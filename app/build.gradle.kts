@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation("com.mapbox.maps:android-ndk27:11.15.0")
+    implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation(libs.play.services.location)
     implementation(libs.protolite.well.known.types) /*Esta vaina es el mapa*/
     testImplementation(libs.junit)
