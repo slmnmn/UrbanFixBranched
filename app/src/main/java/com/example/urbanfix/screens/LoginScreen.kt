@@ -12,27 +12,70 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.urbanfix.R
+import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.navigation.Pantallas
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun LoginScreen(navController: NavController) {
+    val context = LocalContext.current
+    val userPreferencesManager = remember { UserPreferencesManager(context) }
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    // Cargar las credenciales guardadas al iniciar la pantalla
+    LaunchedEffect(Unit) {
+        val isRemembered = userPreferencesManager.getRememberMe()
+        rememberMe = isRemembered
+        if (isRemembered) {
+            email = userPreferencesManager.getSavedEmail()
+            password = userPreferencesManager.getSavedPassword()
+        }
+    }
+
+    // Función para validar credenciales (aquí integrar lógica real)
+    fun validateLogin(): Boolean {
+        // Validar campos vacíos
+        if (email.isBlank() || password.isBlank()) {
+            errorMessage = "Debes ingresar tus credenciales completas"
+            showErrorDialog = true
+            return false
+        }
+
+        // Agregar, lógica de validación real
+        // Por ahora, simulo una validación básica
+        val validEmail = "usuario@ejemplo.com" // Reemplazar con la lógica
+        val validPassword = "123456" // Reemplaza con tu lógica
+
+        if (email != validEmail || password != validPassword) {
+            errorMessage = "El correo o la contraseña es incorrecta, vuelve a intentarlo."
+            showErrorDialog = true
+            return false
+        }
+
+        return true
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -213,7 +256,7 @@ fun LoginScreen(navController: NavController) {
                                         shape = CircleShape
                                     )
                                     .background(
-                                        color = if (rememberMe) Color(0xFFE8E8E8) else Color(0xFFE8E8E8),
+                                        color = Color(0xFFE8E8E8),
                                         shape = CircleShape
                                     ),
                                 contentAlignment = Alignment.Center
@@ -253,7 +296,17 @@ fun LoginScreen(navController: NavController) {
 
                     // Botón iniciar sesión
                     Button(
-                        onClick = { navController.navigate(Pantallas.Home.ruta) },
+                        onClick = {
+                            if (validateLogin()) {
+                                // Guardar credenciales según el estado de "Recordarme"
+                                userPreferencesManager.saveCredentials(
+                                    email = email,
+                                    password = password,
+                                    rememberMe = rememberMe
+                                )
+                                navController.navigate(Pantallas.Home.ruta)
+                            }
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1FAEE)),
                         shape = RoundedCornerShape(26.dp),
                         modifier = Modifier
@@ -299,6 +352,87 @@ fun LoginScreen(navController: NavController) {
                             }
                         )
                     }
+                }
+            }
+        }
+
+        // Diálogo de error
+        if (showErrorDialog) {
+            ErrorDialog(
+                errorMessage = errorMessage,
+                onDismiss = { showErrorDialog = false }
+            )
+        }
+    }
+}
+
+@Composable
+fun ErrorDialog(
+    errorMessage: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            )
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Barra roja de error
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(Color(0xFFFF4B3A)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Error",
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                // Mensaje de error
+                Text(
+                    text = errorMessage,
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    fontStyle = FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                )
+
+                // Botón Volver
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1D3557)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .padding(bottom = 24.dp)
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = "Volver",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
