@@ -1,0 +1,19 @@
+package com.example.urbanfix.network
+
+// Data to SEND to the server
+data class LoginRequest(
+    val email: String,
+    val contrasena_hash: String // Key must match your Flask API XD XD
+)
+
+// Data you EXPECT TO RECEIVE on a successful login
+data class LoginResponse(
+    val id: Int,
+    val nombre: String,
+    val email: String
+)
+
+// Data you EXPECT TO RECEIVE on a failed login
+data class ErrorResponse(
+    val message: String
+)

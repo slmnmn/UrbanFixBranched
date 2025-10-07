@@ -12,76 +12,72 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.urbanfix.R
 import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.navigation.Pantallas
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import com.example.urbanfix.viewmodel.LoginState
+import com.example.urbanfix.viewmodel.LoginViewModel
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(
+    navController: NavController,
+    loginViewModel: LoginViewModel = viewModel() // Obtiene la instancia del ViewModel
+) {
     val context = LocalContext.current
     val userPreferencesManager = remember { UserPreferencesManager(context) }
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    // El estado ahora viene del ViewModel
+    val email by loginViewModel.email.collectAsState()
+    val password by loginViewModel.password.collectAsState()
+    val loginState by loginViewModel.loginState.collectAsState()
+
     var rememberMe by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
 
-    // Cargar las credenciales guardadas al iniciar la pantalla
+    // Reacciona al estado de login para navegar o mostrar errores
+    LaunchedEffect(loginState) {
+        if (loginState is LoginState.Success) {
+            userPreferencesManager.saveCredentials(
+                email = email,
+                password = password,
+                rememberMe = rememberMe
+            )
+            navController.navigate(Pantallas.Home.ruta) {
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         val isRemembered = userPreferencesManager.getRememberMe()
         rememberMe = isRemembered
         if (isRemembered) {
-            email = userPreferencesManager.getSavedEmail()
-            password = userPreferencesManager.getSavedPassword()
+            loginViewModel.onEmailChange(userPreferencesManager.getSavedEmail())
+            loginViewModel.onPasswordChange(userPreferencesManager.getSavedPassword())
         }
-    }
-
-    // Función para validar credenciales (aquí integrar lógica real)
-    fun validateLogin(): Boolean {
-        // Validar campos vacíos
-        if (email.isBlank() || password.isBlank()) {
-            errorMessage = "Debes ingresar tus credenciales completas"
-            showErrorDialog = true
-            return false
-        }
-
-        // Agregar, lógica de validación real
-        // Por ahora, simulo una validación básica
-        val validEmail = "usuario@ejemplo.com" // Reemplazar con la lógica
-        val validPassword = "123456" // Reemplaza con tu lógica
-
-        if (email != validEmail || password != validPassword) {
-            errorMessage = "El correo o la contraseña es incorrecta, vuelve a intentarlo."
-            showErrorDialog = true
-            return false
-        }
-
-        return true
     }
 
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {
-        // Fondo con imagen
         Image(
             painter = painterResource(id = R.drawable.log_back),
             contentDescription = "Fondo Login UrbanFix",
@@ -90,146 +86,67 @@ fun LoginScreen(navController: NavController) {
         )
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(215.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(
-                        elevation = 20.dp,
-                        shape = RoundedCornerShape(32.dp),
-                        clip = false
-                    ),
+                modifier = Modifier.fillMaxWidth().shadow(elevation = 20.dp, shape = RoundedCornerShape(32.dp), clip = false),
                 shape = RoundedCornerShape(32.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFA8DADC)
-                )
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFA8DADC))
             ) {
                 Column(
                     modifier = Modifier.padding(22.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Logo circular con borde blanco
                     Box(
-                        modifier = Modifier
-                            .size(128.dp)
-                            .background(Color.White, CircleShape)
-                            .padding(2.dp),
+                        modifier = Modifier.size(128.dp).background(Color.White, CircleShape).padding(2.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.circular_logo),
                             contentDescription = "Logo UrbanFix",
-                            modifier = Modifier
-                                .size(130.dp)
-                                .clip(CircleShape)
+                            modifier = Modifier.size(130.dp).clip(CircleShape)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "Por favor ingresa tus credenciales",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color(0xFF1D3557),
-                        textAlign = TextAlign.Center
-                    )
+                    Text(text = "Por favor ingresa tus credenciales", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1D3557), textAlign = TextAlign.Center)
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Label E-mail
-                    Text(
-                        text = "E-mail",
-                        fontSize = 14.sp,
-                        color = Color(0xFF658384),
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 4.dp, bottom = 4.dp)
-                    )
+                    Text(text = "E-mail", fontSize = 14.sp, color = Color(0xFF658384), fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
 
-                    // Campo email
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = { loginViewModel.onEmailChange(it) }, // Llama al ViewModel
                         placeholder = { Text("Ingresa tu e-mail", fontSize = 13.sp, color = Color.Gray) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                            .border(
-                                width = 1.5.dp,
-                                color = Color(0xFF1D3557).copy(alpha = 0.8f),
-                                shape = RoundedCornerShape(26.dp)
-                            ),
+                        modifier = Modifier.fillMaxWidth().height(52.dp).border(width = 1.5.dp, color = Color(0xFF1D3557).copy(alpha = 0.8f), shape = RoundedCornerShape(26.dp)),
                         shape = RoundedCornerShape(26.dp),
                         singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFFE8E8E8),
-                            unfocusedContainerColor = Color(0xFFE8E8E8),
-                            disabledContainerColor = Color(0xFFE8E8E8),
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
-                        )
+                        colors = TextFieldDefaults.colors(focusedContainerColor = Color(0xFFE8E8E8), unfocusedContainerColor = Color(0xFFE8E8E8), disabledContainerColor = Color(0xFFE8E8E8), focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent, disabledIndicatorColor = Color.Transparent)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Label Contraseña
-                    Text(
-                        text = "Contraseña",
-                        fontSize = 14.sp,
-                        color = Color(0xFF658384),
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 4.dp, bottom = 4.dp)
-                    )
+                    Text(text = "Contraseña", fontSize = 14.sp, color = Color(0xFF658384), fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
 
-                    // Campo contraseña con ojito
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = { loginViewModel.onPasswordChange(it) }, // Llama al ViewModel
                         placeholder = { Text("Ingresa tu contraseña", fontSize = 13.sp, color = Color.Gray) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                            .border(
-                                width = 1.5.dp,
-                                color = Color(0xFF1D3557).copy(alpha = 0.8f),
-                                shape = RoundedCornerShape(26.dp)
-                            ),
+                        modifier = Modifier.fillMaxWidth().height(52.dp).border(width = 1.5.dp, color = Color(0xFF1D3557).copy(alpha = 0.8f), shape = RoundedCornerShape(26.dp)),
                         shape = RoundedCornerShape(26.dp),
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
                             val image = if (passwordVisible) R.drawable.watch else R.drawable.hide
-                            val description =
-                                if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
-
-                            Image(
-                                painter = painterResource(id = image),
-                                contentDescription = description,
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .clickable { passwordVisible = !passwordVisible }
-                            )
+                            Image(painter = painterResource(id = image), contentDescription = null, modifier = Modifier.size(20.dp).clickable { passwordVisible = !passwordVisible })
                         },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFFE8E8E8),
-                            unfocusedContainerColor = Color(0xFFE8E8E8),
-                            disabledContainerColor = Color(0xFFE8E8E8),
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
-                        )
+                        colors = TextFieldDefaults.colors(focusedContainerColor = Color(0xFFE8E8E8), unfocusedContainerColor = Color(0xFFE8E8E8), disabledContainerColor = Color(0xFFE8E8E8), focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent, disabledIndicatorColor = Color.Transparent)
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -294,78 +211,45 @@ fun LoginScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Botón iniciar sesión
                     Button(
                         onClick = {
-                            if (validateLogin()) {
-                                // Guardar credenciales según el estado de "Recordarme"
-                                userPreferencesManager.saveCredentials(
-                                    email = email,
-                                    password = password,
-                                    rememberMe = rememberMe
-                                )
-                                navController.navigate(Pantallas.Home.ruta)
-                            }
-                        },
+                            // AÑADE ESTA LÍNEA
+                            println("LOGIN_DEBUG: Botón presionado. Llamando a viewModel.loginUser()")
+                            loginViewModel.loginUser()
+                        }, // Llama al ViewModel
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1FAEE)),
                         shape = RoundedCornerShape(26.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top= 10.dp, bottom = 10.dp, start = 50.dp, end = 50.dp)
-                            .height(52.dp)
-                            .shadow(8.dp, RoundedCornerShape(26.dp))
-                            .border(
-                                width = 2.dp,
-                                color = Color(0xFF4AB7B6),
-                                shape = RoundedCornerShape(26.dp)
-                            )
+                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 10.dp, start = 50.dp, end = 50.dp).height(52.dp).shadow(8.dp, RoundedCornerShape(26.dp)).border(width = 2.dp, color = Color(0xFF4AB7B6), shape = RoundedCornerShape(26.dp))
                     ) {
-                        Text(
-                            text = "Iniciar sesión",
-                            color = Color(0xFF1D3557),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
+                        if (loginState is LoginState.Loading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF1D3557), strokeWidth = 2.dp)
+                        } else {
+                            Text(text = "Iniciar sesión", color = Color(0xFF1D3557), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Registro
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "¿No tienes una cuenta? ",
-                            color = Color(0xFF1D3557),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            text = "Regístrate",
-                            color = Color(0xFFE63946),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            textDecoration = TextDecoration.Underline,
-                            modifier = Modifier.clickable {
-                                navController.navigate(Pantallas.Registro.ruta)
-                            }
-                        )
+                        // ... Tu Row de "Regístrate" ...
                     }
                 }
             }
         }
 
-        // Diálogo de error
-        if (showErrorDialog) {
+        if (loginState is LoginState.Error) {
             ErrorDialog(
-                errorMessage = errorMessage,
-                onDismiss = { showErrorDialog = false }
+                errorMessage = (loginState as LoginState.Error).message,
+                onDismiss = { loginViewModel.dismissError() }
             )
         }
     }
 }
 
+// Tu ErrorDialog no necesita cambios
 @Composable
 fun ErrorDialog(
     errorMessage: String,
