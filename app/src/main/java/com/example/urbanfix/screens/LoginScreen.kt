@@ -234,7 +234,22 @@ fun LoginScreen(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // ... Tu Row de "Regístrate" ...
+                        Text(
+                            text = "¿No tienes una cuenta? ",
+                            color = Color(0xFF1D3557),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "Regístrate",
+                            color = Color(0xFFE63946),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            textDecoration = TextDecoration.Underline,
+                            modifier = Modifier.clickable {
+                                navController.navigate(Pantallas.Registro.ruta)
+                            }
+                        )
                     }
                 }
             }
