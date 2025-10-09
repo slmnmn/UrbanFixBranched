@@ -42,7 +42,7 @@ fun OlvidarconScreen(navController: NavHostController) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
-            painter = painterResource(id = R.drawable.log_back),
+            painter = painterResource(id = R.drawable.registro_normal),
             contentDescription = "Fondo de ciudad",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
