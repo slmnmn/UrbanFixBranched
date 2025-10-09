@@ -431,7 +431,6 @@ fun RegEmpresaScreen(navController: NavHostController) {
         )
     }
 
-    // Mostrar diálogo de error si es necesario
     if (showErrorDialog) {
         ErrorDialogo(
             errorMessage = errorMessage,
@@ -439,7 +438,6 @@ fun RegEmpresaScreen(navController: NavHostController) {
         )
     }
 
-    // Mostrar diálogo de éxito si es necesario
     if (showSuccessDialog) {
         SuccessDialog(
             onDismiss = {

@@ -40,7 +40,7 @@ fun RegUsuarioScreen(
     // Se obtiene la instancia del ViewModel
     registrationViewModel: RegistrationViewModel = viewModel()
 ) {
-    // El estado de los campos ahora viene del ViewModel
+    // Estado de los campos
     val email by registrationViewModel.email.collectAsState()
     val nombres by registrationViewModel.nombres.collectAsState()
     val apellidos by registrationViewModel.apellidos.collectAsState()
@@ -64,7 +64,7 @@ fun RegUsuarioScreen(
             contentScale = ContentScale.Crop
         )
 
-        // Card contenedor del formulario
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -94,7 +94,7 @@ fun RegUsuarioScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Campo E-mail
+                // E-mail
                 Text("E-mail", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = email,
@@ -110,7 +110,7 @@ fun RegUsuarioScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Campo Nombres
+                // Nombres
                 Text("Nombres", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = nombres,
@@ -125,7 +125,7 @@ fun RegUsuarioScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Campo Apellidos
+                // Apellidos
                 Text("Apellidos", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = apellidos,
@@ -140,7 +140,7 @@ fun RegUsuarioScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Campo Contraseña
+                // Contraseña
                 Text("Contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = password,
@@ -162,7 +162,7 @@ fun RegUsuarioScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Campo Confirmar Contraseña
+                // Confirmar Contraseña
                 Text("Confirma tu contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = confirmPassword,
@@ -184,7 +184,7 @@ fun RegUsuarioScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Botón Crear cuenta
+                // Crear cuenta
                 Button(
                     onClick = { registrationViewModel.registerUser() },
                     modifier = Modifier.fillMaxWidth(0.85f).height(50.dp).shadow(8.dp, RoundedCornerShape(24.dp)),
@@ -200,7 +200,7 @@ fun RegUsuarioScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Texto de inicio de sesión - clicable
+
                 Text(
                     text = "¿Ya tienes una cuenta? Inicia sesión",
                     fontSize = 14.sp,
@@ -213,7 +213,7 @@ fun RegUsuarioScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Botón de regresar
+
                 IconButton(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.size(64.dp)
@@ -227,7 +227,7 @@ fun RegUsuarioScreen(
             }
         }
 
-        // Logo en la parte superior
+
         Image(
             painter = painterResource(id = R.drawable.circular_logo),
             contentDescription = "Logo UrbanFix",
@@ -235,7 +235,7 @@ fun RegUsuarioScreen(
         )
     }
 
-    // Los diálogos se muestran basados en el estado del ViewModel
+    // Diálogos basados en el estado del ViewModel
     when (val state = registrationState) {
         is RegistrationState.Error -> {
             ErrorDialogo(

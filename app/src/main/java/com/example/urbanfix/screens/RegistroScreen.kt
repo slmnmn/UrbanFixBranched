@@ -49,7 +49,7 @@ fun RegistroScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Box para superponer el logo sobre las tarjetas
+
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.TopCenter
@@ -58,10 +58,10 @@ fun RegistroScreen(navController: NavHostController) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Espacio para el logo (mitad arriba)
+
                     Spacer(modifier = Modifier.height(64.dp))
 
-                    // Tarjeta azul celeste - más pequeña
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -81,10 +81,10 @@ fun RegistroScreen(navController: NavHostController) {
                                 .padding(horizontal = 22.dp, vertical = 16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Espacio para el logo (mitad abajo) - reducido
+
                             Spacer(modifier = Modifier.height(40.dp))
 
-                            // Recuadro interior gris
+
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -121,7 +121,7 @@ fun RegistroScreen(navController: NavHostController) {
                                         modifier = Modifier.padding(bottom = 32.dp)
                                     )
 
-                                    // Botones Sí y No
+
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -178,7 +178,7 @@ fun RegistroScreen(navController: NavHostController) {
 
                             Spacer(modifier = Modifier.height(20.dp))
 
-                            // Texto inferior dentro de la tarjeta azul
+
                             Text(
                                 text = "¿Ya tienes una cuenta? Inicia sesión",
                                 fontSize = 14.sp,
@@ -195,7 +195,7 @@ fun RegistroScreen(navController: NavHostController) {
                     }
                 }
 
-                // Logo circular superpuesto - más abajo
+
                 Box(
                     modifier = Modifier
                         .offset(y = 16.dp) // Bajado un poco más

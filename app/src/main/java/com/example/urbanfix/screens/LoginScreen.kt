@@ -38,12 +38,11 @@ import com.example.urbanfix.viewmodel.LoginViewModel
 @Composable
 fun LoginScreen(
     navController: NavController,
-    loginViewModel: LoginViewModel = viewModel() // Obtiene la instancia del ViewModel
+    loginViewModel: LoginViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val userPreferencesManager = remember { UserPreferencesManager(context) }
 
-    // El estado ahora viene del ViewModel
     val email by loginViewModel.email.collectAsState()
     val password by loginViewModel.password.collectAsState()
     val loginState by loginViewModel.loginState.collectAsState()
@@ -51,7 +50,6 @@ fun LoginScreen(
     var rememberMe by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Reacciona al estado de login para navegar o mostrar errores
     LaunchedEffect(loginState) {
         if (loginState is LoginState.Success) {
             userPreferencesManager.saveCredentials(
@@ -151,7 +149,6 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Checkbox circular + olvidar contraseña
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -163,7 +160,6 @@ fun LoginScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.clickable { rememberMe = !rememberMe }
                         ) {
-                            // Checkbox circular personalizado
                             Box(
                                 modifier = Modifier
                                     .size(20.dp)
@@ -264,7 +260,6 @@ fun LoginScreen(
     }
 }
 
-// Tu ErrorDialog no necesita cambios
 @Composable
 fun ErrorDialog(
     errorMessage: String,
@@ -284,7 +279,6 @@ fun ErrorDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Barra roja de error
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -300,7 +294,6 @@ fun ErrorDialog(
                     )
                 }
 
-                // Mensaje de error
                 Text(
                     text = errorMessage,
                     fontSize = 15.sp,
@@ -313,7 +306,6 @@ fun ErrorDialog(
                         .padding(vertical = 32.dp, horizontal = 24.dp)
                 )
 
-                // Botón Volver
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(

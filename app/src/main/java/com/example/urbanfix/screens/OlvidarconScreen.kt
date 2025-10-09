@@ -16,6 +16,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,8 +32,7 @@ import com.example.urbanfix.viewmodel.ForgotPasswordState
 import com.example.urbanfix.viewmodel.OlvidarconViewModel
 
 val LightGreenCard = Color(0xFFE0F2E9)
-val DialogErrorRed = Color(0xFFE63946)
-val DialogSuccessGreen = Color(0xFF90BE6D)
+val CustomTeal = Color(0xFF86C3D7)
 
 @Composable
 fun OlvidarconScreen(navController: NavHostController) {
@@ -48,7 +49,6 @@ fun OlvidarconScreen(navController: NavHostController) {
             contentScale = ContentScale.Crop
         )
 
-        // Contenido principal que cambia según el estado
         when (state) {
             is ForgotPasswordState.EnterEmail, is ForgotPasswordState.Loading, is ForgotPasswordState.EmailSentSuccess, is ForgotPasswordState.Error -> {
                 EmailEntryContent(
@@ -70,23 +70,16 @@ fun OlvidarconScreen(navController: NavHostController) {
             }
         }
 
-        // Muestra los diálogos sobre el contenido
         when (val currentState = state) {
             is ForgotPasswordState.EmailSentSuccess -> {
-                MessageDialog(
-                    title = "Envío exitoso",
+                SuccessDialog(
                     message = "Código enviado, revisa tu e-mail",
-                    buttonText = "Siguiente",
-                    headerColor = DialogSuccessGreen,
                     onDismiss = { viewModel.dismissDialog() }
                 )
             }
             is ForgotPasswordState.Error -> {
-                MessageDialog(
-                    title = "Error",
-                    message = currentState.message,
-                    buttonText = "Volver",
-                    headerColor = DialogErrorRed,
+                ErrorDialog(
+                    errorMessage = currentState.message,
                     onDismiss = { viewModel.dismissDialog() }
                 )
             }
@@ -95,7 +88,6 @@ fun OlvidarconScreen(navController: NavHostController) {
     }
 }
 
-// Vista para pedir el E-mail
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EmailEntryContent(
@@ -122,7 +114,7 @@ private fun EmailEntryContent(
                 ) {
                     Text(text = "Recupera tu contraseña", fontSize = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = 32.sp)
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text(text = "Escribe tu correo para enviarte un código que te dé acceso a la app.", fontSize = 14.sp, textAlign = TextAlign.Center, color = Color.Gray)
+                    Text(text = "Escribe tu correo para enviarte un código que te dé acceso a la app.", fontSize = 14.sp, textAlign = TextAlign.Center, color = Color.Black)
                     Spacer(modifier = Modifier.height(32.dp))
                     Text(text = "E-mail", fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.height(8.dp))
@@ -144,13 +136,13 @@ private fun EmailEntryContent(
                     Button(
                         onClick = onSendCodeClick,
                         shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.buttonColors(containerColor = BlueSoft),
+                        colors = ButtonDefaults.buttonColors(containerColor = CustomTeal),
                         modifier = Modifier.fillMaxWidth().height(50.dp)
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = WhiteFull, strokeWidth = 2.dp)
                         } else {
-                            Text("Enviar código", color = WhiteFull, fontWeight = FontWeight.Bold)
+                            Text("Enviar código", color = Color.Black, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -172,7 +164,6 @@ private fun EmailEntryContent(
     }
 }
 
-// Vista para pedir el Código
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CodeEntryContent(
@@ -250,37 +241,70 @@ private fun CodeEntryContent(
 }
 
 
-// Diálogo genérico para mostrar mensajes de éxito o error
 @Composable
-fun MessageDialog(
-    title: String,
+fun SuccessDialog(
     message: String,
-    buttonText: String,
-    headerColor: Color,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = WhiteFull)) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            )
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Box(
-                    modifier = Modifier.fillMaxWidth().background(headerColor).padding(vertical = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(Color(0xFF90BE6D)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = title, color = WhiteFull, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Envío exitoso",
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
+
                 Text(
                     text = message,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    fontStyle = FontStyle.Italic,
                     textAlign = TextAlign.Center,
-                    fontSize = 16.sp
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 24.dp)
                 )
+
                 Button(
                     onClick = onDismiss,
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).padding(bottom = 24.dp).height(48.dp)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1D3557)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .padding(bottom = 24.dp)
+                        .height(48.dp)
                 ) {
-                    Text(text = buttonText, color = WhiteFull, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Siguiente",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

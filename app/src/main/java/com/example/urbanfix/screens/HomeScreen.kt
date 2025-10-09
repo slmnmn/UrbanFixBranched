@@ -52,8 +52,6 @@ class MainActivity : ComponentActivity() {
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         setContent {
             UrbanFixTheme {
-                // Tu NavHost debe ir aquí
-                // AppNavigator() ya no es necesario si usas Navigation Compose
             }
         }
     }
@@ -197,8 +195,6 @@ fun HomeScreen(navController: NavHostController) {
                         .height(168.dp)
                         .align(Alignment.CenterHorizontally)
                         .clickable {
-                            // Navega a MapDetailScreen
-                            // Ajusta la ruta según tu sealed class Pantallas
                             navController.navigate("mapa_detalle")
                         },
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),

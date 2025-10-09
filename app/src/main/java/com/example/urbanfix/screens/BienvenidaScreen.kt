@@ -25,7 +25,7 @@ fun BienvenidaScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF043157)), // Fondo azul oscuro
+            .background(Color(0xFF043157)),
         contentAlignment = Alignment.Center
     ) {
         Image(
