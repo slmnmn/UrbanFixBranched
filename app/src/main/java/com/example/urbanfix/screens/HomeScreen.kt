@@ -39,6 +39,7 @@ import com.example.urbanfix.R
 import com.example.urbanfix.ui.theme.*
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
+import com.example.urbanfix.navigation.Pantallas
 import com.mapbox.maps.plugin.locationcomponent.location
 
 class MainActivity : ComponentActivity() {
@@ -292,7 +293,7 @@ fun HomeScreen(navController: NavHostController) {
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
         ) {
-            BottomNavBar()
+            BottomNavBar(navController = navController)
         }
     }
 }
@@ -409,7 +410,7 @@ fun ReportButton(iconId: Int, text: String) {
 }
 
 @Composable
-fun BottomNavBar() {
+fun BottomNavBar(navController: NavHostController) {
     NavigationBar(
         containerColor = BlueMain,
         modifier = Modifier
@@ -494,7 +495,7 @@ fun BottomNavBar() {
         )
         NavigationBarItem(
             selected = false,
-            onClick = { },
+            onClick = { navController.navigate(Pantallas.Perfil.ruta) },
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.miperfil),

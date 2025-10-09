@@ -9,6 +9,7 @@ import com.example.urbanfix.screens.BienvenidaScreen
 import com.example.urbanfix.screens.LoginScreen
 import com.example.urbanfix.screens.RegistroScreen
 import com.example.urbanfix.screens.OlvidarconScreen
+import com.example.urbanfix.screens.UserProfileScreen
 
 sealed class Pantallas(val ruta: String) {
     object Bienvenida : Pantallas("bienvenida")
@@ -16,6 +17,8 @@ sealed class Pantallas(val ruta: String) {
     object Registro : Pantallas("registro")
     object Olvido : Pantallas("olvido")
     object Home : Pantallas("home")
+
+    object Perfil : Pantallas("perfil")
 }
 
 
@@ -36,6 +39,9 @@ fun AppNavigator(navController: NavHostController) {
         }
         composable(Pantallas.Home.ruta) {
             HomeScreen(navController)
+        }
+        composable(Pantallas.Perfil.ruta) {
+            UserProfileScreen(navController)
         }
     }
 }
