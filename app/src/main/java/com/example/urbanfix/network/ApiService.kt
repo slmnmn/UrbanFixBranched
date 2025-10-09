@@ -7,4 +7,6 @@ import retrofit2.http.POST
 interface ApiService {
     @POST("/iniciosesion") // The path of your login endpoint
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+    @POST("/usuarios")
+    suspend fun createuser (@Body request: CreateUserRequest): Response<ErrorResponse> // TEMPORAL  REPONSE PQ SOLO TIENE MENSAJE
 } // TODO: Toda esta interfaz se termina editando para añadir todos los endpoints perros

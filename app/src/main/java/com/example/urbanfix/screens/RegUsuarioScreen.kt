@@ -1,13 +1,12 @@
 package com.example.urbanfix.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,31 +15,41 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.navigation.Pantallas
+import com.example.urbanfix.viewmodel.RegistrationState
+import com.example.urbanfix.viewmodel.RegistrationViewModel
 
 @Composable
-fun RegUsuarioScreen(navController: NavHostController) {
-    var email by remember { mutableStateOf("") }
-    var nombres by remember { mutableStateOf("") }
-    var apellidos by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+fun RegUsuarioScreen(
+    navController: NavHostController,
+    // Se obtiene la instancia del ViewModel
+    registrationViewModel: RegistrationViewModel = viewModel()
+) {
+    // El estado de los campos ahora viene del ViewModel
+    val email by registrationViewModel.email.collectAsState()
+    val nombres by registrationViewModel.nombres.collectAsState()
+    val apellidos by registrationViewModel.apellidos.collectAsState()
+    val password by registrationViewModel.password.collectAsState()
+    val confirmPassword by registrationViewModel.confirmPassword.collectAsState()
+    val registrationState by registrationViewModel.registrationState.collectAsState()
+
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var showSuccessDialog by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -67,7 +76,7 @@ fun RegUsuarioScreen(navController: NavHostController) {
             colors = CardDefaults.cardColors(
                 containerColor = Color(0xFFE0F5E1)
             ),
-            border = androidx.compose.foundation.BorderStroke(2.dp, Color.Black)
+            border = BorderStroke(2.dp, Color.Black)
         ) {
             Column(
                 modifier = Modifier
@@ -86,30 +95,14 @@ fun RegUsuarioScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Campo E-mail
-                Text(
-                    text = "E-mail",
-                    fontSize = 12.sp,
-                    color = Color(0xFF888888),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, bottom = 4.dp)
-                )
+                Text("E-mail", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = { registrationViewModel.onEmailChange(it) },
                     placeholder = { Text("Ingresa tu e-mail", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     singleLine = true,
                     textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
@@ -118,30 +111,14 @@ fun RegUsuarioScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Campo Nombres
-                Text(
-                    text = "Nombres",
-                    fontSize = 12.sp,
-                    color = Color(0xFF888888),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, bottom = 4.dp)
-                )
+                Text("Nombres", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = nombres,
-                    onValueChange = { nombres = it },
+                    onValueChange = { registrationViewModel.onNombresChange(it) },
                     placeholder = { Text("Ingresa tus nombres", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
                     singleLine = true,
                     textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
                 )
@@ -149,30 +126,14 @@ fun RegUsuarioScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Campo Apellidos
-                Text(
-                    text = "Apellidos",
-                    fontSize = 12.sp,
-                    color = Color(0xFF888888),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, bottom = 4.dp)
-                )
+                Text("Apellidos", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = apellidos,
-                    onValueChange = { apellidos = it },
+                    onValueChange = { registrationViewModel.onApellidosChange(it) },
                     placeholder = { Text("Ingresa tus apellidos", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
                     singleLine = true,
                     textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
                 )
@@ -180,40 +141,18 @@ fun RegUsuarioScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Campo Contraseña
-                Text(
-                    text = "Contraseña",
-                    fontSize = 12.sp,
-                    color = Color(0xFF888888),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, bottom = 4.dp)
-                )
+                Text("Contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = { registrationViewModel.onPasswordChange(it) },
                     placeholder = { Text("Ingresa tu contraseña", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Image(
-                                painter = painterResource(
-                                    id = if (passwordVisible) R.drawable.watch else R.drawable.hide
-                                ),
-                                contentDescription = "Toggle password visibility",
-                                modifier = Modifier.size(28.dp)
-                            )
+                            Image(painter = painterResource(id = if (passwordVisible) R.drawable.watch else R.drawable.hide), contentDescription = "Toggle password visibility", modifier = Modifier.size(28.dp))
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -224,40 +163,18 @@ fun RegUsuarioScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Campo Confirmar Contraseña
-                Text(
-                    text = "Confirma tu contraseña",
-                    fontSize = 12.sp,
-                    color = Color(0xFF888888),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, bottom = 4.dp)
-                )
+                Text("Confirma tu contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
+                    onValueChange = { registrationViewModel.onConfirmPasswordChange(it) },
                     placeholder = { Text("Ingresa tu contraseña nuevamente", fontSize = 12.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                            Image(
-                                painter = painterResource(
-                                    id = if (confirmPasswordVisible) R.drawable.watch else R.drawable.hide
-                                ),
-                                contentDescription = "Toggle password visibility",
-                                modifier = Modifier.size(28.dp)
-                            )
+                            Image(painter = painterResource(id = if (confirmPasswordVisible) R.drawable.watch else R.drawable.hide), contentDescription = "Toggle password visibility", modifier = Modifier.size(28.dp))
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -269,38 +186,16 @@ fun RegUsuarioScreen(navController: NavHostController) {
 
                 // Botón Crear cuenta
                 Button(
-                    onClick = {
-                        when {
-                            email.isBlank() || nombres.isBlank() || apellidos.isBlank() ||
-                                    password.isBlank() || confirmPassword.isBlank() -> {
-                                errorMessage = "Debes completar todos los campos"
-                                showErrorDialog = true
-                            }
-                            password != confirmPassword -> {
-                                errorMessage = "Verifica tu contraseña y confirmación."
-                                showErrorDialog = true
-                            }
-                            else -> {
-                                // Todos los campos están llenos y las contraseñas coinciden
-                                showSuccessDialog = true
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .height(50.dp)
-                        .shadow(8.dp, RoundedCornerShape(24.dp)),
+                    onClick = { registrationViewModel.registerUser() },
+                    modifier = Modifier.fillMaxWidth(0.85f).height(50.dp).shadow(8.dp, RoundedCornerShape(24.dp)),
                     shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF7AC8E0)
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AC8E0))
                 ) {
-                    Text(
-                        text = "Crear cuenta",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
+                    if (registrationState is RegistrationState.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black)
+                    } else {
+                        Text(text = "Crear cuenta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -312,10 +207,8 @@ fun RegUsuarioScreen(navController: NavHostController) {
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF000000),
                     textAlign = TextAlign.Center,
-                    textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
-                    modifier = Modifier.clickable {
-                        navController.navigate(Pantallas.Login.ruta)
-                    }
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { navController.navigate(Pantallas.Login.ruta) }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -334,104 +227,70 @@ fun RegUsuarioScreen(navController: NavHostController) {
             }
         }
 
-        // Logo en la parte superior - sobre el card con zIndex mayor
+        // Logo en la parte superior
         Image(
             painter = painterResource(id = R.drawable.circular_logo),
             contentDescription = "Logo UrbanFix",
-            modifier = Modifier
-                .size(120.dp)
-                .align(Alignment.TopCenter)
-                .offset(y = 30.dp)
-                .zIndex(2f)
+            modifier = Modifier.size(120.dp).align(Alignment.TopCenter).offset(y = 30.dp).zIndex(2f)
         )
     }
 
-    // Mostrar diálogo de error si es necesario
-    if (showErrorDialog) {
-        ErrorDialogo(
-            errorMessage = errorMessage,
-            onDismiss = { showErrorDialog = false }
-        )
-    }
-
-    // Mostrar diálogo de éxito si es necesario
-    if (showSuccessDialog) {
-        SuccessDialog(
-            onDismiss = {
-                showSuccessDialog = false
-                navController.navigate(Pantallas.Login.ruta)
-            }
-        )
+    // Los diálogos se muestran basados en el estado del ViewModel
+    when (val state = registrationState) {
+        is RegistrationState.Error -> {
+            ErrorDialogo(
+                errorMessage = state.message,
+                onDismiss = { registrationViewModel.dismissDialog() }
+            )
+        }
+        is RegistrationState.Success -> {
+            SuccessDialog(
+                onDismiss = {
+                    registrationViewModel.dismissDialog()
+                    navController.navigate(Pantallas.Login.ruta) {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    }
+                }
+            )
+        }
+        else -> { /* No hacer nada en los estados Idle o Loading */ }
     }
 }
 
 @Composable
-fun ErrorDialogo(
-    errorMessage: String,
-    onDismiss: () -> Unit
-) {
+fun ErrorDialogo(errorMessage: String, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 1.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 1.dp),
             shape = RoundedCornerShape(1.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Barra roja de error
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(0xFFFF4B3A)),
+                    modifier = Modifier.fillMaxWidth().height(48.dp).background(Color(0xFFFF4B3A)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Error",
-                        color = Color.Black,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Error", color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
-
-                // Mensaje de error
                 Text(
                     text = errorMessage,
                     fontSize = 15.sp,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                    fontFamily = FontFamily.SansSerif,
                     color = Color.Black,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    fontStyle = FontStyle.Italic,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 24.dp)
                 )
-
-                // Botón Volver
                 Button(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1D3557)
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
-                        .padding(bottom = 24.dp)
-                        .height(48.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).padding(bottom = 24.dp).height(48.dp)
                 ) {
-                    Text(
-                        text = "Volver",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Volver", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -439,86 +298,50 @@ fun ErrorDialogo(
 }
 
 @Composable
-fun SuccessDialog(
-    onDismiss: () -> Unit
-) {
+fun SuccessDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 1.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 1.dp),
             shape = RoundedCornerShape(1.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Barra verde de éxito (mismo tamaño que la roja de error)
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(0xFFC8E6C9)),
+                    modifier = Modifier.fillMaxWidth().height(48.dp).background(Color(0xFFC8E6C9)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Cuenta creada exitosamente",
-                        color = Color.Black,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Cuenta creada exitosamente", color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
-
-                // Contenido central con mismo espaciado que ErrorDialog
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp, horizontal = 24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Texto "Ahora puedes iniciar sesión"
                     Text(
                         text = "Ahora puedes iniciar sesión",
                         fontSize = 15.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                        fontFamily = FontFamily.SansSerif,
                         color = Color.Black,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                        fontStyle = FontStyle.Italic,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
-
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // Imagen del chulo verde
                     Image(
                         painter = painterResource(id = R.drawable.chulo),
                         contentDescription = "Éxito",
                         modifier = Modifier.size(60.dp)
                     )
                 }
-
-                // Botón Iniciar (mismo estilo y posición que botón Volver)
                 Button(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1D3557)
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
-                        .padding(bottom = 24.dp)
-                        .height(48.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).padding(bottom = 24.dp).height(48.dp)
                 ) {
-                    Text(
-                        text = "Iniciar",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Iniciar", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

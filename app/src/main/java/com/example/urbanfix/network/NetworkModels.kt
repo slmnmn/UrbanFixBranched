@@ -17,3 +17,9 @@ data class LoginResponse(
 data class ErrorResponse(
     val message: String
 )
+
+data class CreateUserRequest( //TODO: Si vamos a crear entonces usuarios de empresas esto se cambia
+    val nombre: String,
+    val email: String,
+    val contrasena: String
+)
