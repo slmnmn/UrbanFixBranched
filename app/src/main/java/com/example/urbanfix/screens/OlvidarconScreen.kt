@@ -16,8 +16,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,7 +31,8 @@ import com.example.urbanfix.viewmodel.ForgotPasswordState
 import com.example.urbanfix.viewmodel.OlvidarconViewModel
 
 val LightGreenCard = Color(0xFFE0F2E9)
-val CustomTeal = Color(0xFF86C3D7)
+val DialogErrorRed = Color(0xFFE63946)
+val DialogSuccessGreen = Color(0xFF90BE6D)
 
 @Composable
 fun OlvidarconScreen(navController: NavHostController) {
@@ -43,8 +43,8 @@ fun OlvidarconScreen(navController: NavHostController) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
-            painter = painterResource(id = R.drawable.registro_normal),
-            contentDescription = "Fondo de ciudad",
+            painter = painterResource(id = R.drawable.log_back),
+            contentDescription = stringResource(id = R.string.city_background_content_description),
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
@@ -72,14 +72,20 @@ fun OlvidarconScreen(navController: NavHostController) {
 
         when (val currentState = state) {
             is ForgotPasswordState.EmailSentSuccess -> {
-                SuccessDialog(
-                    message = "Código enviado, revisa tu e-mail",
+                MessageDialog(
+                    title = stringResource(id = R.string.success_dialog_title),
+                    message = stringResource(id = R.string.success_dialog_message),
+                    buttonText = stringResource(id = R.string.next_button),
+                    headerColor = DialogSuccessGreen,
                     onDismiss = { viewModel.dismissDialog() }
                 )
             }
             is ForgotPasswordState.Error -> {
-                ErrorDialog(
-                    errorMessage = currentState.message,
+                MessageDialog(
+                    title = stringResource(id = R.string.error_dialog_title),
+                    message = currentState.message,
+                    buttonText = stringResource(id = R.string.back_button),
+                    headerColor = DialogErrorRed,
                     onDismiss = { viewModel.dismissDialog() }
                 )
             }
@@ -112,16 +118,17 @@ private fun EmailEntryContent(
                     modifier = Modifier.padding(top = 80.dp, start = 24.dp, end = 24.dp, bottom = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "Recupera tu contraseña", fontSize = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = 32.sp)
+                    // CAMBIO: Se usa stringResource
+                    Text(text = stringResource(id = R.string.recover_password_title), fontSize = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = 32.sp)
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text(text = "Escribe tu correo para enviarte un código que te dé acceso a la app.", fontSize = 14.sp, textAlign = TextAlign.Center, color = Color.Black)
+                    Text(text = stringResource(id = R.string.recover_password_email_subtitle), fontSize = 14.sp, textAlign = TextAlign.Center, color = Color.Gray)
                     Spacer(modifier = Modifier.height(32.dp))
-                    Text(text = "E-mail", fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth())
+                    Text(text = stringResource(id = R.string.email_label), fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = email,
                         onValueChange = onEmailChange,
-                        placeholder = { Text("Ingresa tu e-mail", color = Color.Gray) },
+                        placeholder = { Text(stringResource(id = R.string.email_placeholder), color = Color.Gray) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
@@ -136,13 +143,13 @@ private fun EmailEntryContent(
                     Button(
                         onClick = onSendCodeClick,
                         shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.buttonColors(containerColor = CustomTeal),
+                        colors = ButtonDefaults.buttonColors(containerColor = BlueSoft),
                         modifier = Modifier.fillMaxWidth().height(50.dp)
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = WhiteFull, strokeWidth = 2.dp)
                         } else {
-                            Text("Enviar código", color = Color.Black, fontWeight = FontWeight.Bold)
+                            Text(stringResource(id = R.string.send_code_button), color = WhiteFull, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -151,7 +158,7 @@ private fun EmailEntryContent(
                 modifier = Modifier.size(120.dp).clip(CircleShape).background(WhiteFull).shadow(elevation = 8.dp, shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Image(painter = painterResource(id = R.drawable.circular_logo), contentDescription = "Logo UrbanFix", modifier = Modifier.size(110.dp))
+                Image(painter = painterResource(id = R.drawable.circular_logo), contentDescription = stringResource(id = R.string.logo_content_description), modifier = Modifier.size(110.dp))
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
@@ -159,7 +166,7 @@ private fun EmailEntryContent(
             onClick = { navController.popBackStack() },
             modifier = Modifier.size(50.dp).clip(CircleShape).background(LightGreenCard)
         ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.Black)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button_content_description), tint = Color.Black)
         }
     }
 }
@@ -188,16 +195,16 @@ private fun CodeEntryContent(
                     modifier = Modifier.padding(top = 80.dp, start = 24.dp, end = 24.dp, bottom = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "Recupera tu contraseña", fontSize = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = 32.sp)
+                    Text(text = stringResource(id = R.string.recover_password_title), fontSize = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = 32.sp)
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text(text = "Escribe el código que se envió al correo que proporcionaste.", fontSize = 14.sp, textAlign = TextAlign.Center, color = Color.Gray)
+                    Text(text = stringResource(id = R.string.recover_password_code_subtitle), fontSize = 14.sp, textAlign = TextAlign.Center, color = Color.Gray)
                     Spacer(modifier = Modifier.height(32.dp))
-                    Text(text = "Código de acceso", fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth())
+                    Text(text = stringResource(id = R.string.access_code_label), fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = code,
                         onValueChange = onCodeChange,
-                        placeholder = { Text("Escribe el código", color = Color.Gray) },
+                        placeholder = { Text(stringResource(id = R.string.code_placeholder), color = Color.Gray) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
@@ -218,7 +225,7 @@ private fun CodeEntryContent(
                         if (isLoading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = WhiteFull, strokeWidth = 2.dp)
                         } else {
-                            Text("Acceder", color = WhiteFull, fontWeight = FontWeight.Bold)
+                            Text(stringResource(id = R.string.access_button), color = WhiteFull, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -227,7 +234,7 @@ private fun CodeEntryContent(
                 modifier = Modifier.size(120.dp).clip(CircleShape).background(WhiteFull).shadow(elevation = 8.dp, shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Image(painter = painterResource(id = R.drawable.circular_logo), contentDescription = "Logo UrbanFix", modifier = Modifier.size(110.dp))
+                Image(painter = painterResource(id = R.drawable.circular_logo), contentDescription = stringResource(id = R.string.logo_content_description), modifier = Modifier.size(110.dp))
             }
         }
         Spacer(modifier = Modifier.height(24.dp))
@@ -235,76 +242,42 @@ private fun CodeEntryContent(
             onClick = { navController.popBackStack() },
             modifier = Modifier.size(50.dp).clip(CircleShape).background(LightGreenCard)
         ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.Black)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button_content_description), tint = Color.Black)
         }
     }
 }
 
 
 @Composable
-fun SuccessDialog(
+fun MessageDialog(
+    title: String,
     message: String,
+    buttonText: String,
+    headerColor: Color,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 1.dp),
-            shape = RoundedCornerShape(1.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+        Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = WhiteFull)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(0xFF90BE6D)),
+                    modifier = Modifier.fillMaxWidth().background(headerColor).padding(vertical = 16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Envío exitoso",
-                        color = Color.Black,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = title, color = WhiteFull, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
-
                 Text(
                     text = message,
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily.SansSerif,
-                    color = Color.Black,
-                    fontStyle = FontStyle.Italic,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                    fontSize = 16.sp
                 )
-
                 Button(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1D3557)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
-                        .padding(bottom = 24.dp)
-                        .height(48.dp)
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).padding(bottom = 24.dp).height(48.dp)
                 ) {
-                    Text(
-                        text = "Siguiente",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = buttonText, color = WhiteFull, fontWeight = FontWeight.Bold)
                 }
             }
         }

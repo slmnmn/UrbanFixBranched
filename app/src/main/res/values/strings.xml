@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">UrbanFix</string>
+
+    <string name="recover_password_title">Recupera tu contraseña</string>
+    <string name="recover_password_email_subtitle">Escribe tu correo para enviarte un código que te dé acceso a la app.</string>
+    <string name="email_label">E-mail</string>
+    <string name="email_placeholder">Ingresa tu e-mail</string>
+    <string name="send_code_button">Enviar código</string>
+    <string name="back_button_content_description">Volver</string>
+
+    <string name="recover_password_code_subtitle">Escribe el código que se envió al correo que proporcionaste.</string>
+    <string name="access_code_label">Código de acceso</string>
+    <string name="code_placeholder">Escribe el código</string>
+    <string name="access_button">Acceder</string>
+
+    <string name="success_dialog_title">Envío exitoso</string>
+    <string name="success_dialog_message">Código enviado, revisa tu e-mail</string>
+    <string name="next_button">Siguiente</string>
+    <string name="error_dialog_title">Error</string>
+    <string name="back_button">Volver</string>
+
+    <string name="logo_content_description">Logo UrbanFix</string>
+    <string name="city_background_content_description">Fondo de ciudad</string>
+
 </resources>
