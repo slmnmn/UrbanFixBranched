@@ -13,4 +13,4 @@ val GrayMedium = Color(0xFF8ADADC)
 val BlackFull = Color(0xFF000000)
 val WhiteFull = Color(0xFFFFFFFF)
 val AquaSoft = Color(0xFFA8DADC)
-
+val RedSignOut = Color(0xFFE63946)

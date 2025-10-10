@@ -12,6 +12,11 @@ import com.example.urbanfix.screens.OlvidarconScreen
 import com.example.urbanfix.screens.RegEmpresaScreen
 import com.example.urbanfix.screens.RegUsuarioScreen
 import com.example.urbanfix.screens.UserProfileScreen
+import com.example.urbanfix.screens.EditProfileScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.urbanfix.screens.CompanyProfileScreen
+import com.example.urbanfix.viewmodel.CompanyProfileViewModel
+import com.example.urbanfix.viewmodel.UserProfileViewModel
 
 sealed class Pantallas(val ruta: String) {
     object Bienvenida : Pantallas("bienvenida")
@@ -22,6 +27,9 @@ sealed class Pantallas(val ruta: String) {
     object RegUsuario : Pantallas("regusuario")
     object RegEmpresa : Pantallas("regempresa")
     object Perfil : Pantallas("perfil")
+    object EditProfile : Pantallas("edit_profile")
+
+    object CompanyProfile : Pantallas("company_profile")
 }
 
 
@@ -49,8 +57,26 @@ fun AppNavigator(navController: NavHostController) {
         composable(Pantallas.RegEmpresa.ruta) {
             RegEmpresaScreen(navController)
         }
-        composable(Pantallas.Perfil.ruta) {
-            UserProfileScreen(navController)
+        composable(route = Pantallas.Perfil.ruta) {
+            val viewModel: UserProfileViewModel = viewModel()
+            UserProfileScreen(
+                navController = navController,
+                viewModel = viewModel
+            )
+        }
+        composable(route = Pantallas.EditProfile.ruta) {
+            val viewModel: UserProfileViewModel = viewModel()
+            EditProfileScreen(
+                navController = navController,
+                viewModel = viewModel
+            )
+        }
+        composable(Pantallas.CompanyProfile.ruta) {
+            val viewModel: CompanyProfileViewModel = viewModel()
+            CompanyProfileScreen(
+                navController = navController,
+                viewModel = viewModel
+            )
         }
     }
 }

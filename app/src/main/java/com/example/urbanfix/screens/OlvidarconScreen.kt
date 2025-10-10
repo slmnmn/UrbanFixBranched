@@ -123,7 +123,7 @@ private fun EmailEntryContent(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(text = stringResource(id = R.string.recover_password_email_subtitle), fontSize = 14.sp, textAlign = TextAlign.Center, color = Color.Gray)
                     Spacer(modifier = Modifier.height(32.dp))
-                    Text(text = stringResource(id = R.string.email_label), fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth())
+                    Text(text = stringResource(id = R.string.recover_password_email_label), fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = email,

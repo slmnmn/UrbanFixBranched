@@ -1,25 +1,52 @@
 <resources>
     <string name="app_name">UrbanFix</string>
+    <string name="back_button">Volver</string>
+    <string name="next_button">Siguiente</string>
+    <string name="error_dialog_title">Error</string>
+    <string name="logo_content_description">Logo UrbanFix</string>
+    <string name="back_button_content_description">Volver</string>
+    <string name="close_button_cd">Cerrar</string>
+
 
     <string name="recover_password_title">Recupera tu contraseña</string>
     <string name="recover_password_email_subtitle">Escribe tu correo para enviarte un código que te dé acceso a la app.</string>
-    <string name="email_label">E-mail</string>
+    <string name="recover_password_email_label">E-mail</string>
     <string name="email_placeholder">Ingresa tu e-mail</string>
     <string name="send_code_button">Enviar código</string>
-    <string name="back_button_content_description">Volver</string>
-
     <string name="recover_password_code_subtitle">Escribe el código que se envió al correo que proporcionaste.</string>
     <string name="access_code_label">Código de acceso</string>
     <string name="code_placeholder">Escribe el código</string>
     <string name="access_button">Acceder</string>
-
     <string name="success_dialog_title">Envío exitoso</string>
     <string name="success_dialog_message">Código enviado, revisa tu e-mail</string>
-    <string name="next_button">Siguiente</string>
-    <string name="error_dialog_title">Error</string>
-    <string name="back_button">Volver</string>
-
-    <string name="logo_content_description">Logo UrbanFix</string>
     <string name="city_background_content_description">Fondo de ciudad</string>
+
+
+    <string name="edit_profile_title">Editar Perfil</string>
+    <string name="full_name_label">Nombre Completo</string>
+    <string name="password_label">Contraseña</string>
+    <string name="confirm_password_label">Confirmar contraseña</string>
+    <string name="confirm_changes_button">Confirmar Cambios</string>
+    <string name="passwords_do_not_match_error">Las contraseñas no coinciden</string>
+    <string name="empty_name_error">El nombre no puede estar vacío</string>
+    <string name="changes_saved_successfully">Cambios Guardados con Éxito</string>
+    <string name="password_fields_empty_error">Debes llenar ambos campos para cambiar la contraseña</string>
+
+
+    <string name="profile_title">Perfil de Usuario</string>
+    <string name="profile_picture_cd">Foto de Perfil</string>
+    <string name="edit_photo_cd">Editar foto</string>
+    <string name="profile_email_label">Correo Electrónico</string>
+    <string name="account_type_label">Tipo de Cuenta</string>
+    <string name="account_type_value">Personal</string>
+    <string name="registration_date_label">Fecha de registro</string>
+    <string name="registration_date_value">27/04/2024</string>
+    <string name="edit_profile_button">Editar Perfil</string>
+    <string name="logout_button">Cerrar Sesión</string>
+    <string name="delete_account_button">Eliminar Cuenta Permanentemente</string>
+
+    <string name="company_profile_title">Perfil de Empresa</string>
+    <string name="company_account_type">Empresarial</string>
+    <string name="verified_profile">Perfil Verificado</string>
 
 </resources>
