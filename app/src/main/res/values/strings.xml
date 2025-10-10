@@ -115,6 +115,21 @@
     <string name="company_account_type">Empresarial</string>
     <string name="verified_profile">Perfil Verificado</string>
 
+    <!-- Diálogo de confirmación de cambio de foto -->
+    <string name="change_photo_confirmation_title">Cambiar Foto de Perfil</string>
+    <string name="change_photo_confirmation_message">¿Seguro que quieres cambiar tu foto de perfil?</string>
+    <string name="yes_change_button">Cambiar</string>
+    <string name="no_change_button">Cancelar</string>
+
+    <!-- Contact Button -->
+    <string name="contact_button">Contactar</string>
+    <string name="contact_icon_description">Icono de contacto</string>
+    <string name="email_copied_title">Correo electrónico copiado</string>
+    <string name="email_copied_message">El correo electrónico se copió al portapapeles. Pégalo en tu aplicación de correo preferida para contactar al usuario.</string>
+    <string name="ok_button">OK</string>
+    <string name="perfil_consulta">Perfil de Usuario</string>
+
+
     <!-- Common -->
     <string name="close_button_cd">Cerrar</string>
 

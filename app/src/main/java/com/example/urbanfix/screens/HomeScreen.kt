@@ -158,7 +158,7 @@ fun HomeScreen(navController: NavHostController) {
                     focusedBorderColor = Color.Transparent
                 ),
                 trailingIcon = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { navController.navigate(Pantallas.Verperfilempresa.ruta)}) {
                         Icon(
                             Icons.Default.Search,
                             contentDescription = stringResource(R.string.search_button_description),

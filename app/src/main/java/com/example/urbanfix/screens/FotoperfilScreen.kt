@@ -45,7 +45,9 @@ fun FotoperfilScreen(navController: NavHostController) {
     val context = LocalContext.current
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var originalImageUri by remember { mutableStateOf<Uri?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showBackDialog by remember { mutableStateOf(false) }
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
     // Launcher para seleccionar de galería
@@ -80,6 +82,15 @@ fun FotoperfilScreen(navController: NavHostController) {
         }
     }
 
+    // Función para manejar el botón de volver
+    fun handleBackPress() {
+        if (imageUri != null && imageUri != originalImageUri) {
+            showBackDialog = true
+        } else {
+            navController.popBackStack()
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -107,7 +118,7 @@ fun FotoperfilScreen(navController: NavHostController) {
                     Box(
                         modifier = Modifier.padding(top = 20.dp)
                     ) {
-                        IconButton(onClick = { navController.popBackStack() }) {
+                        IconButton(onClick = { handleBackPress() }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back_button_content_description),
@@ -119,7 +130,7 @@ fun FotoperfilScreen(navController: NavHostController) {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF457B9D)
                 ),
-                modifier = Modifier.height(72.dp) // Altura aumentada de 64dp a 72dp
+                modifier = Modifier.height(72.dp)
             )
 
             // Contenido principal
@@ -268,7 +279,7 @@ fun FotoperfilScreen(navController: NavHostController) {
                         // Botón Cancelar
                         Button(
                             onClick = {
-                                navController.popBackStack()
+                                handleBackPress()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -309,6 +320,22 @@ fun FotoperfilScreen(navController: NavHostController) {
             },
             onDismiss = {
                 showDeleteDialog = false
+            }
+        )
+    }
+
+    // Diálogo de confirmación para volver con cambios
+    if (showBackDialog) {
+        ChangePhotoConfirmationDialog(
+            onConfirm = {
+                // Aquí puedes guardar la foto si es necesario
+                originalImageUri = imageUri
+                showBackDialog = false
+                navController.popBackStack()
+            },
+            onDismiss = {
+                showBackDialog = false
+                navController.popBackStack()
             }
         )
     }
@@ -402,6 +429,100 @@ fun DeletePhotoConfirmationDialog(
                             fontWeight = FontWeight.Bold
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ChangePhotoConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            )
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(Color(0xFFFFB74D)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.change_photo_confirmation_title),
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.change_photo_confirmation_message),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    fontStyle = FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onConfirm,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1D3557)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.yes_change_button),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RedProfile
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.no_change_button),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
                 }
             }
         }
