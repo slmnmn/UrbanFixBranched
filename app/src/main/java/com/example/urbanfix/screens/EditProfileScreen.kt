@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -51,22 +52,53 @@ fun EditProfileScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(stringResource(id = R.string.edit_profile_title), color = WhiteFull) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button_content_description), tint = WhiteFull)
+            // --- BARRA SUPERIOR CORREGIDA (IGUAL QUE EN USERPROFILE) ---
+            TopAppBar(
+                title = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 35.dp, end = 48.dp), // Padding para centrar y bajar
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.edit_profile_title),
+                            color = WhiteFull,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = BlueMain)
+                navigationIcon = {
+                    Box(modifier = Modifier.padding(top = 20.dp)) { // Padding para bajar el ícono
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(id = R.string.back_button_content_description),
+                                tint = WhiteFull
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BlueMain
+                ),
+                modifier = Modifier.height(72.dp) // Altura fija
             )
+        },
+        bottomBar = {
+            BottomNavBar(navController = navController)
         },
         containerColor = GrayBg
     ) { paddingValues ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // El resto del contenido de la pantalla no cambia, ya que estaba correcto.
             Spacer(modifier = Modifier.height(20.dp))
 
             Box(contentAlignment = Alignment.BottomEnd) {
@@ -76,12 +108,12 @@ fun EditProfileScreen(
                     modifier = Modifier.size(180.dp).clip(CircleShape).background(WhiteFull)
                 )
                 FloatingActionButton(
-                    onClick = { navController.navigate(Pantallas.Fotoperfil.ruta)},
+                    onClick = { /* Acción para editar foto */ },
                     shape = CircleShape,
                     containerColor = RedSignOut,
                     modifier = Modifier.size(40.dp)
                 ) {
-                    Icon(Icons.Default.Edit, contentDescription = "Editar foto", tint = WhiteFull)
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(id = R.string.edit_photo_cd), tint = WhiteFull)
                 }
             }
 
@@ -92,6 +124,12 @@ fun EditProfileScreen(
                 onValueChange = viewModel::onNameChange,
                 label = { Text(stringResource(id = R.string.full_name_label)) },
                 isError = errorMessage != null,
+                supportingText = {
+                    val currentError = errorMessage
+                    if (currentError != null && currentError == stringResource(id = R.string.empty_name_error)) {
+                        Text(text = currentError, color = MaterialTheme.colorScheme.error)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -120,7 +158,10 @@ fun EditProfileScreen(
                 label = { Text(stringResource(id = R.string.confirm_password_label)) },
                 isError = errorMessage != null,
                 supportingText = {
-                    errorMessage?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
+                    val currentError = errorMessage
+                    if (currentError != null) {
+                        Text(text = currentError, color = MaterialTheme.colorScheme.error)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,

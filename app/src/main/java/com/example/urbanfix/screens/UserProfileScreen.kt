@@ -13,10 +13,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -56,32 +58,46 @@ fun UserProfileScreen(
     }
 
     Scaffold(
-        topBar = { /* ... (código de la TopAppBar no cambia) ... */ },
-        bottomBar = { /* ... (código de la BottomNavBar no cambia) ... */ },
-        containerColor = GrayBg
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (val state = userProfileState) {
-                is UserProfileState.Loading -> { /* ... (código de Loading no cambia) ... */ }
-                is UserProfileState.Success -> {
-                    ProfileContent(
-                        paddingValues = paddingValues,
-                        userName = state.userName,
-                        userEmail = state.userEmail,
-                        onLogoutClick = { viewModel.logoutUser() },
-                        onEditClick = {
-                            navController.navigate(Pantallas.EditProfile.ruta)
-                        },
-                        navController = navController
-                    )
-                }
-                is UserProfileState.Error -> { /* ... (código de Error no cambia) ... */ }
-                else -> {}
-            }
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            ) { data ->
+        topBar = {
+            // --- BARRA SUPERIOR CORREGIDA (COMO LA DE TU COMPAÑERO) ---
+            TopAppBar(
+                title = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 35.dp, end = 48.dp), // Padding para centrar y bajar el título
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.profile_title),
+                            color = WhiteFull,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                },
+                navigationIcon = {
+                    Box(modifier = Modifier.padding(top = 20.dp)) { // Padding para bajar el ícono
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(id = R.string.back_button_content_description),
+                                tint = WhiteFull
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BlueMain
+                ),
+                modifier = Modifier.height(72.dp) // Altura fija para la barra
+            )
+        },
+        bottomBar = {
+            BottomNavBar(navController = navController)
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
                     shape = RoundedCornerShape(8.dp),
@@ -98,6 +114,38 @@ fun UserProfileScreen(
                     }
                 }
             }
+        },
+        containerColor = GrayBg
+    ) { paddingValues ->
+        when (val state = userProfileState) {
+            is UserProfileState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = BlueMain)
+                }
+            }
+            is UserProfileState.Success -> {
+                ProfileContent(
+                    paddingValues = paddingValues,
+                    userName = state.userName,
+                    userEmail = state.userEmail,
+                    onLogoutClick = { viewModel.logoutUser() },
+                    onEditClick = {
+                        navController.navigate(Pantallas.EditProfile.ruta)
+                    }
+                )
+            }
+            is UserProfileState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = state.message)
+                }
+            }
+            else -> {}
         }
     }
 }
@@ -108,8 +156,7 @@ private fun ProfileContent(
     userName: String,
     userEmail: String,
     onLogoutClick: () -> Unit,
-    onEditClick: () -> Unit,
-    navController: NavHostController
+    onEditClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -130,7 +177,7 @@ private fun ProfileContent(
                     .background(WhiteFull)
             )
             FloatingActionButton(
-                onClick = { navController.navigate(Pantallas.Fotoperfil.ruta)  },
+                onClick = { /* Acción para editar foto */ },
                 shape = CircleShape,
                 containerColor = RedSignOut,
                 modifier = Modifier.size(40.dp)
@@ -149,7 +196,7 @@ private fun ProfileContent(
             Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)) {
                 UserInfoRow(icon = Icons.Default.Person, label = stringResource(id = R.string.full_name_label), value = userName)
                 Divider(color = WhiteFull.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
-                UserInfoRow(icon = Icons.Default.Email, label = stringResource(id = R.string.recover_password_email_label), value = userEmail)
+                UserInfoRow(icon = Icons.Default.Email, label = stringResource(id = R.string.profile_email_label), value = userEmail)
                 Divider(color = WhiteFull.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
                 UserInfoRow(icon = Icons.Default.Domain, label = stringResource(id = R.string.account_type_label), value = stringResource(id = R.string.account_type_value))
                 Divider(color = WhiteFull.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
