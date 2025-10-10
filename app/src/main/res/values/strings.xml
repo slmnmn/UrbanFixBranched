@@ -128,6 +128,7 @@
     <string name="email_copied_message">El correo electrónico se copió al portapapeles. Pégalo en tu aplicación de correo preferida para contactar al usuario.</string>
     <string name="ok_button">OK</string>
     <string name="perfil_consulta">Perfil de Usuario</string>
+    <string name="user_account_type">Personal</string>
 
 
     <!-- Common -->

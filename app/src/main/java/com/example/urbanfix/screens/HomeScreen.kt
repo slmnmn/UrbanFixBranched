@@ -106,7 +106,7 @@ fun HomeScreen(navController: NavHostController) {
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 IconButton(
-                    onClick = { },
+                    onClick = {navController.navigate(Pantallas.Verperfilusuario.ruta)},
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
