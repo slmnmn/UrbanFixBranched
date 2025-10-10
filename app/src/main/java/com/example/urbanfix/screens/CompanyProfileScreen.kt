@@ -65,7 +65,8 @@ fun CompanyProfileScreen(
                     companyName = state.companyName,
                     userEmail = state.userEmail,
                     onLogoutClick = { /* TODO */ },
-                    onEditClick = { /* TODO */ }
+                    onEditClick = { /* TODO */ },
+                    navController = navController
                 )
             }
             else -> {}
@@ -79,7 +80,8 @@ private fun CompanyProfileContent(
     companyName: String,
     userEmail: String,
     onLogoutClick: () -> Unit,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    navController: NavHostController
 ) {
     val verifiedColor = Color(0xFF00BFFF)
 
@@ -100,7 +102,7 @@ private fun CompanyProfileContent(
                 modifier = Modifier.size(180.dp).clip(CircleShape).background(WhiteFull)
             )
             FloatingActionButton(
-                onClick = { /* Acción para editar foto */ },
+                onClick = { navController.navigate(Pantallas.Fotoperfil.ruta)},
                 shape = CircleShape,
                 containerColor = RedSignOut,
                 modifier = Modifier.size(40.dp)

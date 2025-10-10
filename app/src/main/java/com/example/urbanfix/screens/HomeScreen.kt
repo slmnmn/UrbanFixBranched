@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -100,7 +101,7 @@ fun HomeScreen(navController: NavHostController) {
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.urbanfixlogomenu),
-                    contentDescription = "UrbanFix Logo",
+                    contentDescription = stringResource(R.string.urbanfix_logo_description),
                     modifier = Modifier.height(40.dp)
                 )
                 Spacer(modifier = Modifier.weight(1f))
@@ -114,7 +115,7 @@ fun HomeScreen(navController: NavHostController) {
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.preguntas),
-                        contentDescription = "Ayuda",
+                        contentDescription = stringResource(R.string.help_button_description),
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -128,7 +129,7 @@ fun HomeScreen(navController: NavHostController) {
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.salir_png),
-                        contentDescription = "Salir",
+                        contentDescription = stringResource(R.string.exit_button_description),
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -141,7 +142,7 @@ fun HomeScreen(navController: NavHostController) {
                 onValueChange = {},
                 placeholder = {
                     Text(
-                        "Copia aquí el código del reporte",
+                        stringResource(R.string.search_placeholder),
                         color = GrayMedium,
                         fontSize = 14.sp
                     )
@@ -160,7 +161,7 @@ fun HomeScreen(navController: NavHostController) {
                     IconButton(onClick = { }) {
                         Icon(
                             Icons.Default.Search,
-                            contentDescription = "Buscar",
+                            contentDescription = stringResource(R.string.search_button_description),
                             tint = PurpleMain
                         )
                     }
@@ -180,7 +181,7 @@ fun HomeScreen(navController: NavHostController) {
                     .padding(bottom = 80.dp)
             ) {
                 Text(
-                    text = "¡Hola, Dylan!",
+                    text = stringResource(R.string.greeting_user, "Dylan"),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = BlackFull
@@ -209,7 +210,7 @@ fun HomeScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Reportar",
+                    text = stringResource(R.string.report_title),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = BlackFull
@@ -219,18 +220,18 @@ fun HomeScreen(navController: NavHostController) {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    ReportButton(R.drawable.huecos, "Huecos")
-                    ReportButton(R.drawable.alumbrado, "Alumbrado\nPúblico")
-                    ReportButton(R.drawable.basura, "Basura\nacumulada")
+                    ReportButton(R.drawable.huecos, stringResource(R.string.category_potholes))
+                    ReportButton(R.drawable.alumbrado, stringResource(R.string.category_lighting))
+                    ReportButton(R.drawable.basura, stringResource(R.string.category_trash))
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    ReportButton(R.drawable.semaforo, "Semáforo\ndañado")
-                    ReportButton(R.drawable.hidrante, "Hidrante\nroto")
-                    ReportButton(R.drawable.alcantarilla, "Alcantarilla\nsin tapa")
+                    ReportButton(R.drawable.semaforo, stringResource(R.string.category_traffic_light))
+                    ReportButton(R.drawable.hidrante, stringResource(R.string.category_hydrant))
+                    ReportButton(R.drawable.alcantarilla, stringResource(R.string.category_sewer))
                 }
                 Spacer(modifier = Modifier.height(20.dp))
                 Row(
@@ -247,12 +248,12 @@ fun HomeScreen(navController: NavHostController) {
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.apoyo),
-                            contentDescription = "Apoyos",
+                            contentDescription = stringResource(R.string.supports_icon_description),
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "Mis apoyos",
+                            stringResource(R.string.my_supports),
                             color = WhiteFull,
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp
@@ -269,12 +270,12 @@ fun HomeScreen(navController: NavHostController) {
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.denuncia),
-                            contentDescription = "Denuncias",
+                            contentDescription = stringResource(R.string.reports_icon_description),
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "Mis denuncias",
+                            stringResource(R.string.my_reports_button),
                             color = WhiteFull,
                             fontWeight = FontWeight.Medium,
                             fontSize = 14.sp
@@ -333,7 +334,11 @@ fun MapDetailScreen(navController: NavHostController) {
                 .clip(CircleShape)
                 .background(Color.White.copy(alpha = 0.8f))
         ) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = BlackFull)
+            Icon(
+                Icons.Default.ArrowBack,
+                contentDescription = stringResource(R.string.back_button_content_description),
+                tint = BlackFull
+            )
         }
     }
 }
@@ -413,22 +418,24 @@ fun BottomNavBar(navController: NavHostController) {
             .fillMaxWidth()
             .height(70.dp)
     ) {
+        Spacer(modifier = Modifier.width(3.dp))
         NavigationBarItem(
             selected = true,
-            onClick = { },
+            onClick = { navController.navigate(Pantallas.Home.ruta)},
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.menu),
-                    contentDescription = "Menú",
-                    modifier = Modifier.size(24.dp)
+                    contentDescription = stringResource(R.string.nav_menu),
+                    modifier = Modifier
+                        .size(30.dp)
+                        .padding(top = 5.dp)
                 )
             },
             label = {
                 Text(
-                    "Menú",
+                    stringResource(R.string.nav_menu),
                     color = WhiteFull,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
+                    fontSize = 11.sp
                 )
             },
             colors = NavigationBarItemDefaults.colors(
@@ -445,14 +452,14 @@ fun BottomNavBar(navController: NavHostController) {
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.misreportes),
-                    contentDescription = "Mis Reportes",
-                    modifier = Modifier.size(24.dp)
+                    contentDescription = stringResource(R.string.nav_my_reports),
+                    modifier = Modifier.size(26.dp)
                 )
             },
             label = {
                 Text(
-                    "Mis Reportes",
-                    color = WhiteFull.copy(alpha = 0.6f),
+                    stringResource(R.string.nav_my_reports),
+                    color = WhiteFull,
                     fontSize = 11.sp
                 )
             },
@@ -464,21 +471,22 @@ fun BottomNavBar(navController: NavHostController) {
                 indicatorColor = Color.Transparent
             )
         )
+        Spacer(modifier = Modifier.width(3.dp))
         NavigationBarItem(
             selected = false,
             onClick = { },
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.notificaciones),
-                    contentDescription = "Notificaciones",
-                    modifier = Modifier.size(24.dp)
+                    contentDescription = stringResource(R.string.nav_notifications),
+                    modifier = Modifier.size(26.dp),
                 )
             },
             label = {
                 Text(
-                    "Notificaciones",
-                    color = WhiteFull.copy(alpha = 0.6f),
-                    fontSize = 11.sp
+                    stringResource(R.string.nav_notifications),
+                    color = WhiteFull,
+                    fontSize = 10.5.sp
                 )
             },
             colors = NavigationBarItemDefaults.colors(
@@ -495,14 +503,14 @@ fun BottomNavBar(navController: NavHostController) {
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.miperfil),
-                    contentDescription = "Perfil",
-                    modifier = Modifier.size(24.dp)
+                    contentDescription = stringResource(R.string.nav_profile),
+                    modifier = Modifier.size(26.dp)
                 )
             },
             label = {
                 Text(
-                    "Perfil",
-                    color = WhiteFull.copy(alpha = 0.6f),
+                    stringResource(R.string.nav_profile),
+                    color = WhiteFull,
                     fontSize = 11.sp
                 )
             },
@@ -514,5 +522,6 @@ fun BottomNavBar(navController: NavHostController) {
                 indicatorColor = Color.Transparent
             )
         )
+        Spacer(modifier = Modifier.width(3.dp))
     }
 }

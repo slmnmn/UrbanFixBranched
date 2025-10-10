@@ -71,7 +71,8 @@ fun UserProfileScreen(
                         onLogoutClick = { viewModel.logoutUser() },
                         onEditClick = {
                             navController.navigate(Pantallas.EditProfile.ruta)
-                        }
+                        },
+                        navController = navController
                     )
                 }
                 is UserProfileState.Error -> { /* ... (código de Error no cambia) ... */ }
@@ -107,7 +108,8 @@ private fun ProfileContent(
     userName: String,
     userEmail: String,
     onLogoutClick: () -> Unit,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    navController: NavHostController
 ) {
     Column(
         modifier = Modifier
@@ -128,7 +130,7 @@ private fun ProfileContent(
                     .background(WhiteFull)
             )
             FloatingActionButton(
-                onClick = { /* Acción para editar foto */ },
+                onClick = { navController.navigate(Pantallas.Fotoperfil.ruta)  },
                 shape = CircleShape,
                 containerColor = RedSignOut,
                 modifier = Modifier.size(40.dp)

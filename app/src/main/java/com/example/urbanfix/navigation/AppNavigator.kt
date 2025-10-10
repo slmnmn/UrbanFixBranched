@@ -15,6 +15,7 @@ import com.example.urbanfix.screens.UserProfileScreen
 import com.example.urbanfix.screens.EditProfileScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.urbanfix.screens.CompanyProfileScreen
+import com.example.urbanfix.screens.FotoperfilScreen
 import com.example.urbanfix.viewmodel.CompanyProfileViewModel
 import com.example.urbanfix.viewmodel.UserProfileViewModel
 
@@ -27,6 +28,7 @@ sealed class Pantallas(val ruta: String) {
     object RegUsuario : Pantallas("regusuario")
     object RegEmpresa : Pantallas("regempresa")
     object Perfil : Pantallas("perfil")
+    object Fotoperfil : Pantallas("fotoperfil")
     object EditProfile : Pantallas("edit_profile")
 
     object CompanyProfile : Pantallas("company_profile")
@@ -35,7 +37,7 @@ sealed class Pantallas(val ruta: String) {
 
 @Composable
 fun AppNavigator(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Pantallas.Bienvenida.ruta) {
+    NavHost(navController = navController, startDestination = Pantallas.CompanyProfile.ruta) {
         composable(Pantallas.Bienvenida.ruta) {
             BienvenidaScreen(navController)
         }
@@ -56,6 +58,9 @@ fun AppNavigator(navController: NavHostController) {
         }
         composable(Pantallas.RegEmpresa.ruta) {
             RegEmpresaScreen(navController)
+        }
+        composable(Pantallas.Fotoperfil.ruta) {
+            FotoperfilScreen(navController)
         }
         composable(route = Pantallas.Perfil.ruta) {
             val viewModel: UserProfileViewModel = viewModel()

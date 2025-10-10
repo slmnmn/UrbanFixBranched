@@ -53,10 +53,15 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.5")
     implementation(libs.play.services.location)
     implementation(libs.protolite.well.known.types)
-    implementation(libs.androidx.navigation.runtime.ktx) /*Esta vaina es el mapa*/
+    implementation(libs.androidx.navigation.runtime.ktx)
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0") // JSON converter
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+
+    // Coil para cargar imágenes - AÑADIR ESTAS LÍNEAS
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil:2.5.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

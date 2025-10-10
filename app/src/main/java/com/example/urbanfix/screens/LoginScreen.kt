@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,9 +18,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -78,7 +81,7 @@ fun LoginScreen(
     ) {
         Image(
             painter = painterResource(id = R.drawable.log_back),
-            contentDescription = "Fondo Login UrbanFix",
+            contentDescription = stringResource(R.string.login_background_description),
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
@@ -105,44 +108,67 @@ fun LoginScreen(
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.circular_logo),
-                            contentDescription = "Logo UrbanFix",
+                            contentDescription = stringResource(R.string.logo_content_description),
                             modifier = Modifier.size(130.dp).clip(CircleShape)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(text = "Por favor ingresa tus credenciales", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1D3557), textAlign = TextAlign.Center)
+                    Text(
+                        text = stringResource(R.string.login_credentials_prompt),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color(0xFF1D3557),
+                        textAlign = TextAlign.Center
+                    )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Text(text = "E-mail", fontSize = 14.sp, color = Color(0xFF658384), fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                    Text(
+                        text = stringResource(R.string.email_label),
+                        fontSize = 14.sp,
+                        color = Color(0xFF658384),
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp)
+                    )
 
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { loginViewModel.onEmailChange(it) }, // Llama al ViewModel
-                        placeholder = { Text("Ingresa tu e-mail", fontSize = 13.sp, color = Color.Gray) },
+                        onValueChange = { loginViewModel.onEmailChange(it) },
+                        placeholder = { Text(stringResource(R.string.email_placeholder), fontSize = 13.sp, color = Color.Gray) },
                         modifier = Modifier.fillMaxWidth().height(52.dp).border(width = 1.5.dp, color = Color(0xFF1D3557).copy(alpha = 0.8f), shape = RoundedCornerShape(26.dp)),
                         shape = RoundedCornerShape(26.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         singleLine = true,
                         colors = TextFieldDefaults.colors(focusedContainerColor = Color(0xFFE8E8E8), unfocusedContainerColor = Color(0xFFE8E8E8), disabledContainerColor = Color(0xFFE8E8E8), focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent, disabledIndicatorColor = Color.Transparent)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(text = "Contraseña", fontSize = 14.sp, color = Color(0xFF658384), fontWeight = FontWeight.Medium, modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                    Text(
+                        text = stringResource(R.string.password_label),
+                        fontSize = 14.sp,
+                        color = Color(0xFF658384),
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp)
+                    )
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { loginViewModel.onPasswordChange(it) }, // Llama al ViewModel
-                        placeholder = { Text("Ingresa tu contraseña", fontSize = 13.sp, color = Color.Gray) },
+                        onValueChange = { loginViewModel.onPasswordChange(it) },
+                        placeholder = { Text(stringResource(R.string.password_placeholder), fontSize = 13.sp, color = Color.Gray) },
                         modifier = Modifier.fillMaxWidth().height(52.dp).border(width = 1.5.dp, color = Color(0xFF1D3557).copy(alpha = 0.8f), shape = RoundedCornerShape(26.dp)),
                         shape = RoundedCornerShape(26.dp),
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
                             val image = if (passwordVisible) R.drawable.watch else R.drawable.hide
-                            Image(painter = painterResource(id = image), contentDescription = null, modifier = Modifier.size(20.dp).clickable { passwordVisible = !passwordVisible })
+                            Image(
+                                painter = painterResource(id = image),
+                                contentDescription = stringResource(R.string.toggle_password_visibility),
+                                modifier = Modifier.size(20.dp).clickable { passwordVisible = !passwordVisible }
+                            )
                         },
                         colors = TextFieldDefaults.colors(focusedContainerColor = Color(0xFFE8E8E8), unfocusedContainerColor = Color(0xFFE8E8E8), disabledContainerColor = Color(0xFFE8E8E8), focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent, disabledIndicatorColor = Color.Transparent)
                     )
@@ -186,7 +212,7 @@ fun LoginScreen(
                             Spacer(modifier = Modifier.width(8.dp))
 
                             Text(
-                                text = "Recordarme",
+                                text = stringResource(R.string.remember_me),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1D3557)
@@ -194,7 +220,7 @@ fun LoginScreen(
                         }
 
                         Text(
-                            text = "¿Olvidaste tu contraseña?",
+                            text = stringResource(R.string.forgot_password),
                             color = Color(0xFFE63946),
                             fontSize = 13.sp,
                             textDecoration = TextDecoration.Underline,
@@ -209,10 +235,9 @@ fun LoginScreen(
 
                     Button(
                         onClick = {
-                            // AÑADE ESTA LÍNEA
                             println("LOGIN_DEBUG: Botón presionado. Llamando a viewModel.loginUser()")
                             loginViewModel.loginUser()
-                        }, // Llama al ViewModel
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1FAEE)),
                         shape = RoundedCornerShape(26.dp),
                         modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 10.dp, start = 50.dp, end = 50.dp).height(52.dp).shadow(8.dp, RoundedCornerShape(26.dp)).border(width = 2.dp, color = Color(0xFF4AB7B6), shape = RoundedCornerShape(26.dp))
@@ -220,7 +245,12 @@ fun LoginScreen(
                         if (loginState is LoginState.Loading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF1D3557), strokeWidth = 2.dp)
                         } else {
-                            Text(text = "Iniciar sesión", color = Color(0xFF1D3557), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text(
+                                text = stringResource(R.string.login_button),
+                                color = Color(0xFF1D3557),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
                         }
                     }
 
@@ -231,13 +261,14 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "¿No tienes una cuenta? ",
+                            text = stringResource(R.string.no_account_question),
                             color = Color(0xFF1D3557),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Regístrate",
+                            text = stringResource(R.string.register_link),
                             color = Color(0xFFE63946),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
@@ -287,7 +318,7 @@ fun ErrorDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Error",
+                        text = stringResource(R.string.error_dialog_title),
                         color = Color.Black,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -319,7 +350,7 @@ fun ErrorDialog(
                         .height(48.dp)
                 ) {
                     Text(
-                        text = "Volver",
+                        text = stringResource(R.string.back_button),
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold

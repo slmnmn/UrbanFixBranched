@@ -9,9 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -30,7 +30,7 @@ fun BienvenidaScreen(navController: NavController) {
     ) {
         Image(
             painter = painterResource(id = R.drawable.bienvenido_urban),
-            contentDescription = "Bienvenido UrbanFix",
+            contentDescription = stringResource(R.string.welcome_background_description),
             modifier = Modifier.fillMaxSize()
         )
 
@@ -50,7 +50,7 @@ fun BienvenidaScreen(navController: NavController) {
                     .height(72.dp)
             ) {
                 Text(
-                    text = "Iniciar sesión",
+                    text = stringResource(R.string.login_button),
                     color = Color.Black,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
@@ -61,13 +61,14 @@ fun BienvenidaScreen(navController: NavController) {
 
             Row {
                 Text(
-                    text = "¿No tienes una cuenta? ",
+                    text = stringResource(R.string.no_account_question ),
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Regístrate",
+                    text = stringResource(R.string.register_link),
                     color = Color(0xFFE63946),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
