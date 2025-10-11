@@ -3,8 +3,10 @@ package com.example.urbanfix.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -142,10 +144,13 @@ private fun CompanyProfileContent(
 ) {
     val verifiedColor = Color(0xFF00BFFF)
 
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -153,9 +158,9 @@ private fun CompanyProfileContent(
 
         Box(contentAlignment = Alignment.BottomEnd) {
             Image(
-                painter = painterResource(id = R.drawable.circular_logo),
-                contentDescription = stringResource(id = R.string.profile_picture_cd),
-                modifier = Modifier.size(180.dp).clip(CircleShape).background(WhiteFull)
+                painter = painterResource(id = R.drawable.circular_logo), // <-- CORRECTO
+                contentDescription = "Logo", // No te olvides de la descripción
+                modifier = Modifier.size(180.dp)
             )
             FloatingActionButton(
                 onClick = { navController.navigate(Pantallas.Fotoperfil.ruta)},
@@ -234,16 +239,14 @@ private fun CompanyProfileContent(
                 onClick = onEditClick,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = AquaSoft),
-                modifier = Modifier.weight(1f).height(50.dp)
-            ) {
+                modifier = Modifier.weight(1f).defaultMinSize(minHeight = 50.dp)            ) {
                 Text(stringResource(id = R.string.edit_profile_button), color = BlackFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
             Button(
                 onClick = onLogoutClick,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = RedSignOut),
-                modifier = Modifier.weight(1f).height(50.dp)
-            ) {
+                modifier = Modifier.weight(1f).defaultMinSize(minHeight = 50.dp)            ) {
                 Text(stringResource(id = R.string.logout_button), color = WhiteFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }

@@ -88,6 +88,7 @@ fun RegEmpresaScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .weight(1f)
                     .verticalScroll(scrollState)
                     .padding(20.dp)
                     .padding(top = 30.dp),
