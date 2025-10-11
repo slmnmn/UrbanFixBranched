@@ -12,9 +12,38 @@ class UserPreferencesManager(context: Context) {
         private const val REMEMBER_ME_KEY = "remember_me"
         private const val EMAIL_KEY = "saved_email"
         private const val PASSWORD_KEY = "saved_password"
+
+        private const val USER_ID_KEY = "user_id"
+        private const val USER_NAME_KEY = "user_name"
+        private const val USER_EMAIL_KEY = "user_email"
+        private const val USER_PHONE_KEY = "user_phone"
+        private const val USER_ROLE_KEY = "user_role"
+
+        private const val COMPANY_NAME_KEY = "company_name"
     }
 
-    // Guardar las credenciales
+    fun saveUserData(id: Int, name: String, email: String, phone: String?, role: String, companyName: String?) {
+        sharedPreferences.edit().apply {
+            putInt(USER_ID_KEY, id)
+            putString(USER_NAME_KEY, name)
+            putString(USER_EMAIL_KEY, email)
+            putString(USER_PHONE_KEY, phone ?: "")
+            putString(USER_ROLE_KEY, role)
+            putString(COMPANY_NAME_KEY, companyName ?: "")
+            apply()
+        }
+    }
+
+    fun getUserId(): Int = sharedPreferences.getInt(USER_ID_KEY, -1)
+    fun getUserName(): String = sharedPreferences.getString(USER_NAME_KEY, "Usuario") ?: "Usuario"
+
+    fun getCompanyName(): String = sharedPreferences.getString(COMPANY_NAME_KEY, "") ?: ""
+    fun getUserEmail(): String = sharedPreferences.getString(USER_EMAIL_KEY, "") ?: ""
+    fun getUserPhone(): String = sharedPreferences.getString(USER_PHONE_KEY, "") ?: ""
+    fun getUserRole(): String = sharedPreferences.getString(USER_ROLE_KEY, "usuario") ?: "usuario"
+
+
+    // --- FUNCIONES PARA "RECORDARME" ---
     fun saveCredentials(email: String, password: String, rememberMe: Boolean) {
         sharedPreferences.edit().apply {
             putBoolean(REMEMBER_ME_KEY, rememberMe)
@@ -22,7 +51,6 @@ class UserPreferencesManager(context: Context) {
                 putString(EMAIL_KEY, email)
                 putString(PASSWORD_KEY, password)
             } else {
-                // Si no se activa "Recordarme", limpiamos las credenciales
                 remove(EMAIL_KEY)
                 remove(PASSWORD_KEY)
             }
@@ -30,28 +58,12 @@ class UserPreferencesManager(context: Context) {
         }
     }
 
-    // Obtener si está activado "Recordarme"
-    fun getRememberMe(): Boolean {
-        return sharedPreferences.getBoolean(REMEMBER_ME_KEY, false)
-    }
+    fun getRememberMe(): Boolean = sharedPreferences.getBoolean(REMEMBER_ME_KEY, false)
+    fun getSavedEmail(): String = sharedPreferences.getString(EMAIL_KEY, "") ?: ""
+    fun getSavedPassword(): String = sharedPreferences.getString(PASSWORD_KEY, "") ?: ""
 
-    // Obtener el email guardado
-    fun getSavedEmail(): String {
-        return sharedPreferences.getString(EMAIL_KEY, "") ?: ""
-    }
-
-    // Obtener la contraseña guardada
-    fun getSavedPassword(): String {
-        return sharedPreferences.getString(PASSWORD_KEY, "") ?: ""
-    }
-
-    // Limpiar todas las credenciales (para logout)
+    // --- FUNCIÓN DE LIMPIEZA CORREGIDA ---
     fun clearCredentials() {
-        sharedPreferences.edit().apply {
-            remove(REMEMBER_ME_KEY)
-            remove(EMAIL_KEY)
-            remove(PASSWORD_KEY)
-            apply()
-        }
+        sharedPreferences.edit().clear().apply()
     }
 }

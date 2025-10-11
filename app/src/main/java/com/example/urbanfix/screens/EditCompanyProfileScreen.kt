@@ -30,17 +30,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.ui.theme.*
-import com.example.urbanfix.viewmodel.UserProfileViewModel
+import com.example.urbanfix.viewmodel.CompanyProfileViewModel
 import com.example.urbanfix.viewmodel.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditProfileScreen(
+fun EditCompanyProfileScreen(
     navController: NavHostController,
 ) {
     val context = LocalContext.current
-    val viewModel: UserProfileViewModel = viewModel(factory = ViewModelFactory(context))
-    val name by viewModel.fullName.collectAsState()
+    val viewModel: CompanyProfileViewModel = viewModel(factory = ViewModelFactory(context))
+    val name by viewModel.companyName.collectAsState()
     val password by viewModel.password.collectAsState()
     val confirmPassword by viewModel.confirmPassword.collectAsState()
     val errorMessage by viewModel.editError.collectAsState()
@@ -58,11 +58,13 @@ fun EditProfileScreen(
             TopAppBar(
                 title = {
                     Box(
-                        modifier = Modifier.fillMaxWidth().padding(top = 35.dp, end = 48.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 35.dp, end = 48.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(id = R.string.edit_profile_title),
+                            text = stringResource(id = R.string.edit_company_profile_title),
                             color = WhiteFull,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
@@ -98,6 +100,7 @@ fun EditProfileScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
+            // La sección de la imagen es idéntica
             Box(contentAlignment = Alignment.BottomEnd) {
                 Image(
                     painter = painterResource(id = R.drawable.circular_logo),
@@ -117,17 +120,17 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
 
-            // Título para el nombre
-            Text("Nombre de Usuario", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
+            // Título para el nombre del funcionario
+            Text("Nombre del Funcionario", style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(
                 value = name,
                 onValueChange = viewModel::onNameChange,
-                label = { Text(stringResource(id = R.string.full_name_label)) },
-                isError = errorMessage?.contains("nombre") == true,
+                label = { Text(stringResource(id = R.string.funcionario_name_label)) },
+                isError = errorMessage?.contains("funcionario") == true,
                 supportingText = {
                     val currentError = errorMessage
 
-                    if (currentError?.contains("nombre") == true) {
+                    if (currentError?.contains("funcionario") == true) {
                         Text(text = currentError, color = MaterialTheme.colorScheme.error)
                     }
                 },
@@ -172,7 +175,6 @@ fun EditProfileScreen(
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
-
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {

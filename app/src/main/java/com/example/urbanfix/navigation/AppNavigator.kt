@@ -15,6 +15,7 @@ import com.example.urbanfix.screens.UserProfileScreen
 import com.example.urbanfix.screens.EditProfileScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.urbanfix.screens.CompanyProfileScreen
+import com.example.urbanfix.screens.EditCompanyProfileScreen
 import com.example.urbanfix.screens.FotoperfilScreen
 import com.example.urbanfix.screens.VerperfilempresaScreen
 import com.example.urbanfix.screens.VerperfilusuarioScreen
@@ -34,8 +35,9 @@ sealed class Pantallas(val ruta: String) {
     object EditProfile : Pantallas("edit_profile")
     object Verperfilempresa : Pantallas("verperfilempresa")
     object Verperfilusuario : Pantallas("verperfilusuario")
-
     object CompanyProfile : Pantallas("company_profile")
+
+    object EditCompanyProfile : Pantallas("edit_company_profile")
 }
 
 
@@ -73,25 +75,22 @@ fun AppNavigator(navController: NavHostController) {
             VerperfilusuarioScreen(navController)
         }
         composable(route = Pantallas.Perfil.ruta) {
-            val viewModel: UserProfileViewModel = viewModel()
             UserProfileScreen(
-                navController = navController,
-                viewModel = viewModel
+                navController = navController
             )
         }
         composable(route = Pantallas.EditProfile.ruta) {
-            val viewModel: UserProfileViewModel = viewModel()
             EditProfileScreen(
-                navController = navController,
-                viewModel = viewModel
+                navController = navController
             )
         }
         composable(Pantallas.CompanyProfile.ruta) {
-            val viewModel: CompanyProfileViewModel = viewModel()
             CompanyProfileScreen(
-                navController = navController,
-                viewModel = viewModel
+                navController = navController
             )
+        }
+        composable(Pantallas.EditCompanyProfile.ruta) {
+            EditCompanyProfileScreen(navController = navController)
         }
     }
 }

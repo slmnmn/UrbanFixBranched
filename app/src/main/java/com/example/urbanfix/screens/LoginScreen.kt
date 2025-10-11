@@ -54,12 +54,28 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(loginState) {
+        val currentState = loginState
+
         if (loginState is LoginState.Success) {
+
             userPreferencesManager.saveCredentials(
                 email = email,
                 password = password,
                 rememberMe = rememberMe
             )
+
+            val userData = (currentState as LoginState.Success).userData
+            val userRole = (currentState as LoginState.Success).role
+
+            userPreferencesManager.saveUserData(
+                id = userData.id,
+                name = userData.nombre,
+                email = userData.email,
+                phone = userData.telefono,
+                role = userRole,
+                companyName = userData.entidad_nombre
+            )
+
             navController.navigate(Pantallas.Home.ruta) {
                 popUpTo(navController.graph.startDestinationId) { inclusive = true }
             }

@@ -37,11 +37,13 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
+import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.ui.theme.*
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
 import com.example.urbanfix.navigation.Pantallas
 import com.mapbox.maps.plugin.locationcomponent.location
+import kotlinx.coroutines.flow.collect
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,6 +64,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun HomeScreen(navController: NavHostController) {
     val context = LocalContext.current
+
+    val userPreferencesManager = remember { UserPreferencesManager(context) }
+    val userName = remember { userPreferencesManager.getUserName() }
 
     var hasLocationPermission by remember {
         mutableStateOf(
@@ -181,7 +186,7 @@ fun HomeScreen(navController: NavHostController) {
                     .padding(bottom = 80.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.greeting_user, "Dylan"),
+                    text = stringResource(R.string.greeting_user, userName),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = BlackFull
@@ -412,6 +417,11 @@ fun ReportButton(iconId: Int, text: String) {
 
 @Composable
 fun BottomNavBar(navController: NavHostController) {
+    val context = LocalContext.current
+    val userPreferencesManager = remember { UserPreferencesManager(context) }
+
+    val userRole = remember { userPreferencesManager.getUserRole() }
+
     NavigationBar(
         containerColor = BlueMain,
         modifier = Modifier
@@ -499,7 +509,13 @@ fun BottomNavBar(navController: NavHostController) {
         )
         NavigationBarItem(
             selected = false,
-            onClick = { navController.navigate(Pantallas.Perfil.ruta) },
+            onClick = {
+                if (userRole == "funcionario") {
+                    navController.navigate(Pantallas.CompanyProfile.ruta)
+                } else {
+                    navController.navigate(Pantallas.Perfil.ruta)
+                }
+            },
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.miperfil),

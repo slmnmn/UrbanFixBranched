@@ -15,9 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,27 +27,75 @@ import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
-import com.example.urbanfix.viewmodel.CompanyProfileViewModel
 import com.example.urbanfix.viewmodel.CompanyProfileState
+import com.example.urbanfix.viewmodel.CompanyProfileViewModel
+import com.example.urbanfix.viewmodel.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompanyProfileScreen(
-    navController: NavHostController,
-    viewModel: CompanyProfileViewModel
+    navController: NavHostController
 ) {
+    val context = LocalContext.current
+    val viewModel: CompanyProfileViewModel = viewModel(factory = ViewModelFactory(context))
     val profileState by viewModel.profileState.collectAsState()
+    val navigateToLogin by viewModel.navigateToLogin.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val successMessage = stringResource(id = R.string.changes_saved_successfully)
+
+    val updateResult = navController.currentBackStackEntry
+        ?.savedStateHandle?.get<Boolean>("update_success")
+
+    LaunchedEffect(updateResult) {
+        if (updateResult == true) {
+            snackbarHostState.showSnackbar(successMessage)
+            //
+            navController.currentBackStackEntry?.savedStateHandle?.remove<Boolean>("update_success")
+        }
+    }
+    LaunchedEffect(navigateToLogin) {
+        if (navigateToLogin) {
+            navController.navigate(Pantallas.Login.ruta) {
+                popUpTo(0) { inclusive = true }
+            }
+            viewModel.onNavigateToLoginHandled()
+        }
+    }
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(stringResource(id = R.string.company_profile_title), color = WhiteFull) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button_content_description), tint = WhiteFull)
+            TopAppBar(
+                title = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 35.dp, end = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.company_profile_title),
+                            color = WhiteFull,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = BlueMain)
+                navigationIcon = {
+                    Box(modifier = Modifier.padding(top = 20.dp)) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(id = R.string.back_button_content_description),
+                                tint = WhiteFull
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BlueMain
+                ),
+                modifier = Modifier.height(72.dp)
             )
         },
         bottomBar = {
@@ -63,11 +113,17 @@ fun CompanyProfileScreen(
                 CompanyProfileContent(
                     paddingValues = paddingValues,
                     companyName = state.companyName,
+                    personalName = state.personalName,
                     userEmail = state.userEmail,
-                    onLogoutClick = { /* TODO */ },
-                    onEditClick = { /* TODO */ },
+                    onLogoutClick = { viewModel.logout() },
+                    onEditClick = { navController.navigate(Pantallas.EditCompanyProfile.ruta) },
                     navController = navController
                 )
+            }
+            is CompanyProfileState.Error -> {
+                Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                    Text(text = state.message)
+                }
             }
             else -> {}
         }
@@ -78,6 +134,7 @@ fun CompanyProfileScreen(
 private fun CompanyProfileContent(
     paddingValues: PaddingValues,
     companyName: String,
+    personalName: String,
     userEmail: String,
     onLogoutClick: () -> Unit,
     onEditClick: () -> Unit,
@@ -94,7 +151,6 @@ private fun CompanyProfileContent(
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
-        // --- FOTO DE PERFIL ---
         Box(contentAlignment = Alignment.BottomEnd) {
             Image(
                 painter = painterResource(id = R.drawable.circular_logo),
@@ -113,11 +169,23 @@ private fun CompanyProfileContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- NUEVO: Nombre de la empresa y badge ---
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = companyName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(Icons.Filled.CheckCircle, contentDescription = "Verificado", tint = verifiedColor)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = companyName,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 26.sp
+                )
+            }
+            Icon(Icons.Filled.CheckCircle, contentDescription = "Verificado", tint = BlueMain, modifier = Modifier.padding(start = 4.dp))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -128,52 +196,72 @@ private fun CompanyProfileContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)) {
-                UserInfoRow(icon = Icons.Default.Person, label = stringResource(id = R.string.full_name_label), value = "Nombres y apellidos del usuario") // Placeholder
+                UserInfoRow(icon = Icons.Default.Person, label = stringResource(id = R.string.funcionario_name_label), value = personalName)
                 Divider(color = WhiteFull.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
                 UserInfoRow(icon = Icons.Default.Email, label = stringResource(id = R.string.profile_email_label), value = userEmail)
                 Divider(color = WhiteFull.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
-                UserInfoRow(icon = Icons.Default.Domain, label = stringResource(id = R.string.account_type_label), value = stringResource(id = R.string.company_account_type)) // <-- CAMBIO
+                UserInfoRow(icon = Icons.Default.Domain, label = stringResource(id = R.string.account_type_label), value = stringResource(id = R.string.company_account_type))
                 Divider(color = WhiteFull.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
                 UserInfoRow(icon = Icons.Default.DateRange, label = stringResource(id = R.string.registration_date_label), value = stringResource(id = R.string.registration_date_value))
                 Divider(color = WhiteFull.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
 
-                Row(modifier = Modifier.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(modifier = Modifier.width(48.dp))
-                    Text(stringResource(id = R.string.verified_profile), color = WhiteFull, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Row(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Filled.CheckCircle,
+                        contentDescription = null,
+                        tint = Color.Transparent,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        stringResource(id = R.string.verified_profile),
+                        color = WhiteFull,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
                     Spacer(modifier = Modifier.weight(1f))
-                    Icon(Icons.Filled.CheckCircle, contentDescription = "Verificado", tint = verifiedColor)
+                    Icon(
+                        Icons.Filled.CheckCircle,
+                        contentDescription = "Verificado",
+                        tint = verifiedColor
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // --- BOTONES ---
-        Button(
-            onClick = onEditClick,
-            shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(containerColor = AquaSoft),
-            modifier = Modifier.fillMaxWidth().height(50.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(stringResource(id = R.string.edit_profile_button), color = BlackFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onEditClick,
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(containerColor = AquaSoft),
+                modifier = Modifier.weight(1f).height(50.dp)
+            ) {
+                Text(stringResource(id = R.string.edit_profile_button), color = BlackFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+            Button(
+                onClick = onLogoutClick,
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(containerColor = RedSignOut),
+                modifier = Modifier.weight(1f).height(50.dp)
+            ) {
+                Text(stringResource(id = R.string.logout_button), color = WhiteFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Button(
-            onClick = onLogoutClick,
-            shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(containerColor = RedSignOut),
-            modifier = Modifier.fillMaxWidth().height(50.dp)
-        ) {
-            Text(stringResource(id = R.string.logout_button), color = WhiteFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(onClick = { /* Acción para eliminar cuenta */ }) {
             Text(stringResource(id = R.string.delete_account_button), color = RedSignOut)
         }
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

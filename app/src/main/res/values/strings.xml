@@ -114,6 +114,9 @@
     <string name="company_profile_title">Perfil de Empresa</string>
     <string name="company_account_type">Empresarial</string>
     <string name="verified_profile">Perfil Verificado</string>
+    <string name="company_name_label">Nombre de la Empresa</string>
+    <string name="edit_company_profile_title">Editar Perfil de Empresa</string>
+    <string name="funcionario_name_label">Nombre del Funcionario</string>
 
     <!-- Diálogo de confirmación de cambio de foto -->
     <string name="change_photo_confirmation_title">Cambiar Foto de Perfil</string>

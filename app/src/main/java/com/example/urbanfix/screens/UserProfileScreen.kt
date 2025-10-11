@@ -27,13 +27,20 @@ import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.UserProfileState
 import com.example.urbanfix.viewmodel.UserProfileViewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.urbanfix.viewmodel.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileScreen(
-    navController: NavHostController,
-    viewModel: UserProfileViewModel
+    navController: NavHostController
 ) {
+    val context = LocalContext.current
+    val viewModel: UserProfileViewModel = viewModel(
+        factory = ViewModelFactory(context)
+    )
+
     val userProfileState by viewModel.userProfileState.collectAsState()
     val navigateToLogin by viewModel.navigateToLogin.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -59,13 +66,12 @@ fun UserProfileScreen(
 
     Scaffold(
         topBar = {
-            // --- BARRA SUPERIOR CORREGIDA (COMO LA DE TU COMPAÑERO) ---
             TopAppBar(
                 title = {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 35.dp, end = 48.dp), // Padding para centrar y bajar el título
+                            .padding(top = 35.dp, end = 48.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -77,7 +83,7 @@ fun UserProfileScreen(
                     }
                 },
                 navigationIcon = {
-                    Box(modifier = Modifier.padding(top = 20.dp)) { // Padding para bajar el ícono
+                    Box(modifier = Modifier.padding(top = 20.dp)) {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -90,7 +96,7 @@ fun UserProfileScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = BlueMain
                 ),
-                modifier = Modifier.height(72.dp) // Altura fija para la barra
+                modifier = Modifier.height(72.dp)
             )
         },
         bottomBar = {
