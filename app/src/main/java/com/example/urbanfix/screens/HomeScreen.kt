@@ -22,14 +22,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.window.Dialog
+import androidx.compose.material3.LocalTextStyle
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
@@ -66,6 +72,9 @@ fun HomeScreen(navController: NavHostController) {
     val context = LocalContext.current
     val userPreferencesManager = remember { UserPreferencesManager(context) }
     val userName = remember { userPreferencesManager.getUserName() }
+    var searchText by remember { mutableStateOf("") }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     var hasLocationPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -77,9 +86,7 @@ fun HomeScreen(navController: NavHostController) {
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            hasLocationPermission = isGranted
-        }
+        onResult = { isGranted -> hasLocationPermission = isGranted }
     )
 
     LaunchedEffect(Unit) {
@@ -88,202 +95,220 @@ fun HomeScreen(navController: NavHostController) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF1FAEE))
+    ) {
+
+        Image(
+            painter = painterResource(id = R.drawable.part_arriba_menu),
+            contentDescription = "Decoración superior",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .align(Alignment.TopCenter),
+            contentScale = ContentScale.FillWidth
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BlueMain)
+                .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Image(
+                painter = painterResource(id = R.drawable.urbanfixlogomenu),
+                contentDescription = stringResource(R.string.urbanfix_logo_description),
+                modifier = Modifier
+                    .height(40.dp)
+                    .padding(start=10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.urbanfixlogomenu),
-                    contentDescription = stringResource(R.string.urbanfix_logo_description),
-                    modifier = Modifier.height(40.dp)
+                    painter = painterResource(id = R.drawable.back_search),
+                    contentDescription = "Fondo barra de búsqueda",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(61.dp)
+                        .align(Alignment.Center),
+                    contentScale = ContentScale.FillBounds
                 )
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(
-                    onClick = {navController.navigate(Pantallas.Verperfilusuario.ruta)},
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.search_placeholder),
+                            color = Color(0xFF666666),
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .offset(y = (-3).dp)
+                        )
+                    },
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(AquaSoft)
-
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.preguntas),
-                        contentDescription = stringResource(R.string.help_button_description),
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                IconButton(
-                    onClick = { },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(AquaSoft)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.salir_png),
-                        contentDescription = stringResource(R.string.exit_button_description),
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                        .fillMaxWidth()
+                        .height(51.dp)
+                        .padding(horizontal = 8.dp)
+                        .align(Alignment.Center)
+                        .clip(RoundedCornerShape(12.dp)),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedContainerColor = WhiteFull,
+                        focusedContainerColor = WhiteFull,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedBorderColor = Color.Transparent
+                    ),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            navController.navigate(Pantallas.Verperfilempresa.ruta)
+                        }) {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = stringResource(R.string.search_button_description),
+                                tint = PurpleMain
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                placeholder = {
-                    Text(
-                        stringResource(R.string.search_placeholder),
-                        color = GrayMedium,
-                        fontSize = 14.sp
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .clip(RoundedCornerShape(30.dp)),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = WhiteFull,
-                    focusedContainerColor = WhiteFull,
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = Color.Transparent
-                ),
-                trailingIcon = {
-                    IconButton(onClick = {
-                        navController.navigate(Pantallas.Verperfilempresa.ruta)
-                    }) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = stringResource(R.string.search_button_description),
-                            tint = PurpleMain
-                        )
-                    }
-                },
-                shape = RoundedCornerShape(30.dp)
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
-                    .background(WhiteFull)
-                    .padding(20.dp)
-                    .padding(bottom = 80.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.greeting_user, userName),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BlackFull
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Card(
-                    shape = RoundedCornerShape(20.dp),
+                Column(
                     modifier = Modifier
-                        .width(318.dp)
-                        .height(168.dp)
-                        .align(Alignment.CenterHorizontally)
-                        .clickable {
-                            navController.navigate("mapa_detalle")
-                        },
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                    colors = CardDefaults.cardColors(containerColor = WhiteFull)
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(topStart = 1.dp, topEnd = 1.dp))
+                        .background(Color.Transparent)
+                        .padding(1.dp)
+                        .padding(bottom = 1.dp)
                 ) {
-                    MapboxMapComponent(
-                        modifier = Modifier.fillMaxSize(),
-                        hasPermission = hasLocationPermission
+                    Spacer(modifier = Modifier.height(58.dp))
+                    Text(
+                        text = stringResource(R.string.greeting_user, userName),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BlackFull
                     )
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                Text(
-                    text = stringResource(R.string.report_title),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BlackFull
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ReportButton(R.drawable.huecos, stringResource(R.string.category_potholes))
-                    ReportButton(R.drawable.alumbrado, stringResource(R.string.category_lighting))
-                    ReportButton(R.drawable.basura, stringResource(R.string.category_trash))
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ReportButton(R.drawable.semaforo, stringResource(R.string.category_traffic_light))
-                    ReportButton(R.drawable.hidrante, stringResource(R.string.category_hydrant))
-                    ReportButton(R.drawable.alcantarilla, stringResource(R.string.category_sewer))
-                }
-                Spacer(modifier = Modifier.height(20.dp))
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = { },
-                        colors = ButtonDefaults.buttonColors(containerColor = PurpleMain),
-                        shape = RoundedCornerShape(25.dp),
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
                         modifier = Modifier
-                            .width(167.dp)
-                            .height(48.dp)
+                            .width(318.dp)
+                            .height(168.dp)
+                            .align(Alignment.CenterHorizontally)
+                            .clickable {
+                                navController.navigate("mapa_detalle")
+                            },
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                        colors = CardDefaults.cardColors(containerColor = WhiteFull)
+                    ) {
+                        MapboxMapComponent(
+                            modifier = Modifier.fillMaxSize(),
+                            hasPermission = hasLocationPermission
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = stringResource(R.string.report_title),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BlackFull
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        ReportButton(R.drawable.huecos, stringResource(R.string.category_potholes))
+                        ReportButton(R.drawable.alumbrado, stringResource(R.string.category_lighting))
+                        ReportButton(R.drawable.basura, stringResource(R.string.category_trash))
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        ReportButton(R.drawable.semaforo, stringResource(R.string.category_traffic_light))
+                        ReportButton(R.drawable.hidrante, stringResource(R.string.category_hydrant))
+                        ReportButton(R.drawable.alcantarilla, stringResource(R.string.category_sewer))
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.apoyo),
-                            contentDescription = stringResource(R.string.supports_icon_description),
-                            modifier = Modifier.size(20.dp)
+                            painter = painterResource(id = R.drawable.btn_mis_apoyos),
+                            contentDescription = stringResource(R.string.my_supports),
+                            modifier = Modifier
+                                .width(167.dp)
+                                .height(48.dp)
+                                .clickable { }
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.my_supports),
-                            color = WhiteFull,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Image(
+                            painter = painterResource(id = R.drawable.btn_mis_denuncias),
+                            contentDescription = stringResource(R.string.my_reports_button),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                                .clickable { }
+                        )
+                    }
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 1.dp)
+                ) {
+                    IconButton(
+                        onClick = { navController.navigate(Pantallas.Verperfilusuario.ruta) },
+                        modifier = Modifier
+                            .size(55.dp)
+                            .clip(CircleShape)
+                            .background(AquaSoft)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.preguntas),
+                            contentDescription = stringResource(R.string.help_button_description),
+                            modifier = Modifier.size(35.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Button(
-                        onClick = { },
-                        colors = ButtonDefaults.buttonColors(containerColor = BlueMain),
-                        shape = RoundedCornerShape(25.dp),
+                    IconButton(
+                        onClick = { showLogoutDialog = true },
                         modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
+                            .size(55.dp)
+                            .clip(CircleShape)
+                            .background(AquaSoft)
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.denuncia),
-                            contentDescription = stringResource(R.string.reports_icon_description),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.my_reports_button),
-                            color = WhiteFull,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp
+                            painter = painterResource(id = R.drawable.salir_png),
+                            contentDescription = stringResource(R.string.exit_button_description),
+                            modifier = Modifier.size(35.dp)
                         )
                     }
                 }
@@ -296,6 +321,116 @@ fun HomeScreen(navController: NavHostController) {
                 .fillMaxWidth()
         ) {
             BottomNavBar(navController = navController)
+        }
+    }
+
+    // Diálogo de confirmación de cerrar sesión
+    if (showLogoutDialog) {
+        LogoutConfirmationDialog(
+            onConfirm = {
+                userPreferencesManager.clearCredentials()
+                showLogoutDialog = false
+                navController.navigate(Pantallas.Login.ruta) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+            onDismiss = {
+                showLogoutDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun LogoutConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            )
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(Color(0xFFFFB74D)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.logout_confirmation_title),
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.logout_confirmation_message),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    fontStyle = FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1D3557)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.logout_no_button),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Button(
+                        onClick = onConfirm,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE63946)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.logout_yes_button),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
         }
     }
 }

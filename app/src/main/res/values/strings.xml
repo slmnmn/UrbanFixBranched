@@ -133,7 +133,11 @@
     <string name="perfil_consulta">Perfil de Usuario</string>
     <string name="user_account_type">Personal</string>
 
-
+    <!-- Logout Confirmation Dialog -->
+    <string name="logout_confirmation_title">Cerrar sesión</string>
+    <string name="logout_confirmation_message">¿Estás seguro que deseas cerrar sesión?</string>
+    <string name="logout_yes_button">Sí</string>
+    <string name="logout_no_button">Cancelar</string>
     <!-- Common -->
     <string name="close_button_cd">Cerrar</string>
 
