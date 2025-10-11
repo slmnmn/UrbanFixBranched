@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
+import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.CompanyProfileViewModel
 import com.example.urbanfix.viewmodel.ViewModelFactory
@@ -108,7 +109,7 @@ fun EditCompanyProfileScreen(
                     modifier = Modifier.size(180.dp).clip(CircleShape).background(WhiteFull)
                 )
                 FloatingActionButton(
-                    onClick = { /* Acción para editar foto */ },
+                    onClick = { navController.navigate(Pantallas.Fotoperfil.ruta) },
                     shape = CircleShape,
                     containerColor = RedSignOut,
                     modifier = Modifier.size(40.dp)

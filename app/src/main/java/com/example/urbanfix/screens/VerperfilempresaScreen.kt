@@ -93,7 +93,7 @@ private fun CompanyProfileContent(
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // --- FOTO DE PERFIL ---
         Box(contentAlignment = Alignment.BottomEnd) {
@@ -107,7 +107,7 @@ private fun CompanyProfileContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // --- Nombre de la empresa y badge ---
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -124,7 +124,7 @@ private fun CompanyProfileContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(15.dp))
 
         Card(
             shape = RoundedCornerShape(40.dp),
@@ -200,26 +200,26 @@ private fun CompanyProfileContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Spacer(modifier = Modifier.width(60.dp))
+                    Spacer(modifier = Modifier.width(40.dp))
                     Text(
                         stringResource(R.string.verified_profile),
                         color = WhiteFull,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        modifier = Modifier.padding(start = 30.dp, top = 10.dp)
+                        modifier = Modifier.padding(start = 30.dp, top = 5.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         Icons.Filled.CheckCircle,
                         contentDescription = stringResource(R.string.verified_profile),
                         tint = verifiedColor,
-                        modifier = Modifier.padding(start = 4.dp, top = 10.dp)
+                        modifier = Modifier.padding(start = 4.dp, top = 5.dp)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(25.dp))
 
         // --- BOTÓN CONTACTAR ---
         Button(
@@ -233,7 +233,7 @@ private fun CompanyProfileContent(
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA8DADC)),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp)
+                .height(50.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

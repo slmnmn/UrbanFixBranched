@@ -134,6 +134,7 @@ fun UserProfileScreen(
             }
             is UserProfileState.Success -> {
                 ProfileContent(
+                    navController = navController,
                     paddingValues = paddingValues,
                     userName = state.userName,
                     userEmail = state.userEmail,
@@ -158,6 +159,7 @@ fun UserProfileScreen(
 
 @Composable
 private fun ProfileContent(
+    navController: NavHostController,
     paddingValues: PaddingValues,
     userName: String,
     userEmail: String,
@@ -183,7 +185,7 @@ private fun ProfileContent(
                     .background(WhiteFull)
             )
             FloatingActionButton(
-                onClick = { /* Acción para editar foto */ },
+                onClick = { navController.navigate(Pantallas.Fotoperfil.ruta) },
                 shape = CircleShape,
                 containerColor = RedSignOut,
                 modifier = Modifier.size(40.dp)
@@ -196,7 +198,7 @@ private fun ProfileContent(
 
         Card(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = PurpleMain),
+            colors = CardDefaults.cardColors(containerColor=Color(0xFF663251)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)) {
