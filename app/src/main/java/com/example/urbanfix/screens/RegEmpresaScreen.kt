@@ -74,60 +74,47 @@ fun RegEmpresaScreen(
             contentScale = ContentScale.Crop
         )
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .align(Alignment.TopCenter)
-                .offset(y = 100.dp)
-                .zIndex(1f),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F5E1)),
-            border = androidx.compose.foundation.BorderStroke(2.dp, Color.Black)
+        // Column principal para organizar la pantalla verticalmente
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
+            // Espacio para posicionar el logo
+            Spacer(modifier = Modifier.height(30.dp))
+            Image(
+                painter = painterResource(id = R.drawable.circular_logo),
+                contentDescription = "Logo UrbanFix",
+                modifier = Modifier.size(120.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // El Card ahora usa '.weight(1f)' para ocupar el espacio restante
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .padding(20.dp)
-                    .padding(top = 30.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = 24.dp)
+                    .weight(1f), // Esto le da un límite de altura flexible
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE0F5E1)),
+                border = androidx.compose.foundation.BorderStroke(2.dp, Color.Black)
             ) {
-                Text(text = "Regístrate ahora", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                Spacer(modifier = Modifier.height(16.dp))
+                // El Column del formulario tiene el scroll y sabe cuándo activarse
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(scrollState)
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = "Regístrate ahora", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Text("E-mail Institucional", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                OutlinedTextField(
-                    value = emailInstitucional,
-                    onValueChange = { regViewModel.email.value = it },
-                    placeholder = { Text("Ingresa tu e-mail institucional", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text("Selecciona la empresa", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+                    Text("E-mail Institucional", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                     OutlinedTextField(
-                        value = empresaSeleccionada,
-                        onValueChange = {},
-                        readOnly = true,
-                        placeholder = { Text("Selecciona tu organización", fontSize = 13.sp, color = Color(0xFF888888)) },
-                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, "Dropdown") },
-                        modifier = Modifier.menuAnchor().fillMaxWidth().height(50.dp),
+                        value = emailInstitucional,
+                        onValueChange = { regViewModel.email.value = it },
+                        placeholder = { Text("Ingresa tu e-mail institucional", fontSize = 13.sp, color = Color(0xFF888888)) },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(24.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedContainerColor = Color(0xFFD9D9D9),
@@ -137,174 +124,196 @@ fun RegEmpresaScreen(
                             unfocusedTextColor = Color(0xFF555555),
                             focusedTextColor = Color(0xFF555555)
                         ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        singleLine = true,
                         textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
                     )
-                    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        empresas.forEach { (nombre, id) ->
-                            DropdownMenuItem(
-                                text = { Text(text = nombre) },
-                                onClick = {
-                                    empresaSeleccionada = nombre
-                                    regViewModel.entidadId.value = id
-                                    expanded = false
-                                }
-                            )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text("Selecciona la empresa", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+                        OutlinedTextField(
+                            value = empresaSeleccionada,
+                            onValueChange = {},
+                            readOnly = true,
+                            placeholder = { Text("Selecciona tu organización", fontSize = 13.sp, color = Color(0xFF888888)) },
+                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, "Dropdown") },
+                            modifier = Modifier.menuAnchor().fillMaxWidth().height(50.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedContainerColor = Color(0xFFD9D9D9),
+                                focusedContainerColor = Color(0xFFD9D9D9),
+                                unfocusedBorderColor = Color.Black,
+                                focusedBorderColor = Color(0xFF043157),
+                                unfocusedTextColor = Color(0xFF555555),
+                                focusedTextColor = Color(0xFF555555)
+                            ),
+                            textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                        )
+                        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            empresas.forEach { (nombre, id) ->
+                                DropdownMenuItem(
+                                    text = { Text(text = nombre) },
+                                    onClick = {
+                                        empresaSeleccionada = nombre
+                                        regViewModel.entidadId.value = id
+                                        expanded = false
+                                    }
+                                )
+                            }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Nombres", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                OutlinedTextField(
-                    value = nombres,
-                    onValueChange = { regViewModel.nombres.value = it },
-                    placeholder = { Text("Ingresa tus nombres", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text("Apellidos", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                OutlinedTextField(
-                    value = apellidos,
-                    onValueChange = { regViewModel.apellidos.value = it },
-                    placeholder = { Text("Ingresa tus apellidos", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text("Contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { regViewModel.password.value = it },
-                    placeholder = { Text("Ingresa tu contraseña", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Image(
-                                painter = painterResource(id = if (passwordVisible) R.drawable.watch else R.drawable.hide),
-                                contentDescription = "Toggle password visibility",
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text("Confirma tu contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = { regViewModel.confirmPassword.value = it },
-                    placeholder = { Text("Ingresa tu contraseña nuevamente", fontSize = 12.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFD9D9D9),
-                        focusedContainerColor = Color(0xFFD9D9D9),
-                        unfocusedBorderColor = Color.Black,
-                        focusedBorderColor = Color(0xFF043157),
-                        unfocusedTextColor = Color(0xFF555555),
-                        focusedTextColor = Color(0xFF555555)
-                    ),
-                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                            Image(
-                                painter = painterResource(id = if (confirmPasswordVisible) R.drawable.watch else R.drawable.hide),
-                                contentDescription = "Toggle password visibility",
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = { regViewModel.registerFuncionario() },
-                    modifier = Modifier.fillMaxWidth(0.85f).height(50.dp).shadow(8.dp, RoundedCornerShape(24.dp)),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AC8E0))
-                ) {
-                    if (regState is RegState.Loading) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black)
-                    } else {
-                        Text(text = "Crear cuenta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "¿Ya tienes una cuenta? Inicia sesión",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF000000),
-                    textAlign = TextAlign.Center,
-                    textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
-                    modifier = Modifier.clickable { navController.navigate(Pantallas.Login.ruta) },
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.size(64.dp)) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ellipse_41),
-                        contentDescription = "Regresar",
-                        modifier = Modifier.size(56.dp)
+                    Text("Nombres", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                    OutlinedTextField(
+                        value = nombres,
+                        onValueChange = { regViewModel.nombres.value = it },
+                        placeholder = { Text("Ingresa tus nombres", fontSize = 13.sp, color = Color(0xFF888888)) },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color(0xFFD9D9D9),
+                            focusedContainerColor = Color(0xFFD9D9D9),
+                            unfocusedBorderColor = Color.Black,
+                            focusedBorderColor = Color(0xFF043157),
+                            unfocusedTextColor = Color(0xFF555555),
+                            focusedTextColor = Color(0xFF555555)
+                        ),
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
                     )
-                }
-            }
-        }
 
-        Image(
-            painter = painterResource(id = R.drawable.circular_logo),
-            contentDescription = "Logo UrbanFix",
-            modifier = Modifier.size(120.dp).align(Alignment.TopCenter).offset(y = 30.dp).zIndex(2f)
-        )
-    }
+                    Spacer(modifier = Modifier.height(12.dp))
 
+                    Text("Apellidos", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                    OutlinedTextField(
+                        value = apellidos,
+                        onValueChange = { regViewModel.apellidos.value = it },
+                        placeholder = { Text("Ingresa tus apellidos", fontSize = 13.sp, color = Color(0xFF888888)) },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color(0xFFD9D9D9),
+                            focusedContainerColor = Color(0xFFD9D9D9),
+                            unfocusedBorderColor = Color.Black,
+                            focusedBorderColor = Color(0xFF043157),
+                            unfocusedTextColor = Color(0xFF555555),
+                            focusedTextColor = Color(0xFF555555)
+                        ),
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text("Contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { regViewModel.password.value = it },
+                        placeholder = { Text("Ingresa tu contraseña", fontSize = 13.sp, color = Color(0xFF888888)) },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color(0xFFD9D9D9),
+                            focusedContainerColor = Color(0xFFD9D9D9),
+                            unfocusedBorderColor = Color.Black,
+                            focusedBorderColor = Color(0xFF043157),
+                            unfocusedTextColor = Color(0xFF555555),
+                            focusedTextColor = Color(0xFF555555)
+                        ),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Image(
+                                    painter = painterResource(id = if (passwordVisible) R.drawable.watch else R.drawable.hide),
+                                    contentDescription = "Toggle password visibility",
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text("Confirma tu contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { regViewModel.confirmPassword.value = it },
+                        placeholder = { Text("Ingresa tu contraseña nuevamente", fontSize = 12.sp, color = Color(0xFF888888)) },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color(0xFFD9D9D9),
+                            focusedContainerColor = Color(0xFFD9D9D9),
+                            unfocusedBorderColor = Color.Black,
+                            focusedBorderColor = Color(0xFF043157),
+                            unfocusedTextColor = Color(0xFF55555-5),
+                            focusedTextColor = Color(0xFF555555)
+                        ),
+                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Image(
+                                    painter = painterResource(id = if (confirmPasswordVisible) R.drawable.watch else R.drawable.hide),
+                                    contentDescription = "Toggle password visibility",
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = { regViewModel.registerFuncionario() },
+                        modifier = Modifier.fillMaxWidth(0.85f).height(50.dp).shadow(8.dp, RoundedCornerShape(24.dp)),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AC8E0))
+                    ) {
+                        if (regState is RegState.Loading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black)
+                        } else {
+                            Text(text = "Crear cuenta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "¿Ya tienes una cuenta? Inicia sesión",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF000000),
+                        textAlign = TextAlign.Center,
+                        textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                        modifier = Modifier.clickable { navController.navigate(Pantallas.Login.ruta) },
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.size(64.dp)) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ellipse_41),
+                            contentDescription = "Regresar",
+                            modifier = Modifier.size(56.dp)
+                        )
+                    }
+                } // Fin del Column del formulario
+            } // Fin del Card
+            Spacer(modifier = Modifier.height(24.dp))
+        } // Fin del Column principal
+    } // Fin del Box
+
+    // Manejo de diálogos (sin cambios)
     when (val state = regState) {
         is RegState.Error -> {
             ErrorDialogo(
