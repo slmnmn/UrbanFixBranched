@@ -169,23 +169,18 @@ private fun CompanyProfileContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = companyName,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 26.sp
-                )
-            }
-            Icon(Icons.Filled.CheckCircle, contentDescription = "Verificado", tint = BlueMain, modifier = Modifier.padding(start = 4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = companyName,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                Icons.Filled.CheckCircle,
+                contentDescription = stringResource(R.string.verified_profile),
+                tint = verifiedColor
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -207,26 +202,23 @@ private fun CompanyProfileContent(
 
                 Row(
                     modifier = Modifier.padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(
-                        Icons.Filled.CheckCircle,
-                        contentDescription = null,
-                        tint = Color.Transparent,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(60.dp))
                     Text(
-                        stringResource(id = R.string.verified_profile),
+                        stringResource(R.string.verified_profile),
                         color = WhiteFull,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(start = 30.dp, top = 10.dp)
                     )
-                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         Icons.Filled.CheckCircle,
-                        contentDescription = "Verificado",
-                        tint = verifiedColor
+                        contentDescription = stringResource(R.string.verified_profile),
+                        tint = verifiedColor,
+                        modifier = Modifier.padding(start = 4.dp, top = 10.dp)
                     )
                 }
             }

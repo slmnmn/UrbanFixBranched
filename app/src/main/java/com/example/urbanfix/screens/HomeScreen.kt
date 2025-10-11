@@ -64,10 +64,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun HomeScreen(navController: NavHostController) {
     val context = LocalContext.current
-
     val userPreferencesManager = remember { UserPreferencesManager(context) }
     val userName = remember { userPreferencesManager.getUserName() }
-
     var hasLocationPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -163,7 +161,9 @@ fun HomeScreen(navController: NavHostController) {
                     focusedBorderColor = Color.Transparent
                 ),
                 trailingIcon = {
-                    IconButton(onClick = { navController.navigate(Pantallas.Verperfilempresa.ruta)}) {
+                    IconButton(onClick = {
+                        navController.navigate(Pantallas.Verperfilempresa.ruta)
+                    }) {
                         Icon(
                             Icons.Default.Search,
                             contentDescription = stringResource(R.string.search_button_description),
@@ -419,7 +419,6 @@ fun ReportButton(iconId: Int, text: String) {
 fun BottomNavBar(navController: NavHostController) {
     val context = LocalContext.current
     val userPreferencesManager = remember { UserPreferencesManager(context) }
-
     val userRole = remember { userPreferencesManager.getUserRole() }
 
     NavigationBar(

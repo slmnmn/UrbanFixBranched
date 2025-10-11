@@ -34,49 +34,30 @@ import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
-import com.example.urbanfix.viewmodel.CompanyProfileState
 import com.example.urbanfix.viewmodel.CompanyProfileViewModel
+import com.example.urbanfix.viewmodel.CompanyProfileState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerperfilempresaScreen(
-    navController: NavHostController,
-    viewModel: CompanyProfileViewModel = viewModel()
+    navController: NavHostController
 ) {
-    val profileState by viewModel.profileState.collectAsState()
-
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 35.dp, end = 42.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.perfil_consulta),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
+                    Box(modifier = Modifier.fillMaxWidth().padding(top = 35.dp, end = 42.dp), contentAlignment = Alignment.Center) {
+                        Text(text = stringResource(R.string.perfil_consulta), color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
                 navigationIcon = {
                     Box(modifier = Modifier.padding(top = 20.dp)) {
                         IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.back_button_content_description),
-                                tint = Color.White
-                            )
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = Color.White)
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BlueMain
-                ),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BlueMain),
                 modifier = Modifier.height(72.dp)
             )
         },
@@ -85,27 +66,12 @@ fun VerperfilempresaScreen(
         },
         containerColor = GrayBg
     ) { paddingValues ->
-        when (val state = profileState) {
-            is CompanyProfileState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = BlueMain)
-                }
-            }
-            is CompanyProfileState.Success -> {
-                CompanyProfileContent(
-                    paddingValues = paddingValues,
-                    companyName = state.companyName,
-                    userEmail = state.userEmail,
-                    navController = navController
-                )
-            }
-            else -> {}
-        }
+        CompanyProfileContent(
+            paddingValues = paddingValues,
+            companyName = "Nombre de Empresa S.A.",
+            userEmail = "contacto@empresa.com",
+            navController = navController
+        )
     }
 }
 

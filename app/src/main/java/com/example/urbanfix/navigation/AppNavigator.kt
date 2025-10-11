@@ -1,5 +1,6 @@
 package com.example.urbanfix.navigation
 
+import android.R.attr.defaultValue
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -14,6 +15,7 @@ import com.example.urbanfix.screens.RegUsuarioScreen
 import com.example.urbanfix.screens.UserProfileScreen
 import com.example.urbanfix.screens.EditProfileScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.navArgument
 import com.example.urbanfix.screens.CompanyProfileScreen
 import com.example.urbanfix.screens.EditCompanyProfileScreen
 import com.example.urbanfix.screens.FotoperfilScreen
