@@ -7,13 +7,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// Definimos todos los posibles estados de esta pantalla
 sealed interface ForgotPasswordState {
-    object EnterEmail : ForgotPasswordState // Estado inicial para pedir el e-mail
+    object EnterEmail : ForgotPasswordState
     object Loading : ForgotPasswordState
-    object EmailSentSuccess : ForgotPasswordState // Estado para mostrar el diálogo de éxito
+    object EmailSentSuccess : ForgotPasswordState
     data class Error(val message: String) : ForgotPasswordState
-    object EnterCode : ForgotPasswordState // Estado para pedir el código de verificación
+    object EnterCode : ForgotPasswordState
 }
 
 class OlvidarconViewModel : ViewModel() {
@@ -34,7 +33,7 @@ class OlvidarconViewModel : ViewModel() {
                 return@launch
             }
             _state.value = ForgotPasswordState.Loading
-            delay(1500) // Simula la llamada a la API
+            delay(1500)
             _state.value = ForgotPasswordState.EmailSentSuccess
         }
     }
@@ -48,12 +47,10 @@ class OlvidarconViewModel : ViewModel() {
             }
             _state.value = ForgotPasswordState.Loading
             delay(1500) // Simula la llamada a la API
-            // Aquí, si el código es correcto, navegarías a la pantalla de "Nueva Contraseña"
-            // Por ahora, lo dejamos pendiente.
+
         }
     }
 
-    // Función para cerrar los diálogos
     fun dismissDialog() {
         if (_state.value is ForgotPasswordState.EmailSentSuccess) {
             _state.value = ForgotPasswordState.EnterCode // Después del éxito, pasamos a pedir el código

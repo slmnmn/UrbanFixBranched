@@ -31,7 +31,7 @@ fun RegistroScreen(navController: NavHostController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF043157)), // Fondo azul oscuro
+            .background(Color(0xFF043157)),
         contentAlignment = Alignment.Center
     ) {
         // Imagen de fondo
@@ -198,7 +198,7 @@ fun RegistroScreen(navController: NavHostController) {
 
                 Box(
                     modifier = Modifier
-                        .offset(y = 16.dp) // Bajado un poco más
+                        .offset(y = 16.dp)
                         .size(128.dp)
                         .zIndex(10f)
                         .background(Color.White, CircleShape)

@@ -77,7 +77,6 @@ fun RegEmpresaScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                // --- CAMBIO: Se elimina la altura fija para que se ajuste al contenido ---
                 .padding(horizontal = 24.dp)
                 .align(Alignment.TopCenter)
                 .offset(y = 100.dp)
@@ -97,7 +96,6 @@ fun RegEmpresaScreen(
                 Text(text = "Regístrate ahora", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // --- CAMBIO: Se añade Título y se aplican colores al campo E-mail ---
                 Text("E-mail Institucional", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = emailInstitucional,
@@ -120,7 +118,6 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // --- CAMBIO: Se añade Título y se aplican colores al campo Empresa ---
                 Text("Selecciona la empresa", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                     OutlinedTextField(
@@ -157,7 +154,6 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // --- CAMBIO: Se añade Título y se aplican colores al campo Nombres ---
                 Text("Nombres", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = nombres,
@@ -179,7 +175,6 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // --- CAMBIO: Se añade Título y se aplican colores al campo Apellidos ---
                 Text("Apellidos", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = apellidos,
@@ -201,7 +196,6 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // --- CAMBIO: Se añade Título y se aplican colores al campo Contraseña ---
                 Text("Contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = password,
@@ -234,7 +228,6 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // --- CAMBIO: Se añade Título y se aplican colores al campo Confirmar Contraseña ---
                 Text("Confirma tu contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = confirmPassword,
@@ -267,7 +260,6 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // El resto de la pantalla (botones, etc.) no necesita cambios
                 Button(
                     onClick = { regViewModel.registerFuncionario() },
                     modifier = Modifier.fillMaxWidth(0.85f).height(50.dp).shadow(8.dp, RoundedCornerShape(24.dp)),
