@@ -192,7 +192,7 @@ private fun CompanyProfileContent(
 
         Card(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = PurpleMain),
+            colors = CardDefaults.cardColors(containerColor=Color(0xFF663251)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)) {

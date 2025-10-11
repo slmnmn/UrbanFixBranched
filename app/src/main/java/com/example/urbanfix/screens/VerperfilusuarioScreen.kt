@@ -33,16 +33,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.ui.theme.*
-import com.example.urbanfix.viewmodel.CompanyProfileState
-import com.example.urbanfix.viewmodel.CompanyProfileViewModel
+import com.example.urbanfix.viewmodel.UserProfileViewModel
+import com.example.urbanfix.viewmodel.UserProfileState
+import com.example.urbanfix.viewmodel.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerperfilusuarioScreen(
-    navController: NavHostController,
-    viewModel: CompanyProfileViewModel = viewModel()
+    navController: NavHostController
 ) {
-    val profileState by viewModel.profileState.collectAsState()
+    val context = LocalContext.current
+
+    val viewModel: UserProfileViewModel = viewModel(
+        factory = ViewModelFactory(context)
+    )
+
+    val profileState by viewModel.userProfileState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -85,7 +91,7 @@ fun VerperfilusuarioScreen(
         containerColor = GrayBg
     ) { paddingValues ->
         when (val state = profileState) {
-            is CompanyProfileState.Loading -> {
+            is UserProfileState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -96,12 +102,28 @@ fun VerperfilusuarioScreen(
                 }
             }
 
-            is CompanyProfileState.Success -> {
+            is UserProfileState.Success -> {
                 UsuarioProfileContent(
                     paddingValues = paddingValues,
-                    userName = state.companyName,
+                    userName = state.userName,
                     userEmail = state.userEmail
                 )
+            }
+
+            is UserProfileState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Error al cargar el perfil.",
+                        color = Color.Red,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             else -> {}
@@ -141,15 +163,6 @@ private fun UsuarioProfileContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- NOMBRE DE USUARIO ---
-        Text(
-            text = userName,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         // --- CARD DE INFORMACIÓN ---
         Card(
@@ -161,7 +174,7 @@ private fun UsuarioProfileContent(
                 UserInfoRowUsuario(
                     icon = Icons.Default.Person,
                     label = stringResource(R.string.full_name_label),
-                    value = "Nombres y apellidos del usuario"
+                    value = userName
                 )
 
                 Divider(color = WhiteFull.copy(alpha = 0.2f))
