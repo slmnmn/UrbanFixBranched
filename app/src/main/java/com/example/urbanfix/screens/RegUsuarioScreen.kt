@@ -5,10 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,8 +37,10 @@ import com.example.urbanfix.viewmodel.RegistrationViewModel
 @Composable
 fun RegUsuarioScreen(
     navController: NavHostController,
+    // Se obtiene la instancia del ViewModel
     registrationViewModel: RegistrationViewModel = viewModel()
 ) {
+    // Estado de los campos
     val email by registrationViewModel.email.collectAsState()
     val nombres by registrationViewModel.nombres.collectAsState()
     val apellidos by registrationViewModel.apellidos.collectAsState()
@@ -50,13 +50,13 @@ fun RegUsuarioScreen(
 
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    val scrollState = rememberScrollState()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF043157))
     ) {
+        // Imagen de fondo
         Image(
             painter = painterResource(id = R.drawable.registro_normal),
             contentDescription = "Fondo",
@@ -64,173 +64,178 @@ fun RegUsuarioScreen(
             contentScale = ContentScale.Crop
         )
 
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(30.dp))
-            Image(
-                painter = painterResource(id = R.drawable.circular_logo),
-                contentDescription = "Logo UrbanFix",
-                modifier = Modifier.size(120.dp)
-            )
-            Spacer(modifier = Modifier.height(10.dp))
 
-            Card(
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .align(Alignment.TopCenter)
+                .offset(y = 100.dp)
+                .zIndex(1f),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFE0F5E1)
+            ),
+            border = BorderStroke(2.dp, Color.Black)
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .weight(1f),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFE0F5E1)
-                ),
-                border = BorderStroke(2.dp, Color.Black)
+                    .padding(20.dp)
+                    .padding(top = 30.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(scrollState)
-                        .padding(20.dp)
-                        .padding(top = 30.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Regístrate ahora",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Regístrate ahora",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
 
-                    Text("E-mail", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { registrationViewModel.onEmailChange(it) },
-                        placeholder = { Text("Ingresa tu e-mail", fontSize = 13.sp, color = Color(0xFF888888)) },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                    )
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                // E-mail
+                Text("E-mail", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { registrationViewModel.onEmailChange(it) },
+                    placeholder = { Text("Ingresa tu e-mail", fontSize = 13.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                )
 
-                    Text("Nombres", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                    OutlinedTextField(
-                        value = nombres,
-                        onValueChange = { registrationViewModel.onNombresChange(it) },
-                        placeholder = { Text("Ingresa tus nombres", fontSize = 13.sp, color = Color(0xFF888888)) },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                    )
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                // Nombres
+                Text("Nombres", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                OutlinedTextField(
+                    value = nombres,
+                    onValueChange = { registrationViewModel.onNombresChange(it) },
+                    placeholder = { Text("Ingresa tus nombres", fontSize = 13.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                )
 
-                    Text("Apellidos", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                    OutlinedTextField(
-                        value = apellidos,
-                        onValueChange = { registrationViewModel.onApellidosChange(it) },
-                        placeholder = { Text("Ingresa tus apellidos", fontSize = 13.sp, color = Color(0xFF888888)) },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                    )
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                // Apellidos
+                Text("Apellidos", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                OutlinedTextField(
+                    value = apellidos,
+                    onValueChange = { registrationViewModel.onApellidosChange(it) },
+                    placeholder = { Text("Ingresa tus apellidos", fontSize = 13.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                )
 
-                    Text("Contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { registrationViewModel.onPasswordChange(it) },
-                        placeholder = { Text("Ingresa tu contraseña", fontSize = 13.sp, color = Color(0xFF888888)) },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Image(painter = painterResource(id = if (passwordVisible) R.drawable.watch else R.drawable.hide), contentDescription = "Toggle password visibility", modifier = Modifier.size(28.dp))
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                    )
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text("Confirma tu contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
-                    OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = { registrationViewModel.onConfirmPasswordChange(it) },
-                        placeholder = { Text("Ingresa tu contraseña nuevamente", fontSize = 12.sp, color = Color(0xFF888888)) },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
-                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                                Image(painter = painterResource(id = if (confirmPasswordVisible) R.drawable.watch else R.drawable.hide), contentDescription = "Toggle password visibility", modifier = Modifier.size(28.dp))
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = { registrationViewModel.registerUser() },
-                        modifier = Modifier.fillMaxWidth(0.85f).height(50.dp).shadow(8.dp, RoundedCornerShape(24.dp)),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AC8E0))
-                    ) {
-                        if (registrationState is RegistrationState.Loading) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black)
-                        } else {
-                            Text(text = "Crear cuenta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                // Contraseña
+                Text("Contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { registrationViewModel.onPasswordChange(it) },
+                    placeholder = { Text("Ingresa tu contraseña", fontSize = 13.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Image(painter = painterResource(id = if (passwordVisible) R.drawable.watch else R.drawable.hide), contentDescription = "Toggle password visibility", modifier = Modifier.size(28.dp))
                         }
-                    }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "¿Ya tienes una cuenta? Inicia sesión",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF000000),
-                        textAlign = TextAlign.Center,
-                        textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable { navController.navigate(Pantallas.Login.ruta) }
-                    )
+                // Confirmar Contraseña
+                Text("Confirma tu contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { registrationViewModel.onConfirmPasswordChange(it) },
+                    placeholder = { Text("Ingresa tu contraseña nuevamente", fontSize = 12.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color(0xFFD9D9D9), focusedContainerColor = Color(0xFFD9D9D9), unfocusedBorderColor = Color.Black, focusedBorderColor = Color(0xFF043157), unfocusedTextColor = Color(0xFF555555), focusedTextColor = Color(0xFF555555)),
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Image(painter = painterResource(id = if (confirmPasswordVisible) R.drawable.watch else R.drawable.hide), contentDescription = "Toggle password visibility", modifier = Modifier.size(28.dp))
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    singleLine = true,
+                    textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    IconButton(
-                        onClick = { navController.popBackStack() },
-                        modifier = Modifier.size(64.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ellipse_41),
-                            contentDescription = "Regresar",
-                            modifier = Modifier.size(56.dp)
-                        )
+                // Crear cuenta
+                Button(
+                    onClick = { registrationViewModel.registerUser() },
+                    modifier = Modifier.fillMaxWidth(0.85f).height(50.dp).shadow(8.dp, RoundedCornerShape(24.dp)),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AC8E0))
+                ) {
+                    if (registrationState is RegistrationState.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black)
+                    } else {
+                        Text(text = "Crear cuenta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                     }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+
+                Text(
+                    text = "¿Ya tienes una cuenta? Inicia sesión",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF000000),
+                    textAlign = TextAlign.Center,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { navController.navigate(Pantallas.Login.ruta) }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ellipse_41),
+                        contentDescription = "Regresar",
+                        modifier = Modifier.size(56.dp)
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(24.dp))
         }
+
+
+        Image(
+            painter = painterResource(id = R.drawable.circular_logo),
+            contentDescription = "Logo UrbanFix",
+            modifier = Modifier.size(120.dp).align(Alignment.TopCenter).offset(y = 30.dp).zIndex(2f)
+        )
     }
 
+    // Diálogos basados en el estado del ViewModel
     when (val state = registrationState) {
         is RegistrationState.Error -> {
             ErrorDialogo(
@@ -248,7 +253,7 @@ fun RegUsuarioScreen(
                 }
             )
         }
-        else -> {}
+        else -> { /* No hacer nada en los estados Idle o Loading */ }
     }
 }
 
