@@ -644,11 +644,7 @@ fun BottomNavBar(navController: NavHostController) {
         NavigationBarItem(
             selected = false,
             onClick = {
-                if (userRole == "funcionario") {
-                    navController.navigate(Pantallas.CompanyProfile.ruta)
-                } else {
-                    navController.navigate(Pantallas.Perfil.ruta)
-                }
+                navController.navigate(Pantallas.Perfil.ruta)
             },
             icon = {
                 Image(

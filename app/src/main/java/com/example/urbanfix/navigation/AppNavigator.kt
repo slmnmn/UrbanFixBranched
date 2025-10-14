@@ -12,17 +12,14 @@ import com.example.urbanfix.screens.RegistroScreen
 import com.example.urbanfix.screens.OlvidarconScreen
 import com.example.urbanfix.screens.RegEmpresaScreen
 import com.example.urbanfix.screens.RegUsuarioScreen
-import com.example.urbanfix.screens.UserProfileScreen
 import com.example.urbanfix.screens.EditProfileScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.navArgument
-import com.example.urbanfix.screens.CompanyProfileScreen
-import com.example.urbanfix.screens.EditCompanyProfileScreen
 import com.example.urbanfix.screens.FotoperfilScreen
+import com.example.urbanfix.screens.ProfileScreen
 import com.example.urbanfix.screens.VerperfilempresaScreen
 import com.example.urbanfix.screens.VerperfilusuarioScreen
-import com.example.urbanfix.viewmodel.CompanyProfileViewModel
-import com.example.urbanfix.viewmodel.UserProfileViewModel
+
 
 sealed class Pantallas(val ruta: String) {
     object Bienvenida : Pantallas("bienvenida")
@@ -37,9 +34,6 @@ sealed class Pantallas(val ruta: String) {
     object EditProfile : Pantallas("edit_profile")
     object Verperfilempresa : Pantallas("verperfilempresa")
     object Verperfilusuario : Pantallas("verperfilusuario")
-    object CompanyProfile : Pantallas("company_profile")
-
-    object EditCompanyProfile : Pantallas("edit_company_profile")
 }
 
 
@@ -77,7 +71,7 @@ fun AppNavigator(navController: NavHostController) {
             VerperfilusuarioScreen(navController)
         }
         composable(route = Pantallas.Perfil.ruta) {
-            UserProfileScreen(
+            ProfileScreen(
                 navController = navController
             )
         }
@@ -85,14 +79,6 @@ fun AppNavigator(navController: NavHostController) {
             EditProfileScreen(
                 navController = navController
             )
-        }
-        composable(Pantallas.CompanyProfile.ruta) {
-            CompanyProfileScreen(
-                navController = navController
-            )
-        }
-        composable(Pantallas.EditCompanyProfile.ruta) {
-            EditCompanyProfileScreen(navController = navController)
         }
     }
 }

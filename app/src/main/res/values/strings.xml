@@ -140,6 +140,21 @@
     <string name="logout_no_button">Cancelar</string>
     <!-- Common -->
     <string name="close_button_cd">Cerrar</string>
+    <string name="edit_profile_user_title_section">Nombre de Usuario</string>
+    <string name="edit_profile_official_title_section">Nombre del Funcionario</string>
+    <string name="edit_profile_password_section">Cambiar Contraseña</string>
+
+    <string name="error_official_name_empty">El nombre del funcionario no puede estar vacío</string>
+    <string name="error_user_name_empty">El nombre no puede estar vacío</string>
+    <string name="error_password_length">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="error_password_mismatch">Las contraseñas no coinciden</string>
+    <string name="error_no_user_id">Error: No se pudo obtener el ID del usuario.</string>
+    <string name="error_save_changes">Error al guardar los cambios (código: %1$d)</string>
+    <string name="error_network_connection">No se pudo conectar al servidor. Revisa tu conexión a internet.</string>
+    <string name="error_profile_not_found">Perfil no encontrado</string>
+    <string name="error_loading_profile">Perfil no encontrado</string>
+    <string name="error_invalid_role">Rol de usuario no válido</string>
+
 
 </resources>
 

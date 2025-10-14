@@ -59,7 +59,7 @@ class LoginViewModel : ViewModel() {
                 }
 
             } catch (e: Exception) {
-                _loginState.value = LoginState.Error("No se pudo conectar al servidor: ${e.message}")
+                _loginState.value = LoginState.Error("No se pudo conectar al servidor")
             }
         }
     }

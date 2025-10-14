@@ -10,11 +10,8 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         val userPreferencesManager = UserPreferencesManager(context.applicationContext)
 
         return when {
-            modelClass.isAssignableFrom(UserProfileViewModel::class.java) -> {
-                UserProfileViewModel(userPreferencesManager) as T
-            }
-            modelClass.isAssignableFrom(CompanyProfileViewModel::class.java) -> {
-                CompanyProfileViewModel(userPreferencesManager) as T
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
+                ProfileViewModel(userPreferencesManager) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

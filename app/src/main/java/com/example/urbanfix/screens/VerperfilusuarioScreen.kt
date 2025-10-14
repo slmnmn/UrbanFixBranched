@@ -33,8 +33,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.ui.theme.*
-import com.example.urbanfix.viewmodel.UserProfileViewModel
-import com.example.urbanfix.viewmodel.UserProfileState
+import com.example.urbanfix.viewmodel.ProfileViewModel
+import com.example.urbanfix.viewmodel.ProfileState
 import com.example.urbanfix.viewmodel.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,11 +44,11 @@ fun VerperfilusuarioScreen(
 ) {
     val context = LocalContext.current
 
-    val viewModel: UserProfileViewModel = viewModel(
+    val viewModel: ProfileViewModel = viewModel(
         factory = ViewModelFactory(context)
     )
 
-    val profileState by viewModel.userProfileState.collectAsState()
+    val profileState by viewModel.profileState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -91,7 +91,7 @@ fun VerperfilusuarioScreen(
         containerColor = GrayBg
     ) { paddingValues ->
         when (val state = profileState) {
-            is UserProfileState.Loading -> {
+            is ProfileState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -102,15 +102,15 @@ fun VerperfilusuarioScreen(
                 }
             }
 
-            is UserProfileState.Success -> {
+            is ProfileState.Success -> {
                 UsuarioProfileContent(
                     paddingValues = paddingValues,
-                    userName = state.userName,
+                    userName = state.userName ?: "N/A",
                     userEmail = state.userEmail
                 )
             }
 
-            is UserProfileState.Error -> {
+            is ProfileState.Error -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

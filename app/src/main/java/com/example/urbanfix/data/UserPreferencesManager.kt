@@ -18,11 +18,11 @@ class UserPreferencesManager(context: Context) {
         private const val USER_EMAIL_KEY = "user_email"
         private const val USER_PHONE_KEY = "user_phone"
         private const val USER_ROLE_KEY = "user_role"
-
         private const val COMPANY_NAME_KEY = "company_name"
+        private const val REGISTRATION_DATE_KEY = "registration_date"
     }
 
-    fun saveUserData(id: Int, name: String, email: String, phone: String?, role: String, companyName: String?) {
+    fun saveUserData(id: Int, name: String, email: String, phone: String?, role: String, companyName: String?, registrationDate: String) {
         sharedPreferences.edit().apply {
             putInt(USER_ID_KEY, id)
             putString(USER_NAME_KEY, name)
@@ -30,6 +30,7 @@ class UserPreferencesManager(context: Context) {
             putString(USER_PHONE_KEY, phone ?: "")
             putString(USER_ROLE_KEY, role)
             putString(COMPANY_NAME_KEY, companyName ?: "")
+            putString(REGISTRATION_DATE_KEY, registrationDate)
             apply()
         }
     }
@@ -41,6 +42,8 @@ class UserPreferencesManager(context: Context) {
     fun getUserEmail(): String = sharedPreferences.getString(USER_EMAIL_KEY, "") ?: ""
     fun getUserPhone(): String = sharedPreferences.getString(USER_PHONE_KEY, "") ?: ""
     fun getUserRole(): String = sharedPreferences.getString(USER_ROLE_KEY, "usuario") ?: "usuario"
+
+    fun getRegistrationDate(): String = sharedPreferences.getString(REGISTRATION_DATE_KEY, "") ?: ""
 
 
     // --- FUNCIONES PARA "RECORDARME" ---

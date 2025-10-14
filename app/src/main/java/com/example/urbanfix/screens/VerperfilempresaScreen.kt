@@ -34,8 +34,6 @@ import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
-import com.example.urbanfix.viewmodel.CompanyProfileViewModel
-import com.example.urbanfix.viewmodel.CompanyProfileState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

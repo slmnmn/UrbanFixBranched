@@ -73,7 +73,8 @@ fun LoginScreen(
                 email = userData.email,
                 phone = userData.telefono,
                 role = userRole,
-                companyName = userData.entidad_nombre
+                companyName = userData.entidad_nombre,
+                registrationDate = userData.fecha_registro
             )
 
             navController.navigate(Pantallas.Home.ruta) {

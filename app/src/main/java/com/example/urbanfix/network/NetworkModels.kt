@@ -17,7 +17,8 @@ data class UserData(
     val nombre: String,
     val email: String,
     val entidad_nombre: String?,
-    val telefono: String?
+    val telefono: String?,
+    val fecha_registro: String
 )
 // Data you EXPECT TO RECEIVE on a successful login
 data class LoginResponse(
