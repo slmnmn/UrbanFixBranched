@@ -155,6 +155,73 @@
     <string name="error_loading_profile">Perfil no encontrado</string>
     <string name="error_invalid_role">Rol de usuario no válido</string>
 
+    <!-- Company registration -->
+    <string name="uaesp_unidad_administrativa_especial_de_servicios_p_blicos">UAESP (Unidad Administrativa Especial de Servicios Públicos)</string>
+    <string name="empresa_de_acueducto_y_alcantarillado_de_bogot_eaab">Empresa de Acueducto y Alcantarillado de Bogotá (EAAB)</string>
+    <string name="unidad_de_mantenimiento_vial_umv">Unidad de Mantenimiento Vial (UMV)</string>
+    <string name="instituto_de_desarrollo_urbano_idu">Instituto de Desarrollo Urbano (IDU)</string>
+    <string name="bomberos_de_bogot">Bomberos de Bogotá</string>
+    <string name="fondo">Fondo</string>
+    <string name="reg_strate_ahora">Regístrate ahora</string>
+    <string name="e_mail_institucional">E-mail Institucional</string>
+    <string name="ingresa_tu_e_mail_institucional">Ingresa tu e-mail institucional</string>
+    <string name="selecciona_la_empresa">Selecciona la empresa</string>
+    <string name="selecciona_tu_organizaci_n">Selecciona tu organización</string>
+    <string name="dropdown">Dropdown</string>
+    <string name="nombres">Nombres</string>
+    <string name="ingresa_tus_nombres">Ingresa tus nombres</string>
+    <string name="apellidos">Apellidos</string>
+    <string name="ingresa_tus_apellidos">Ingresa tus apellidos</string>
+    <string name="contrase_a">Contraseña</string>
+    <string name="ingresa_tu_contrase_a">Ingresa tu contraseña</string>
+    <string name="toggle_password">Toggle password visibility</string>
+    <string name="confirma_tu_contrase_a">Confirma tu contraseña</string>
+    <string name="ingresa_tu_contrase_a_nuevamente">Ingresa tu contraseña nuevamente</string>
+    <string name="crear_cuenta">Crear cuenta</string>
+    <string name="ya_tienes_una_cuenta_inicia_sesi_n">¿Ya tienes una cuenta? Inicia sesión</string>
+    <string name="regresar">Regresar</string>
+    <string name="logo_urbanfix">Logo UrbanFix</string>
+
+    <!-- User registration -->
+    <string name="e_mail">E-mail</string>
+    <string name="ingresa_tu_e_mail">Ingresa tu e-mail</string>
+    <string name="ingresa_nombres">Ingresa tus nombres</string>
+    <string name="apellido">Apellidos</string>
+    <string name="ingresa_tus_apellido">Ingresa tus apellidos</string>
+    <string name="contrase_">Contraseña</string>
+    <string name="ingresa_tu_contrase_">Ingresa tu contraseña</string>
+    <string name="confirma_tu_contrase_">Confirma tu contraseña</string>
+    <string name="ingresa_tu_contrase_a_nuevament">Ingresa tu contraseña nuevamente</string>
+    <string name="crear_cuent">Crear cuenta</string>
+    <string name="ya_tienes_una_cuenta_inicia_sesi_">¿Ya tienes una cuenta? Inicia sesión</string>
+    <string name="regresa">Regresar</string>
+    <string name="error">Error</string>
+    <string name="volver">Volver</string>
+    <string name="cuenta_creada_exitosamente">Cuenta creada exitosamente</string>
+    <string name="ahora_puedes_iniciar_sesi_n">Ahora puedes iniciar sesión</string>
+    <string name="xito">Éxito</string>
+    <string name="iniciar">Iniciar</string>
+
+    <!-- Profile Screen -->
+    <string name="exito">Éxito</string>
+    <string name="logo">Logo</string>
+    <string name="verificado">Verificado</string>
+    <string name="est_s_seguro_de_que_quieres_cerrar_sesi_n">¿Estás seguro de que quieres cerrar sesión?</string>
+    <string name="podr_s_volver_a_iniciar_sesi_n_en_cualquier_momento">Podrás volver a iniciar sesión en cualquier momento.</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="confirmar">Confirmar</string>
+    <string name="est_s_seguro_de_que_quieres_eliminar_tu_cuenta">¿Estás seguro de que quieres eliminar tu cuenta?</string>
+    <string name="esta_acci_n_es_permanente_y_no_se_puede_deshacer_se_borrar_n_todos_tus_datos_de_forma_definitiva">Esta acción es PERMANENTE y no se puede deshacer. Se borrarán todos tus datos de forma definitiva.</string>
+    <string name="cuenta_eliminada_con_xito">"Cuenta eliminada con éxito "</string>
+    <string name="hemos_eliminado_tu_cuenta_y_todos_tus_datos_de_urban_fix_de_forma_permanente_lamentamos_verte_partir_y_te_agradecemos_por_haber_sido_parte_de_nuestra_comunidad">Hemos eliminado tu cuenta y todos tus datos de Urban Fix de forma permanente. Lamentamos verte partir y te agradecemos por haber sido parte de nuestra comunidad.</string>
+    <string name="salir">Salir</string>
+
+    <!-- Edit profile screen -->
+    <string name="tus_datos_ser_n_actualizados_si_confirmas_esta_acci_n">Tus datos serán actualizados si confirmas esta acción.</string>
+    <string name="quieres_guardar_tus_cambios">¿Quieres guardar tus cambios?</string>
+    <string name="no_se_guardar_n_tus_cambios_si_abandonas_el_proceso">No se guardarán tus cambios si abandonas el proceso.</string>
+    <string name="est_s_seguro_que_quieres_salir">¿Estás seguro que quieres salir?</string>
+
 
 </resources>
 

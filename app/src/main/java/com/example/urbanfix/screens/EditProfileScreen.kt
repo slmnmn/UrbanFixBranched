@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
@@ -48,10 +50,34 @@ fun EditProfileScreen(
     val name by viewModel.name.collectAsState()
     val password by viewModel.password.collectAsState()
     val confirmPassword by viewModel.confirmPassword.collectAsState()
-    // --- CAMBIO 1: La variable ahora es un ID de error (Int?) ---
     val errorMessageId by viewModel.editError.collectAsState()
 
     var passwordVisible by remember { mutableStateOf(false) }
+
+    // Estados para los diálogos
+    var showExitDialog by remember { mutableStateOf(false) }
+    var showSaveDialog by remember { mutableStateOf(false) }
+
+    // Función para validar los campos antes de mostrar el diálogo
+    fun validateFields(): Boolean {
+        viewModel.clearEditError()
+
+        // Simular la validación que hace onSaveChanges
+        // Solo mostrar diálogo si no hay errores
+        return when {
+            name.isBlank() -> {
+                // Forzar validación en el ViewModel
+                viewModel.onSaveChanges { }
+                false
+            }
+            password.isNotBlank() && password != confirmPassword -> {
+                // Forzar validación en el ViewModel
+                viewModel.onSaveChanges { }
+                false
+            }
+            else -> true
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -83,7 +109,7 @@ fun EditProfileScreen(
                 },
                 navigationIcon = {
                     Box(modifier = Modifier.padding(top = 20.dp)) {
-                        IconButton(onClick = { navController.popBackStack() }) {
+                        IconButton(onClick = { showExitDialog = true }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(id = R.string.back_button_content_description),
@@ -114,7 +140,10 @@ fun EditProfileScreen(
                 Image(
                     painter = painterResource(id = R.drawable.circular_logo),
                     contentDescription = stringResource(id = R.string.logo_content_description),
-                    modifier = Modifier.size(180.dp).clip(CircleShape).background(WhiteFull)
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(CircleShape)
+                        .background(WhiteFull)
                 )
                 FloatingActionButton(
                     onClick = { navController.navigate(Pantallas.Fotoperfil.ruta) },
@@ -197,18 +226,201 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {
-                    viewModel.onSaveChanges {
-                        navController.previousBackStackEntry?.savedStateHandle?.set("update_success", true)
-                        navController.popBackStack()
+                    // Primero validar los campos
+                    if (validateFields()) {
+                        // Si la validación es exitosa, mostrar el diálogo
+                        showSaveDialog = true
                     }
+                    // Si hay errores, ya se habrán mostrado en los campos
                 },
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = AquaSoft),
-                modifier = Modifier.fillMaxWidth().height(50.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
             ) {
                 Text(stringResource(id = R.string.confirm_changes_button), color = BlackFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(20.dp))
+        }
+    }
+
+    // Diálogo de confirmación para salir
+    if (showExitDialog) {
+        ExitEditDialog(
+            onDismiss = { showExitDialog = false },
+            onConfirm = {
+                showExitDialog = false
+                navController.popBackStack()
+            }
+        )
+    }
+
+    // Diálogo de confirmación para guardar
+    if (showSaveDialog) {
+        SaveChangesDialog(
+            onDismiss = { showSaveDialog = false },
+            onConfirm = {
+                showSaveDialog = false
+                viewModel.onSaveChanges {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("update_success", true)
+                    navController.popBackStack()
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun ExitEditDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(Color(0xFFFF4B3A)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.est_s_seguro_que_quieres_salir),
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.no_se_guardar_n_tus_cambios_si_abandonas_el_proceso),
+                    fontSize = 15.sp,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                    color = Color.Black,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                )
+
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancelar), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4B3A)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .padding(bottom = 24.dp)
+                        .height(48.dp)
+                ) {
+                    Text(stringResource(R.string.confirmar), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SaveChangesDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(Color(0xFFFF4B3A)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.quieres_guardar_tus_cambios),
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.tus_datos_ser_n_actualizados_si_confirmas_esta_acci_n),
+                    fontSize = 15.sp,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                    color = Color.Black,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                )
+
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancelar), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4B3A)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .padding(bottom = 24.dp)
+                        .height(48.dp)
+                ) {
+                    Text(stringResource(R.string.confirmar), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }

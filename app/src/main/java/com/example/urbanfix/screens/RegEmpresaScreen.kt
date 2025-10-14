@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -53,11 +54,11 @@ fun RegEmpresaScreen(
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     val empresas = listOf(
-        "UAESP (Unidad Administrativa Especial de Servicios Públicos)" to 1,
-        "Empresa de Acueducto y Alcantarillado de Bogotá (EAAB)" to 2,
-        "Unidad de Mantenimiento Vial (UMV)" to 3,
-        "Instituto de Desarrollo Urbano (IDU)" to 4,
-        "Bomberos de Bogotá" to 5
+        stringResource(R.string.uaesp_unidad_administrativa_especial_de_servicios_p_blicos) to 1,
+        stringResource(R.string.empresa_de_acueducto_y_alcantarillado_de_bogot_eaab) to 2,
+        stringResource(R.string.unidad_de_mantenimiento_vial_umv) to 3,
+        stringResource(R.string.instituto_de_desarrollo_urbano_idu) to 4,
+        stringResource(R.string.bomberos_de_bogot) to 5
     )
 
     val scrollState = rememberScrollState()
@@ -69,7 +70,7 @@ fun RegEmpresaScreen(
     ) {
         Image(
             painter = painterResource(id = R.drawable.registro_normal),
-            contentDescription = "Fondo",
+            contentDescription = stringResource(R.string.fondo),
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
@@ -94,15 +95,20 @@ fun RegEmpresaScreen(
                     .padding(top = 30.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "Regístrate ahora", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                Text(text = stringResource(R.string.reg_strate_ahora), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("E-mail Institucional", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                Text(
+                    stringResource(R.string.e_mail_institucional), fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = emailInstitucional,
                     onValueChange = { regViewModel.email.value = it },
-                    placeholder = { Text("Ingresa tu e-mail institucional", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    placeholder = { Text(stringResource(R.string.ingresa_tu_e_mail_institucional), fontSize = 13.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedContainerColor = Color(0xFFD9D9D9),
@@ -119,15 +125,23 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Selecciona la empresa", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                Text(
+                    stringResource(R.string.selecciona_la_empresa), fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, bottom = 4.dp))
                 ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                     OutlinedTextField(
                         value = empresaSeleccionada,
                         onValueChange = {},
                         readOnly = true,
-                        placeholder = { Text("Selecciona tu organización", fontSize = 13.sp, color = Color(0xFF888888)) },
-                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, "Dropdown") },
-                        modifier = Modifier.menuAnchor().fillMaxWidth().height(50.dp),
+                        placeholder = { Text(stringResource(R.string.selecciona_tu_organizaci_n), fontSize = 13.sp, color = Color(0xFF888888)) },
+                        trailingIcon = { Icon(Icons.Default.ArrowDropDown,
+                            stringResource(R.string.dropdown)
+                        ) },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                            .height(50.dp),
                         shape = RoundedCornerShape(24.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedContainerColor = Color(0xFFD9D9D9),
@@ -155,12 +169,17 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Nombres", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                Text(
+                    stringResource(R.string.nombres), fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = nombres,
                     onValueChange = { regViewModel.nombres.value = it },
-                    placeholder = { Text("Ingresa tus nombres", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    placeholder = { Text(stringResource(R.string.ingresa_tus_nombres), fontSize = 13.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedContainerColor = Color(0xFFD9D9D9),
@@ -176,12 +195,17 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Apellidos", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                Text(
+                    stringResource(R.string.apellidos), fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = apellidos,
                     onValueChange = { regViewModel.apellidos.value = it },
-                    placeholder = { Text("Ingresa tus apellidos", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    placeholder = { Text(stringResource(R.string.ingresa_tus_apellidos), fontSize = 13.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedContainerColor = Color(0xFFD9D9D9),
@@ -197,12 +221,17 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                Text(
+                    stringResource(R.string.contrase_a), fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = password,
                     onValueChange = { regViewModel.password.value = it },
-                    placeholder = { Text("Ingresa tu contraseña", fontSize = 13.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    placeholder = { Text(stringResource(R.string.ingresa_tu_contrase_a), fontSize = 13.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedContainerColor = Color(0xFFD9D9D9),
@@ -217,7 +246,7 @@ fun RegEmpresaScreen(
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Image(
                                 painter = painterResource(id = if (passwordVisible) R.drawable.watch else R.drawable.hide),
-                                contentDescription = "Toggle password visibility",
+                                contentDescription = stringResource(R.string.toggle_password),
                                 modifier = Modifier.size(28.dp)
                             )
                         }
@@ -229,12 +258,17 @@ fun RegEmpresaScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text("Confirma tu contraseña", fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 4.dp))
+                Text(
+                    stringResource(R.string.confirma_tu_contrase_a), fontSize = 12.sp, color = Color(0xFF888888), modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, bottom = 4.dp))
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { regViewModel.confirmPassword.value = it },
-                    placeholder = { Text("Ingresa tu contraseña nuevamente", fontSize = 12.sp, color = Color(0xFF888888)) },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    placeholder = { Text(stringResource(R.string.ingresa_tu_contrase_a_nuevamente), fontSize = 12.sp, color = Color(0xFF888888)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedContainerColor = Color(0xFFD9D9D9),
@@ -249,7 +283,7 @@ fun RegEmpresaScreen(
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                             Image(
                                 painter = painterResource(id = if (confirmPasswordVisible) R.drawable.watch else R.drawable.hide),
-                                contentDescription = "Toggle password visibility",
+                                contentDescription = stringResource(R.string.toggle_password),
                                 modifier = Modifier.size(28.dp)
                             )
                         }
@@ -263,21 +297,24 @@ fun RegEmpresaScreen(
 
                 Button(
                     onClick = { regViewModel.registerFuncionario() },
-                    modifier = Modifier.fillMaxWidth(0.85f).height(50.dp).shadow(8.dp, RoundedCornerShape(24.dp)),
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(50.dp)
+                        .shadow(8.dp, RoundedCornerShape(24.dp)),
                     shape = RoundedCornerShape(24.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AC8E0))
                 ) {
                     if (regState is RegState.Loading) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black)
                     } else {
-                        Text(text = "Crear cuenta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                        Text(text = stringResource(R.string.crear_cuenta), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "¿Ya tienes una cuenta? Inicia sesión",
+                    text = stringResource(R.string.ya_tienes_una_cuenta_inicia_sesi_n),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF000000),
@@ -291,7 +328,7 @@ fun RegEmpresaScreen(
                 IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.size(64.dp)) {
                     Image(
                         painter = painterResource(id = R.drawable.ellipse_41),
-                        contentDescription = "Regresar",
+                        contentDescription = stringResource(R.string.regresar),
                         modifier = Modifier.size(56.dp)
                     )
                 }
@@ -300,8 +337,12 @@ fun RegEmpresaScreen(
 
         Image(
             painter = painterResource(id = R.drawable.circular_logo),
-            contentDescription = "Logo UrbanFix",
-            modifier = Modifier.size(120.dp).align(Alignment.TopCenter).offset(y = 30.dp).zIndex(2f)
+            contentDescription = stringResource(R.string.logo_urbanfix),
+            modifier = Modifier
+                .size(120.dp)
+                .align(Alignment.TopCenter)
+                .offset(y = 30.dp)
+                .zIndex(2f)
         )
     }
 
