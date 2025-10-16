@@ -67,6 +67,18 @@ class UserPreferencesManager(context: Context) {
 
     // --- FUNCIÓN DE LIMPIEZA CORREGIDA ---
     fun clearCredentials() {
+        sharedPreferences.edit().apply {
+            remove(USER_ID_KEY)
+            remove(USER_NAME_KEY)
+            remove(USER_EMAIL_KEY)
+            remove(USER_PHONE_KEY)
+            remove(USER_ROLE_KEY)
+            remove(COMPANY_NAME_KEY)
+            remove(REGISTRATION_DATE_KEY)
+            apply()
+        }
+    }
+    fun deleteAllData() {
         sharedPreferences.edit().clear().apply()
     }
 }

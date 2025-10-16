@@ -55,7 +55,7 @@ class ProfileViewModel(
         loadProfile()
     }
 
-    private fun loadProfile() {
+    fun loadProfile() {
         viewModelScope.launch {
             _profileState.value = ProfileState.Loading
 
@@ -134,7 +134,7 @@ class ProfileViewModel(
                 }
                 return@launch
             }
-            if (_password.value.isNotEmpty()) {
+            if (_password.value.isNotEmpty() || _confirmPassword.value.isNotEmpty()) {
                 if (_password.value.length < 6) {
                     _editError.value = R.string.error_password_length
                     return@launch
@@ -199,6 +199,31 @@ class ProfileViewModel(
         }
     }
 
+    fun validateForSave(): Boolean {
+        // Reutilizamos la misma lógica de validación de onSaveChanges
+        if (_name.value.isBlank()) {
+            _editError.value = if (_role.value == "funcionario") {
+                R.string.error_official_name_empty
+            } else {
+                R.string.error_user_name_empty
+            }
+            return false // Hay un error
+        }
+        if (_password.value.isNotEmpty() || _confirmPassword.value.isNotEmpty()) {
+            if (_password.value.length < 6) {
+                _editError.value = R.string.error_password_length
+                return false // Hay un error
+            }
+            if (_password.value != _confirmPassword.value) {
+                _editError.value = R.string.error_password_mismatch
+                return false // Hay un error
+            }
+        }
+        // Si llegamos aquí, no hay errores
+        _editError.value = null
+        return true
+    }
+
     fun logout() {
         viewModelScope.launch {
             userPreferencesManager.clearCredentials()
@@ -209,4 +234,31 @@ class ProfileViewModel(
     fun onNavigateToLoginHandled() {
         _navigateToLogin.value = false
     }
+
+    private val _accountDeleted = MutableStateFlow(false)
+    val accountDeleted: StateFlow<Boolean> = _accountDeleted.asStateFlow()
+
+    fun deleteAccount() {
+        viewModelScope.launch {
+            try {
+                val userId = userPreferencesManager.getUserId()
+                if (userId == -1) {return@launch }
+
+                val pathRole = if (_role.value == "funcionario") "funcionarios" else "usuarios"
+                val response = RetrofitInstance.api.deleteUser(pathRole, userId)
+
+                if (response.isSuccessful) {
+                    userPreferencesManager.deleteAllData()
+                    _accountDeleted.value = true
+                } else {
+                }
+            } catch (e: Exception) {
+            }
+        }
+    }
+
+    fun onAccountDeletedHandled() {
+        _accountDeleted.value = false
+    }
 }
+

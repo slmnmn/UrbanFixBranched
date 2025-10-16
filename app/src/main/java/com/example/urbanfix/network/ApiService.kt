@@ -4,6 +4,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.DELETE
 import retrofit2.http.Path
 interface ApiService {
     @POST("/login") // The path of your login endpoint
@@ -20,5 +21,11 @@ interface ApiService {
         @Path("role") role: String,
         @Path("userId") userId: Int,
         @Body request: UpdateUserRequest
+    ): Response<Unit>
+
+    @DELETE("/{role}/{userId}")
+    suspend fun deleteUser(
+        @Path("role") role: String,
+        @Path("userId") userId: Int
     ): Response<Unit>
 }

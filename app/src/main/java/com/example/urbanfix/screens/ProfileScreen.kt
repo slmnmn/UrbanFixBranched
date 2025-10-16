@@ -46,7 +46,7 @@ fun ProfileScreen(
     val viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(context))
     val profileState by viewModel.profileState.collectAsState()
     val navigateToLogin by viewModel.navigateToLogin.collectAsState()
-
+    val accountDeleted by viewModel.accountDeleted.collectAsState()
     // Variables de estado para los diálogos
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -60,6 +60,7 @@ fun ProfileScreen(
 
     LaunchedEffect(updateResult) {
         if (updateResult == true) {
+            viewModel.loadProfile()
             snackbarHostState.showSnackbar(successMessage)
             navController.currentBackStackEntry?.savedStateHandle?.remove<Boolean>("update_success")
         }
@@ -71,6 +72,16 @@ fun ProfileScreen(
                 popUpTo(0) { inclusive = true }
             }
             viewModel.onNavigateToLoginHandled()
+        }
+    }
+
+    LaunchedEffect(accountDeleted) {
+        if (accountDeleted) {
+            // 1. Muestra el diálogo de éxito
+            showDeleteSuccessDialog = true
+
+            // 2. Llama a la función para "apagar la alarma" y evitar bugs
+            viewModel.onAccountDeletedHandled()
         }
     }
 
@@ -222,7 +233,7 @@ fun ProfileScreen(
             onDismiss = { showDeleteDialog = false },
             onConfirm = {
                 showDeleteDialog = false
-                showDeleteSuccessDialog = true
+                viewModel.deleteAccount()
             }
         )
     }

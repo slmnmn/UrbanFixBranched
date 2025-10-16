@@ -62,8 +62,6 @@ fun EditProfileScreen(
     fun validateFields(): Boolean {
         viewModel.clearEditError()
 
-        // Simular la validación que hace onSaveChanges
-        // Solo mostrar diálogo si no hay errores
         return when {
             name.isBlank() -> {
                 // Forzar validación en el ViewModel
@@ -174,10 +172,11 @@ fun EditProfileScreen(
                         }
                     )
                 },
-                isError = errorMessageId != null,
+                isError = errorMessageId == R.string.error_user_name_empty || errorMessageId == R.string.error_official_name_empty,
                 supportingText = {
-                    errorMessageId?.let {
-                        Text(text = stringResource(id = it), color = MaterialTheme.colorScheme.error)
+                    // Muestra el mensaje solo si es un error de nombre
+                    if (errorMessageId == R.string.error_user_name_empty || errorMessageId == R.string.error_official_name_empty) {
+                        Text(text = stringResource(id = errorMessageId!!), color = MaterialTheme.colorScheme.error)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -211,10 +210,10 @@ fun EditProfileScreen(
                 value = confirmPassword,
                 onValueChange = viewModel::onConfirmPasswordChange,
                 label = { Text(stringResource(id = R.string.confirm_password_label)) },
-                isError = errorMessageId != null,
+                isError = errorMessageId == R.string.error_password_length || errorMessageId == R.string.error_password_mismatch,
                 supportingText = {
-                    errorMessageId?.let {
-                        Text(text = stringResource(id = it), color = MaterialTheme.colorScheme.error)
+                    if (errorMessageId == R.string.error_password_length || errorMessageId == R.string.error_password_mismatch) {
+                        Text(text = stringResource(id = errorMessageId!!), color = MaterialTheme.colorScheme.error)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -226,12 +225,12 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {
-                    // Primero validar los campos
-                    if (validateFields()) {
-                        // Si la validación es exitosa, mostrar el diálogo
+                    // Ahora llamamos a la nueva función de validación del ViewModel
+                    if (viewModel.validateForSave()) {
+                        // Si no hay errores, mostramos el diálogo de confirmación
                         showSaveDialog = true
                     }
-                    // Si hay errores, ya se habrán mostrado en los campos
+                    // Si hay errores, el ViewModel ya actualizó el estado y se mostrarán en los campos
                 },
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = AquaSoft),
