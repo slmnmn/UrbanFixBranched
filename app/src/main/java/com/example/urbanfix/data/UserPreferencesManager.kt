@@ -20,6 +20,8 @@ class UserPreferencesManager(context: Context) {
         private const val USER_ROLE_KEY = "user_role"
         private const val COMPANY_NAME_KEY = "company_name"
         private const val REGISTRATION_DATE_KEY = "registration_date"
+        //SIMULACRO IMAGEN PERFIL
+        private const val PROFILE_PIC_URI_KEY = "profile_pic_uri"
     }
 
     fun saveUserData(id: Int, name: String, email: String, phone: String?, role: String, companyName: String?, registrationDate: String) {
@@ -81,4 +83,12 @@ class UserPreferencesManager(context: Context) {
     fun deleteAllData() {
         sharedPreferences.edit().clear().apply()
     }
-}
+
+    //SIMULACRO IMAGEN PERFIL
+    fun saveProfilePicUri(uriString: String?) {
+        sharedPreferences.edit().apply {
+            putString(PROFILE_PIC_URI_KEY, uriString)
+        }.apply()
+    }
+
+    fun getProfilePicUri(): String? = sharedPreferences.getString(PROFILE_PIC_URI_KEY, null)}

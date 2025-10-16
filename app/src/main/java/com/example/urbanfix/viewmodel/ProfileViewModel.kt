@@ -18,6 +18,8 @@ sealed interface ProfileState {
         val role: String,
         val userEmail: String,
         val registrationDate: String,
+        //SIMULACRO IMAGEN PERFIL
+        val profilePicUri: String?,
         val userName: String? = null,
         val companyName: String? = null,
         val personalName: String? = null
@@ -51,6 +53,9 @@ class ProfileViewModel(
     private val _editError = MutableStateFlow<Int?>(null)
     val editError: StateFlow<Int?> = _editError.asStateFlow()
 
+    private val _profilePicUri = MutableStateFlow<String?>(null)
+    val profilePicUri: StateFlow<String?> = _profilePicUri.asStateFlow()
+
     init {
         loadProfile()
     }
@@ -63,6 +68,9 @@ class ProfileViewModel(
                 val userRole = userPreferencesManager.getUserRole()
                 val email = userPreferencesManager.getUserEmail()
                 val registrationDate = userPreferencesManager.getRegistrationDate()
+                //SIMULACRO IMAGEN PERFIL
+                val picUri = userPreferencesManager.getProfilePicUri()
+                _profilePicUri.value = picUri
 
                 if (userRole.isEmpty() || email.isEmpty()) {
                     _profileState.value = ProfileState.Error(R.string.error_profile_not_found)
@@ -79,7 +87,9 @@ class ProfileViewModel(
                             role = "usuario",
                             userEmail = email,
                             userName = userName,
-                            registrationDate = registrationDate
+                            registrationDate = registrationDate,
+                            //SIMULACRO IMAGEN PERFIL
+                            profilePicUri = picUri
                         )
                     }
                     "funcionario" -> {
@@ -91,7 +101,9 @@ class ProfileViewModel(
                             userEmail = email,
                             companyName = companyName,
                             personalName = personalName,
-                            registrationDate = registrationDate
+                            registrationDate = registrationDate,
+                            //SIMULACRO IMAGEN PERFIL
+                            profilePicUri = picUri
                         )
                     }
                     else -> {

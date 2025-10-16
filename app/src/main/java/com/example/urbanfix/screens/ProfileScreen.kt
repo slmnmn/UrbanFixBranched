@@ -36,6 +36,8 @@ import com.example.urbanfix.viewmodel.ProfileViewModel
 import com.example.urbanfix.viewmodel.ViewModelFactory
 import java.text.SimpleDateFormat
 import java.util.Locale
+import coil.compose.AsyncImage
+import com.example.urbanfix.screens.CompanyProfileContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,6 +153,7 @@ fun ProfileScreen(
                             personalName = state.personalName ?: "",
                             userEmail = state.userEmail,
                             registrationDate = state.registrationDate,
+                            profilePicUri = state.profilePicUri,
                             onLogoutClick = { showLogoutDialog = true },
                             onEditClick = { navController.navigate(Pantallas.EditProfile.ruta) },
                             onDeleteClick = { showDeleteDialog = true },
@@ -163,6 +166,7 @@ fun ProfileScreen(
                             userName = state.userName ?: "",
                             userEmail = state.userEmail,
                             registrationDate = state.registrationDate,
+                            profilePicUri = state.profilePicUri,
                             onLogoutClick = { showLogoutDialog = true },
                             onEditClick = { navController.navigate(Pantallas.EditProfile.ruta) },
                             onDeleteClick = { showDeleteDialog = true }
@@ -189,7 +193,7 @@ fun ProfileScreen(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 16.dp)
+                .padding(top = 88.dp)
         ) { data ->
             Card(
                 modifier = Modifier
@@ -279,6 +283,7 @@ private fun CompanyProfileContent(
     personalName: String,
     userEmail: String,
     registrationDate: String,
+    profilePicUri: String?,
     onLogoutClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -297,10 +302,16 @@ private fun CompanyProfileContent(
         Spacer(modifier = Modifier.height(20.dp))
 
         Box(contentAlignment = Alignment.BottomEnd) {
-            Image(
-                painter = painterResource(id = R.drawable.circular_logo),
-                contentDescription = stringResource(R.string.logo),
-                modifier = Modifier.size(180.dp)
+            AsyncImage(
+                model = profilePicUri,
+                contentDescription = stringResource(id = R.string.profile_picture_cd),
+                modifier = Modifier
+                    .size(180.dp)
+                    .clip(CircleShape)
+                    .background(WhiteFull),
+                // Muestra el logo por defecto si no hay foto o mientras carga
+                error = painterResource(id = R.drawable.circular_logo),
+                placeholder = painterResource(id = R.drawable.circular_logo)
             )
             FloatingActionButton(
                 onClick = { navController.navigate(Pantallas.Fotoperfil.ruta)},
@@ -426,6 +437,7 @@ private fun UserProfileContent(
     userName: String,
     userEmail: String,
     registrationDate: String,
+    profilePicUri: String?,
     onLogoutClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -441,13 +453,16 @@ private fun UserProfileContent(
         Spacer(modifier = Modifier.height(20.dp))
 
         Box(contentAlignment = Alignment.BottomEnd) {
-            Image(
-                painter = painterResource(id = R.drawable.circular_logo),
+            AsyncImage(
+                model = profilePicUri,
                 contentDescription = stringResource(id = R.string.profile_picture_cd),
                 modifier = Modifier
                     .size(180.dp)
                     .clip(CircleShape)
-                    .background(WhiteFull)
+                    .background(WhiteFull),
+                // Muestra el logo por defecto si no hay foto o mientras carga
+                error = painterResource(id = R.drawable.circular_logo),
+                placeholder = painterResource(id = R.drawable.circular_logo)
             )
             FloatingActionButton(
                 onClick = { navController.navigate(Pantallas.Fotoperfil.ruta) },

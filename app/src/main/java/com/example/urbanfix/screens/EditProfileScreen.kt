@@ -37,6 +37,7 @@ import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.ProfileViewModel
 import com.example.urbanfix.viewmodel.ViewModelFactory
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +53,8 @@ fun EditProfileScreen(
     val confirmPassword by viewModel.confirmPassword.collectAsState()
     val errorMessageId by viewModel.editError.collectAsState()
 
+    val profilePicUri by viewModel.profilePicUri.collectAsState()
+
     var passwordVisible by remember { mutableStateOf(false) }
 
     // Estados para los diálogos
@@ -59,23 +62,6 @@ fun EditProfileScreen(
     var showSaveDialog by remember { mutableStateOf(false) }
 
     // Función para validar los campos antes de mostrar el diálogo
-    fun validateFields(): Boolean {
-        viewModel.clearEditError()
-
-        return when {
-            name.isBlank() -> {
-                // Forzar validación en el ViewModel
-                viewModel.onSaveChanges { }
-                false
-            }
-            password.isNotBlank() && password != confirmPassword -> {
-                // Forzar validación en el ViewModel
-                viewModel.onSaveChanges { }
-                false
-            }
-            else -> true
-        }
-    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -135,13 +121,15 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Box(contentAlignment = Alignment.BottomEnd) {
-                Image(
-                    painter = painterResource(id = R.drawable.circular_logo),
-                    contentDescription = stringResource(id = R.string.logo_content_description),
+                AsyncImage(
+                    model = profilePicUri, // <-- USA LA NUEVA VARIABLE
+                    contentDescription = stringResource(id = R.string.profile_picture_cd),
                     modifier = Modifier
                         .size(180.dp)
                         .clip(CircleShape)
-                        .background(WhiteFull)
+                        .background(WhiteFull),
+                    error = painterResource(id = R.drawable.circular_logo),
+                    placeholder = painterResource(id = R.drawable.circular_logo)
                 )
                 FloatingActionButton(
                     onClick = { navController.navigate(Pantallas.Fotoperfil.ruta) },

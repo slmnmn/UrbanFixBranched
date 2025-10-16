@@ -34,6 +34,8 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.urbanfix.R
+import com.example.urbanfix.data.UserPreferencesManager
+import com.example.urbanfix.navigation.Pantallas
 import java.io.File
 
 val BlueProfile = Color(0xFF1D3557)
@@ -43,26 +45,50 @@ val RedProfile = Color(0xFFE63946)
 @Composable
 fun FotoperfilScreen(navController: NavHostController) {
     val context = LocalContext.current
+    val userPreferencesManager = remember { UserPreferencesManager(context) }
 
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    var originalImageUri by remember { mutableStateOf<Uri?>(null) }
+    fun navigateBackToProfile() {
+        navController.popBackStack(Pantallas.Perfil.ruta, inclusive = false)
+        navController.currentBackStackEntry?.savedStateHandle?.set("update_success", true)
+    }
+
+    // Cargar imagen inicial
+    val initialUri = remember { userPreferencesManager.getProfilePicUri()?.let { Uri.parse(it) } }
+    var imageUri by remember { mutableStateOf(initialUri) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var showBackDialog by remember { mutableStateOf(false) }
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
     // Launcher para seleccionar de galería
     val galleryLauncher = rememberLauncherForActivityResult(
+
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { imageUri = it }
+        uri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: Exception) {
+                // Ignorar si no se pueden obtener permisos persistentes
+            }
+
+            val uriString = it.toString()
+            imageUri = it
+            userPreferencesManager.saveProfilePicUri(uriString)
+            navigateBackToProfile()
+        }
     }
 
     // Launcher para tomar foto
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success) {
+        if (success && tempImageUri != null) {
+            val uriString = tempImageUri.toString()
             imageUri = tempImageUri
+            userPreferencesManager.saveProfilePicUri(uriString)
+            navigateBackToProfile()
         }
     }
 
@@ -82,22 +108,13 @@ fun FotoperfilScreen(navController: NavHostController) {
         }
     }
 
-    // Función para manejar el botón de volver
-    fun handleBackPress() {
-        if (imageUri != null && imageUri != originalImageUri) {
-            showBackDialog = true
-        } else {
-            navController.popBackStack()
-        }
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
         ) {
-            // Top Bar - Modificada: más alta, texto centrado y contenido más abajo
+            // Top Bar
             TopAppBar(
                 title = {
                     Box(
@@ -118,7 +135,7 @@ fun FotoperfilScreen(navController: NavHostController) {
                     Box(
                         modifier = Modifier.padding(top = 20.dp)
                     ) {
-                        IconButton(onClick = { handleBackPress() }) {
+                        IconButton(onClick = { navController.popBackStack() }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back_button_content_description),
@@ -279,7 +296,7 @@ fun FotoperfilScreen(navController: NavHostController) {
                         // Botón Cancelar
                         Button(
                             onClick = {
-                                handleBackPress()
+                                navController.popBackStack()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -315,27 +332,13 @@ fun FotoperfilScreen(navController: NavHostController) {
     if (showDeleteDialog) {
         DeletePhotoConfirmationDialog(
             onConfirm = {
+                showDeleteDialog = false
                 imageUri = null
-                showDeleteDialog = false
+                userPreferencesManager.saveProfilePicUri(null)
+                navigateBackToProfile()
             },
             onDismiss = {
                 showDeleteDialog = false
-            }
-        )
-    }
-
-    // Diálogo de confirmación para volver con cambios
-    if (showBackDialog) {
-        ChangePhotoConfirmationDialog(
-            onConfirm = {
-                // Aquí puedes guardar la foto si es necesario
-                originalImageUri = imageUri
-                showBackDialog = false
-                navController.popBackStack()
-            },
-            onDismiss = {
-                showBackDialog = false
-                navController.popBackStack()
             }
         )
     }
@@ -429,100 +432,6 @@ fun DeletePhotoConfirmationDialog(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ChangePhotoConfirmationDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 1.dp),
-            shape = RoundedCornerShape(1.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(0xFFFFB74D)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.change_photo_confirmation_title),
-                        color = Color.Black,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Text(
-                    text = stringResource(R.string.change_photo_confirmation_message),
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily.SansSerif,
-                    color = Color.Black,
-                    fontStyle = FontStyle.Italic,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp, horizontal = 24.dp)
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .padding(bottom = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = onConfirm,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1D3557)
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.yes_change_button),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Button(
-                        onClick = onDismiss,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = RedProfile
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.no_change_button),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
                 }
             }
         }

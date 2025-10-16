@@ -7,6 +7,8 @@ import com.example.urbanfix.network.RetrofitInstance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.google.gson.Gson
+import com.example.urbanfix.network.ErrorResponse
 
 sealed interface RegState {
     object Idle : RegState
@@ -57,7 +59,10 @@ class RegEmpresaViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     _regState.value = RegState.Success
                 } else {
-                    _regState.value = RegState.Error("Error al registrar: ${response.message()}")
+                    val errorMsg = response.errorBody()?.string()?.let {
+                        Gson().fromJson(it, ErrorResponse::class.java).message
+                    } ?: "Error al registrar (Código: ${response.code()})"
+                    _regState.value = RegState.Error(errorMsg)
                 }
             } catch (e: Exception) {
                 _regState.value = RegState.Error("No se pudo conectar al servidor: ${e.message}")
