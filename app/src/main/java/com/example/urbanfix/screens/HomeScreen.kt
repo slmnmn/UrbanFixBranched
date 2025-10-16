@@ -49,7 +49,6 @@ import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
 import com.example.urbanfix.navigation.Pantallas
 import com.mapbox.maps.plugin.locationcomponent.location
-import kotlinx.coroutines.flow.collect
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -229,29 +228,59 @@ fun HomeScreen(navController: NavHostController) {
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = stringResource(R.string.report_title),
+                        text = stringResource(R.string.report_title_2),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = BlackFull
                     )
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    // Primera fila de botones con navegación
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        ReportButton(R.drawable.huecos, stringResource(R.string.category_potholes))
-                        ReportButton(R.drawable.alumbrado, stringResource(R.string.category_lighting))
-                        ReportButton(R.drawable.basura, stringResource(R.string.category_trash))
+                        ReportButton(
+                            iconId = R.drawable.huecos,
+                            text = stringResource(R.string.category_potholes),
+                            onClick = { navController.navigate("reportar/huecos") }
+                        )
+                        ReportButton(
+                            iconId = R.drawable.alumbrado,
+                            text = stringResource(R.string.category_lighting),
+                            onClick = { navController.navigate("reportar/alumbrado") }
+                        )
+                        ReportButton(
+                            iconId = R.drawable.basura,
+                            text = stringResource(R.string.category_trash),
+                            onClick = { navController.navigate("reportar/basura") }
+                        )
                     }
+
                     Spacer(modifier = Modifier.height(12.dp))
+
+                    // Segunda fila de botones con navegación
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        ReportButton(R.drawable.semaforo, stringResource(R.string.category_traffic_light))
-                        ReportButton(R.drawable.hidrante, stringResource(R.string.category_hydrant))
-                        ReportButton(R.drawable.alcantarilla, stringResource(R.string.category_sewer))
+                        ReportButton(
+                            iconId = R.drawable.semaforo,
+                            text = stringResource(R.string.category_traffic_light),
+                            onClick = { navController.navigate("reportar/semaforo") }
+                        )
+                        ReportButton(
+                            iconId = R.drawable.hidrante,
+                            text = stringResource(R.string.category_hydrant),
+                            onClick = { navController.navigate("reportar/hidrante") }
+                        )
+                        ReportButton(
+                            iconId = R.drawable.alcantarilla,
+                            text = stringResource(R.string.category_sewer),
+                            onClick = { navController.navigate("reportar/alcantarilla") }
+                        )
                     }
+
                     Spacer(modifier = Modifier.height(20.dp))
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -515,8 +544,9 @@ private fun initLocationComponent(mapView: MapView) {
     }
 }
 
+// ReportButton ACTUALIZADO con onClick
 @Composable
-fun ReportButton(iconId: Int, text: String) {
+fun ReportButton(iconId: Int, text: String, onClick: () -> Unit = {}) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = PurpleMain),
@@ -524,6 +554,7 @@ fun ReportButton(iconId: Int, text: String) {
         modifier = Modifier
             .width(100.dp)
             .height(100.dp)
+            .clickable(onClick = onClick)  // CAMBIO AQUÍ
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

@@ -46,7 +46,7 @@
     <string name="search_placeholder">Copia aquí el código del reporte</string>
     <string name="search_button_description">Buscar</string>
     <string name="greeting_user">¡Hola, %1$s!</string>
-    <string name="report_title">Reportar</string>
+    <string name="report_title_2">Reportar</string>
     <string name="my_supports">Mis apoyos</string>
     <string name="my_reports_button">Mis denuncias</string>
     <string name="supports_icon_description">Apoyos</string>
@@ -222,6 +222,43 @@
     <string name="no_se_guardar_n_tus_cambios_si_abandonas_el_proceso">No se guardarán tus cambios si abandonas el proceso.</string>
     <string name="est_s_seguro_que_quieres_salir">¿Estás seguro que quieres salir?</string>
 
+
+
+
+    <!-- MIS CAMBIOOOS -->
+    <!-- Report Screen -->
+    <string name="report_title">Reportar %1$s</string>
+    <string name="event_address_label">Dirección del evento</string>
+    <string name="event_address_required">(Obligatorio)</string>
+    <string name="event_address_placeholder">Carrera 12 #30c 47 Sur</string>
+    <string name="reference_point_label">Punto de referencia</string>
+    <string name="reference_point_required">(Obligatorio)</string>
+    <string name="reference_point_placeholder">Al lado del colegio Carmen teresiano</string>
+    <string name="attach_photos">Adjuntar fotos</string>
+    <string name="max_photos">(Máx 2)</string>
+    <string name="take_photo_button">Tomar foto</string>
+    <string name="add_from_gallery_button">Agregar de Galería</string>
+    <string name="continue_button">Continuar</string>
+
+    <!-- Report Alerts -->
+    <string name="exit_confirmation_title">Seguro que quieres salir?</string>
+    <string name="exit_confirmation_message">Se perderán todos los cambios</string>
+    <string name="exit_yes_button">Salir</string>
+    <string name="exit_no_button">Volver</string>
+
+    <string name="incomplete_fields_title">Error</string>
+    <string name="incomplete_fields_message">Debes completar los campos obligatorios</string>
+
+    <string name="max_photos_error_title">Error</string>
+    <string name="max_photos_error_message">No puedes agregar más de dos fotos</string>
+
+    <!-- Report Types -->
+    <string name="report_type_potholes">huecos</string>
+    <string name="report_type_lighting">alumbrado público</string>
+    <string name="report_type_trash">basura acumulada</string>
+    <string name="report_type_traffic_light">semáforo dañado</string>
+    <string name="report_type_hydrant">hidrante roto</string>
+    <string name="report_type_sewer">alcantarilla sin tapa</string>
 
 </resources>
 
