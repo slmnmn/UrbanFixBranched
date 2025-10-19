@@ -4,15 +4,19 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -20,8 +24,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -36,14 +43,128 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat
 import com.mapbox.maps.MapView
+import com.example.urbanfix.data.ReportDataHolder
+import com.example.urbanfix.navigation.Pantallas
 import com.mapbox.maps.Style
 import com.mapbox.maps.plugin.locationcomponent.location
+import com.mapbox.maps.plugin.gestures.addOnMapClickListener
+import com.mapbox.geojson.Point
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.ui.theme.*
 import java.io.File
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.URLEncoder
+import org.json.JSONObject
+import java.net.URL
+
+
+private fun rotateImageIfNeeded(bitmap: Bitmap, uri: Uri, context: android.content.Context): Bitmap {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val exif = ExifInterface(inputStream!!)
+        val orientation = exif.getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_NORMAL
+        )
+        inputStream.close()
+
+        val matrix = android.graphics.Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        }
+
+        android.graphics.Bitmap.createBitmap(
+            bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
+        )
+    } catch (e: Exception) {
+        bitmap
+    }
+}
+
+// Función para geocodificar dirección a coordenadas
+private suspend fun geocodeAddress(address: String, context: android.content.Context): Point? {
+    return withContext(Dispatchers.IO) {
+        try {
+            val encodedAddress = URLEncoder.encode(address, "UTF-8")
+            val accessToken = context.getString(R.string.mapbox_access_token)
+            val url = "https://api.mapbox.com/geocoding/v5/mapbox.places/$encodedAddress.json?access_token=$accessToken&limit=1"
+
+            val response = URL(url).readText()
+            val json = JSONObject(response)
+            val features = json.getJSONArray("features")
+
+            if (features.length() > 0) {
+                val coordinates = features.getJSONObject(0)
+                    .getJSONArray("coordinates")
+                Point.fromLngLat(
+                    coordinates.getDouble(0),
+                    coordinates.getDouble(1)
+                )
+            } else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+}
+
+// Función para geocodificación inversa (coordenadas a dirección)
+private suspend fun reverseGeocode(point: Point, context: android.content.Context): String? {
+    return withContext(Dispatchers.IO) {
+        try {
+            val accessToken = context.getString(R.string.mapbox_access_token)
+            val url = "https://api.mapbox.com/geocoding/v5/mapbox.places/${point.longitude()},${point.latitude()}.json?access_token=$accessToken&limit=1"
+
+            val response = URL(url).readText()
+            val json = JSONObject(response)
+            val features = json.getJSONArray("features")
+
+            if (features.length() > 0) {
+                features.getJSONObject(0).getString("place_name")
+            } else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+}
+
+// Función para actualizar la ubicación en el mapa
+private fun updateMapLocation(mapView: MapView, point: Point) {
+    try {
+        // Mover la cámara al punto
+        mapView.getMapboxMap().setCamera(
+            CameraOptions.Builder()
+                .center(point)
+                .zoom(15.0)
+                .build()
+        )
+
+        // Agregar marcador
+        val annotationApi = mapView.annotations
+        val pointAnnotationManager = annotationApi.createPointAnnotationManager()
+        pointAnnotationManager.deleteAll()
+
+        val pointAnnotationOptions = PointAnnotationOptions()
+            .withPoint(point)
+
+        pointAnnotationManager.create(pointAnnotationOptions)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,15 +173,23 @@ fun ReportarScreen(
     reportType: String = "huecos"
 ) {
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
 
     var eventAddress by remember { mutableStateOf("") }
     var referencePoint by remember { mutableStateOf("") }
     var photos by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
+    // Estados para el mapa
+    var selectedLocation by remember { mutableStateOf<Point?>(null) }
+    var mapView by remember { mutableStateOf<MapView?>(null) }
+
     var showExitDialog by remember { mutableStateOf(false) }
     var showIncompleteFieldsDialog by remember { mutableStateOf(false) }
     var showMaxPhotosDialog by remember { mutableStateOf(false) }
+    var expandedImageIndex by remember { mutableStateOf<Int?>(null) }
+
 
     // Estado para permisos de ubicación
     var hasLocationPermission by remember {
@@ -104,7 +233,8 @@ fun ReportarScreen(
             } else {
                 try {
                     val inputStream = context.contentResolver.openInputStream(it)
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    var bitmap = BitmapFactory.decodeStream(inputStream)
+                    bitmap = rotateImageIfNeeded(bitmap, it, context)
                     photos = photos + bitmap
                     inputStream?.close()
                 } catch (e: Exception) {
@@ -124,7 +254,8 @@ fun ReportarScreen(
             } else {
                 try {
                     val inputStream = context.contentResolver.openInputStream(tempImageUri!!)
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    var bitmap = BitmapFactory.decodeStream(inputStream)
+                    bitmap = rotateImageIfNeeded(bitmap, tempImageUri!!, context)
                     photos = photos + bitmap
                     inputStream?.close()
                 } catch (e: Exception) {
@@ -169,52 +300,75 @@ fun ReportarScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        if (eventAddress.isNotEmpty() || referencePoint.isNotEmpty() || photos.isNotEmpty()) {
-                            showExitDialog = true
-                        } else {
-                            navController.popBackStack()
+                    Box(modifier = Modifier.padding(top = 20.dp)) {
+                        IconButton(onClick = {
+                            if (eventAddress.isNotEmpty() || referencePoint.isNotEmpty() || photos.isNotEmpty()) {
+                                showExitDialog = true
+                            } else {
+                                navController.popBackStack()
+                            }
+                        }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back_button_content_description),
+                                tint = WhiteFull
+                            )
                         }
-                    }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back_button_content_description),
-                            tint = WhiteFull
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = BlueMain
-                )
+                ),
+                modifier = Modifier.height(72.dp)
             )
         },
         bottomBar = {
             BottomNavBar(navController = navController)
-        }
+        },
+        containerColor = GrayBg
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xFFF5F5F5))
+                .background(Color(0xFFF1FAEE))
                 .padding(16.dp)
         ) {
-            // Dirección del evento
-            Text(
-                text = stringResource(R.string.event_address_label),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = BlackFull
-            )
-            Text(
-                text = stringResource(R.string.event_address_required),
-                fontSize = 12.sp,
-                color = Color(0xFFE63946),
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 4.dp)
-            )
+            ) {
+                Text(
+                    text = stringResource(R.string.event_address_label),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BlackFull
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.event_address_required),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFE63946)
+                )
+            }
             OutlinedTextField(
                 value = eventAddress,
-                onValueChange = { eventAddress = it },
+                onValueChange = { newAddress ->
+                    eventAddress = newAddress
+                    // Geocodificar cuando el usuario termine de escribir
+                    if (newAddress.length > 5) {
+                        coroutineScope.launch {
+                            val location = geocodeAddress(newAddress, context)
+                            location?.let { point ->
+                                selectedLocation = point
+                                mapView?.let { mv ->
+                                    updateMapLocation(mv, point)
+                                }
+                            }
+                        }
+                    }
+                },
                 placeholder = {
                     Text(
                         stringResource(R.string.event_address_placeholder),
@@ -224,10 +378,11 @@ fun ReportarScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(6.dp, RoundedCornerShape(12.dp))
                     .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = WhiteFull,
+                    unfocusedContainerColor = Color(0xFFE2DEDE),
                     focusedContainerColor = WhiteFull,
                     unfocusedBorderColor = Color.LightGray,
                     focusedBorderColor = BlueMain
@@ -238,18 +393,25 @@ fun ReportarScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Punto de referencia
-            Text(
-                text = stringResource(R.string.reference_point_label),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = BlackFull
-            )
-            Text(
-                text = stringResource(R.string.reference_point_required),
-                fontSize = 12.sp,
-                color = Color(0xFFE63946),
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 4.dp)
-            )
+            ) {
+                Text(
+                    text = stringResource(R.string.reference_point_label),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BlackFull
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.reference_point_required),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFE63946)
+                )
+            }
+
             OutlinedTextField(
                 value = referencePoint,
                 onValueChange = { referencePoint = it },
@@ -262,10 +424,11 @@ fun ReportarScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(56.dp)
+                    .shadow(6.dp, RoundedCornerShape(12.dp)),
+                shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = WhiteFull,
+                    unfocusedContainerColor = Color(0xFFE2DEDE),
                     focusedContainerColor = WhiteFull,
                     unfocusedBorderColor = Color.LightGray,
                     focusedBorderColor = BlueMain
@@ -275,38 +438,59 @@ fun ReportarScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Mapa - REEMPLAZADO CON MAPBOX
+            // Mapa con sincronización bidireccional
             Card(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
+                    .height(if (photos.isEmpty() || photos.size >= 2) 220.dp else 150.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 MapboxMapComponent(
-                    modifier = Modifier.fillMaxSize(),
-                    hasPermission = hasLocationPermission
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .nestedScroll(connection = object : NestedScrollConnection {}),
+                    hasPermission = hasLocationPermission,
+                    selectedLocation = selectedLocation,
+                    onMapReady = { mv -> mapView = mv },
+                    onLocationSelected = { point ->
+                        selectedLocation = point
+                        // Geocodificación inversa: obtener dirección del punto
+                        coroutineScope.launch {
+                            val address = reverseGeocode(point, context)
+                            if (address != null) {
+                                eventAddress = address
+                            }
+                        }
+                    }
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Adjuntar fotos
-            Text(
-                text = stringResource(R.string.attach_photos),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = BlackFull,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = stringResource(R.string.max_photos),
-                fontSize = 12.sp,
-                color = Color(0xFFE63946),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.attach_photos),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BlackFull,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.max_photos),
+                    fontSize = 14.sp,
+                    color = Color(0xFFE63946),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Spacer(modifier = Modifier.height(5.dp))
 
             // Mostrar fotos agregadas o botones
             if (photos.isEmpty()) {
@@ -352,6 +536,8 @@ fun ReportarScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -359,8 +545,9 @@ fun ReportarScreen(
                         photos.forEachIndexed { index, bitmap ->
                             Box(
                                 modifier = Modifier
-                                    .size(120.dp)
+                                    .size(100.dp)
                                     .padding(4.dp)
+                                    .clickable { expandedImageIndex = index }
                             ) {
                                 Image(
                                     bitmap = bitmap.asImageBitmap(),
@@ -377,20 +564,20 @@ fun ReportarScreen(
                                     },
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .size(32.dp)
-                                        .background(Color.Red, RoundedCornerShape(16.dp))
+                                        .size(28.dp)
+                                        .background(Color.Transparent, RoundedCornerShape(14.dp))
                                 ) {
                                     Image(
                                         painter = painterResource(id = R.drawable.eliminar_foto),
                                         contentDescription = "Eliminar foto",
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     if (photos.size < 2) {
                         Row(
@@ -400,6 +587,8 @@ fun ReportarScreen(
                             SmallPhotoButton(
                                 iconId = R.drawable.icono_foto,
                                 text = stringResource(R.string.take_photo_button),
+                                width = 150.dp,
+                                height = 100.dp,
                                 onClick = {
                                     when (PackageManager.PERMISSION_GRANTED) {
                                         ContextCompat.checkSelfPermission(
@@ -427,6 +616,8 @@ fun ReportarScreen(
                             SmallPhotoButton(
                                 iconId = R.drawable.icono_galeria,
                                 text = stringResource(R.string.add_from_gallery_button),
+                                width = 150.dp,
+                                height = 100.dp,
                                 onClick = {
                                     galleryLauncher.launch("image/*")
                                 }
@@ -436,14 +627,23 @@ fun ReportarScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Button(
                 onClick = {
                     if (eventAddress.isEmpty() || referencePoint.isEmpty()) {
                         showIncompleteFieldsDialog = true
                     } else {
-                        // Continuar con el proceso
+                        // Guardar datos temporalmente incluyendo la ubicación
+                        ReportDataHolder.setData(
+                            address = eventAddress,
+                            reference = referencePoint,
+                            photoList = photos,
+                            location = selectedLocation
+                        )
+
+                        // Navegar a la segunda pantalla
+                        navController.navigate(Pantallas.ReportarDos.crearRuta(reportType))
                     }
                 },
                 modifier = Modifier
@@ -488,9 +688,16 @@ fun ReportarScreen(
             onDismiss = { showMaxPhotosDialog = false }
         )
     }
+    if (expandedImageIndex != null && expandedImageIndex!! < photos.size) {
+        ImagePreviewDialog(
+            bitmap = photos[expandedImageIndex!!],
+            onDismiss = { expandedImageIndex = null }
+        )
+    }
+
 }
 
-// Función auxiliar para inicializar el componente de ubicación
+
 private fun initLocationComponent(mapView: MapView) {
     val context = mapView.context
     if (ActivityCompat.checkSelfPermission(
@@ -505,6 +712,7 @@ private fun initLocationComponent(mapView: MapView) {
         }
     }
 }
+
 @Composable
 fun PhotoActionButton(
     iconId: Int,
@@ -513,8 +721,8 @@ fun PhotoActionButton(
 ) {
     Card(
         modifier = Modifier
-            .width(150.dp)
-            .height(140.dp)
+            .width(160.dp)
+            .height(120.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -530,12 +738,12 @@ fun PhotoActionButton(
             Image(
                 painter = painterResource(id = iconId),
                 contentDescription = text,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(28.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = text,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = BlackFull,
                 textAlign = TextAlign.Center
@@ -548,12 +756,14 @@ fun PhotoActionButton(
 fun SmallPhotoButton(
     iconId: Int,
     text: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    width: Dp = 100.dp,
+    height: Dp = 80.dp
 ) {
     Card(
         modifier = Modifier
-            .width(100.dp)
-            .height(100.dp)
+            .width(width)
+            .height(height)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -569,16 +779,16 @@ fun SmallPhotoButton(
             Image(
                 painter = painterResource(id = iconId),
                 contentDescription = text,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(26.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = text,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = BlackFull,
                 textAlign = TextAlign.Center,
-                lineHeight = 12.sp
+                lineHeight = 10.sp
             )
         }
     }
@@ -815,3 +1025,121 @@ fun MaxPhotosErrorDialog(
         }
     }
 }
+@Composable
+fun ImagePreviewDialog(
+    bitmap: Bitmap,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.9f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .fillMaxHeight(0.85f)
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Imagen ampliada
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Imagen ampliada",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Fit
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Botón Volver
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1D3557)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Text(
+                        text = "Volver",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+@Composable
+fun MapboxMapComponent(
+    modifier: Modifier = Modifier,
+    hasPermission: Boolean = false,
+    selectedLocation: Point? = null,
+    onMapReady: (MapView) -> Unit = {},
+    onLocationSelected: (Point) -> Unit = {}
+) {
+    val context = LocalContext.current
+
+    AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            val mapView = MapView(ctx).apply {
+                getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS)
+            }
+
+            // Callback cuando el mapa está listo
+            onMapReady(mapView)
+
+            // Detectar clics en el mapa
+            mapView.getMapboxMap().addOnMapClickListener { point ->
+                onLocationSelected(point)
+                true
+            }
+
+            // Activar ubicación si hay permiso
+            if (hasPermission) {
+                try {
+                    val locationComponent = mapView.location
+                    locationComponent.updateSettings {
+                        enabled = true
+                        pulsingEnabled = true
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            mapView
+        },
+        update = { mapView ->
+            // Mover cámara si hay una ubicación seleccionada
+            selectedLocation?.let { point ->
+                mapView.getMapboxMap().setCamera(
+                    CameraOptions.Builder()
+                        .center(point)
+                        .zoom(15.0)
+                        .build()
+                )
+            }
+        }
+    )
+}
+
+

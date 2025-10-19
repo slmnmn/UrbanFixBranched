@@ -25,9 +25,12 @@ sealed class Pantallas(val ruta: String) {
     object Verperfilempresa : Pantallas("verperfilempresa")
     object Verperfilusuario : Pantallas("verperfilusuario")
 
-    // 👇 Nueva pantalla con parámetro
     object Reportar : Pantallas("reportar/{reportType}") {
         fun crearRuta(reportType: String) = "reportar/$reportType"
+    }
+
+    object ReportarDos : Pantallas("reportar_dos/{reportType}") {
+        fun crearRuta(reportType: String) = "reportar_dos/$reportType"
     }
 }
 
@@ -58,20 +61,35 @@ fun AppNavigator(navController: NavHostController) {
         }
 
         /* ---------------------------
-           NUEVA RUTA: ReportarScreen
+           RUTA: ReportarScreen (Pantalla 1)
         ----------------------------*/
         composable(
             route = Pantallas.Reportar.ruta,
             arguments = listOf(
                 navArgument("reportType") {
                     type = NavType.StringType
-                    defaultValue = "huecos" // Valor por defecto
+                    defaultValue = "huecos"
                 }
             )
         ) { backStackEntry ->
             val reportType = backStackEntry.arguments?.getString("reportType") ?: "huecos"
             ReportarScreen(navController = navController, reportType = reportType)
         }
+
+        /* ---------------------------
+           RUTA: ReportarDosScreen (Pantalla 2)
+        ----------------------------*/
+        composable(
+            route = Pantallas.ReportarDos.ruta,
+            arguments = listOf(
+                navArgument("reportType") {
+                    type = NavType.StringType
+                    defaultValue = "huecos"
+                }
+            )
+        ) { backStackEntry ->
+            val reportType = backStackEntry.arguments?.getString("reportType") ?: "huecos"
+            ReportarDosScreen(navController = navController, reportType = reportType)
+        }
     }
 }
-

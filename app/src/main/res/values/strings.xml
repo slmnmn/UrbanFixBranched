@@ -237,7 +237,8 @@
     <string name="attach_photos">Adjuntar fotos</string>
     <string name="max_photos">(Máx 2)</string>
     <string name="take_photo_button">Tomar foto</string>
-    <string name="add_from_gallery_button">Agregar de Galería</string>
+    <string name="add_from_gallery_button">Agregar de la Galería</string>
+    <string name="add_from_gallery_button_dos">Galería</string>
     <string name="continue_button">Continuar</string>
 
     <!-- Report Alerts -->
@@ -258,7 +259,18 @@
     <string name="report_type_trash">basura acumulada</string>
     <string name="report_type_traffic_light">semáforo dañado</string>
     <string name="report_type_hydrant">hidrante roto</string>
-    <string name="report_type_sewer">alcantarilla sin tapa</string>
+    <string name="report_type_sewer">alcantarilla</string>
 
+    <!-- ReportarDosScreen -->
+    <string name="event_type_label">Tipo de evento</string>
+    <string name="event_type_required">(Obligatorio)</string>
+    <string name="select_event_type">Seleccionar…</string>
+    <string name="generate_description_ia">Generar Descripción con IA</string>
+    <string name="generate_with_ia">Generar con IA</string>
+    <string name="regenerate_description">Regenerar Descripción</string>
+    <string name="generating_description">Generando descripción…</string>
+    <string name="description_placeholder">La IA te va a generar una descripción aquí.</string>
+    <string name="create_report_button">Crear Reporte</string>
+    <string name="select_photo_source">Seleccionar origen de foto</string>
 </resources>
 
