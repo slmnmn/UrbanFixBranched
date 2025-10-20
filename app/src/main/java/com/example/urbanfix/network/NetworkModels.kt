@@ -38,6 +38,19 @@ data class UpdateUserRequest(
     val nombre: String,
     val contrasena: String? // Opcional
 )
+
+data class ReporteRequest(
+    val descripcion: String, //Requerido
+    val direccion: String, //Requerido
+    val referencia: String, //Requerido
+    val img_prueba_1: String, //Requeridxo. Manden el bitmap.
+    val img_prueba_2: String,
+    val latitud: Float, //Requerido
+    val longitud: Float, //Requerido
+    val usuario_creador_id: String, //Requerido
+    val categoria_id: Int //Requerido.
+)
+
 // Data you EXPECT TO RECEIVE on a failed login
 data class ErrorResponse(
     val message: String
