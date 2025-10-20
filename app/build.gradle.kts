@@ -61,7 +61,7 @@ dependencies {
     // Coil para cargar imágenes - AÑADIR ESTAS LÍNEAS
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("io.coil-kt:coil:2.5.0")
-
+    implementation("org.json:json:20231013")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

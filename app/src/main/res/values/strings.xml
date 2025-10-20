@@ -19,7 +19,6 @@
     <string name="success_dialog_message">Código enviado, revisa tu e-mail</string>
     <string name="next_button">Siguiente</string>
     <string name="error_dialog_title">Error</string>
-    <string name="back_button">Volver</string>
 
     <string name="logo_content_description">Logo UrbanFix</string>
     <string name="city_background_content_description">Fondo de ciudad</string>
@@ -29,6 +28,14 @@
     <string name="login_button">Iniciar sesión</string>
     <string name="no_account_question">¿No tienes una cuenta? </string>
     <string name="register_link">Regístrate</string>
+    <string name="error_generating_description">Error al generar descripción: %1$s</string>
+
+    <!-- Strings para el diálogo de carga de reporte -->
+    <string name="loading_report">Cargando..</string>
+    <string name="error_uploading_report">Error al subir el reporte</string>
+    <string name="retry_button">Volver a intentarlo</string>
+    <string name="report_completed">Completado</string>
+    <string name="home_button">Inicio</string>
 
     <!-- Login Screen -->
     <string name="login_background_description">Fondo Login UrbanFix</string>
@@ -272,5 +279,56 @@
     <string name="description_placeholder">La IA te va a generar una descripción aquí.</string>
     <string name="create_report_button">Crear Reporte</string>
     <string name="select_photo_source">Seleccionar origen de foto</string>
+
+    <!-- Diálogos y mensajes -->
+    <string name="photo_delete_description">Eliminar foto</string>
+    <string name="photo_number">Foto %1$d</string>
+    <string name="add_photo">+</string>
+    <string name="back_button">Volver</string>
+
+    <!-- NoImageDialog -->
+    <string name="image_required_title">Imagen requerida</string>
+    <string name="image_required_message">Debes subir al menos una imagen para generar la descripción.</string>
+    <string name="understood_button">Entendido</string>
+
+    <!-- NoSubtypeDialog -->
+    <string name="event_type_required_title">Tipo de evento requerido</string>
+    <string name="event_type_required_message">Debes seleccionar un tipo de evento antes de generar la descripción.</string>
+
+    <!-- Subtipos - Huecos -->
+    <string name="pothole_small">Hueco Pequeño</string>
+    <string name="pothole_deep">Hueco Profundo</string>
+    <string name="pothole_large">Hueco Grande/Ancho</string>
+    <string name="road_deteriorated">Vía Deteriorada</string>
+
+    <!-- Subtipos - Alumbrado -->
+    <string name="light_off">Luminaria Apagada</string>
+    <string name="light_flickering">Luminaria Intermitente</string>
+    <string name="light_on_day">Luz Encendida de Día</string>
+    <string name="pole_damaged">Poste Dañado/Caído</string>
+
+    <!-- Subtipos - Alcantarilla -->
+    <string name="cover_missing">Tapa Faltante/Rota</string>
+    <string name="sewer_blocked">Alcantarilla Obstruida</string>
+    <string name="strong_odor">Mal Olor Fuerte</string>
+    <string name="wastewater_leak">Fuga de Aguas Residuales</string>
+
+    <!-- Subtipos - Hidrante -->
+    <string name="hydrant_inoperable">Hidrante Inoperable</string>
+    <string name="water_leak">Fuga de Agua</string>
+    <string name="access_blocked">Obstrucción de Acceso</string>
+    <string name="vandalism_damage">Vandalismo/Daño Físico</string>
+
+    <!-- Subtipos - Semáforo -->
+    <string name="traffic_light_off">Semáforo Apagado</string>
+    <string name="light_missing">Luz Faltante/Rota</string>
+    <string name="traffic_light_flickering">Semáforo Intermitente</string>
+    <string name="traffic_light_fallen">Semáforo Caído</string>
+
+    <!-- Subtipos - Basura -->
+    <string name="illegal_dump_site">Punto Regular de Basura (Ilegal)</string>
+    <string name="overflowing_container">Contenedor Desbordado</string>
+    <string name="bulky_waste">Desechos Voluminosos</string>
+    <string name="green_area_accumulation">Acumulación en Zona Verde/Parque</string>
 </resources>
 
