@@ -37,6 +37,13 @@
     <string name="report_completed">Completado</string>
     <string name="home_button">Inicio</string>
 
+    <!-- Strings para EditarReporteScreen -->
+    <string name="report_details_title">Detalles del Reporte</string>
+    <string name="edit_button">EDITAR</string>
+    <string name="comments_label">Comentarios</string>
+    <string name="add_comment_placeholder">Añadir un comentario</string>
+    <string name="send_comment">Enviar comentario</string>
+
     <!-- Login Screen -->
     <string name="login_background_description">Fondo Login UrbanFix</string>
     <string name="login_credentials_prompt">Por favor ingresa tus credenciales</string>

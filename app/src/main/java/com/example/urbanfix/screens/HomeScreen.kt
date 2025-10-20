@@ -623,7 +623,7 @@ fun BottomNavBar(navController: NavHostController) {
         )
         NavigationBarItem(
             selected = false,
-            onClick = { },
+            onClick = { navController.navigate("editar_reporte_screen/2025-0001")},
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.misreportes),

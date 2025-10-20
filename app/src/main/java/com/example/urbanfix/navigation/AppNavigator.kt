@@ -32,6 +32,10 @@ sealed class Pantallas(val ruta: String) {
     object ReportarDos : Pantallas("reportar_dos/{reportType}") {
         fun crearRuta(reportType: String) = "reportar_dos/$reportType"
     }
+
+    object EditarReporte : Pantallas("editar_reporte_screen/{reportId}") {
+        fun crearRuta(reportId: String) = "editar_reporte_screen/$reportId"
+    }
 }
 
 /* ---------------------------
@@ -90,6 +94,29 @@ fun AppNavigator(navController: NavHostController) {
         ) { backStackEntry ->
             val reportType = backStackEntry.arguments?.getString("reportType") ?: "huecos"
             ReportarDosScreen(navController = navController, reportType = reportType)
+        }
+
+        /* ---------------------------
+           RUTA: EditarReporteScreen (Detalles del Reporte)
+        ----------------------------*/
+        composable(
+            route = Pantallas.EditarReporte.ruta,
+            arguments = listOf(
+                navArgument("reportId") {
+                    type = NavType.StringType
+                    defaultValue = "2025-0001"
+                }
+            )
+        ) { backStackEntry ->
+            val reportId = backStackEntry.arguments?.getString("reportId") ?: "2025-0001"
+            EditarReporteScreen(navController = navController, reportId = reportId)
+        }
+
+        /* ---------------------------
+           RUTA: MapDetailScreen
+        ----------------------------*/
+        composable("mapa_detalle") {
+            MapDetailScreen(navController = navController)
         }
     }
 }
