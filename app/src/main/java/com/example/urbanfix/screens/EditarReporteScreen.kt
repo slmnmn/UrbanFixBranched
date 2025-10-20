@@ -29,6 +29,21 @@ import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.ui.theme.*
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.window.Dialog
+
+data class Comment(
+    val id: String,
+    val author: String,
+    val initials: String,
+    val text: String,
+    val time: String,
+    val isVerified: Boolean = false,
+    val backgroundColor: Color,
+    val isCurrentUser: Boolean = false
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +55,41 @@ fun EditarReporteScreen(
     var commentText by remember { mutableStateOf("") }
     var likeActive by remember { mutableStateOf(true) }
     var dislikeActive by remember { mutableStateOf(false) }
+    var likeCount by remember { mutableStateOf(1) }
+    var dislikeCount by remember { mutableStateOf(0) }
     val scrollState = rememberScrollState()
+
+    var comments by remember {
+        mutableStateOf(
+            listOf(
+                Comment(
+                    id = "1",
+                    author = "Fernanda Ladino",
+                    initials = "FL",
+                    text = "Estamos procesando el reporte.",
+                    time = "hace 20 horas",
+                    isVerified = true,
+                    backgroundColor = Color(0xFFB76998),
+                    isCurrentUser = false
+                ),
+                Comment(
+                    id = "2",
+                    author = "Dylan Gutierrez",
+                    initials = "DG",
+                    text = "Ya estoy cansado de esa situación, espero lo arreglen pronto.",
+                    time = "hace 1d",
+                    isVerified = false,
+                    backgroundColor = Color(0xFFDEB6D1),
+                    isCurrentUser = false
+                )
+            )
+        )
+    }
+
+    var showMenuForComment by remember { mutableStateOf<String?>(null) }
+    var commentToEdit by remember { mutableStateOf<Comment?>(null) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showOptionsDialog by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -89,7 +138,7 @@ fun EditarReporteScreen(
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .background(Color(0xFFF1FAEE))
-                    .padding(bottom = 100.dp)
+                    .paddingFromBaseline(bottom = 180.dp)
             ) {
                 // SECCIÓN DEL MAPA CON OVERLAYS Y TARJETA
                 Box(
@@ -248,8 +297,17 @@ fun EditarReporteScreen(
                                         Spacer(modifier = Modifier.height(6.dp))
                                         IconButton(
                                             onClick = {
-                                                likeActive = !likeActive
-                                                if (likeActive && dislikeActive) dislikeActive = false
+                                                if (likeActive) {
+                                                    likeActive = false
+                                                    likeCount--
+                                                } else {
+                                                    likeActive = true
+                                                    likeCount++
+                                                    if (dislikeActive) {
+                                                        dislikeActive = false
+                                                        dislikeCount--
+                                                    }
+                                                }
                                             },
                                             modifier = Modifier.size(28.dp)
                                         ) {
@@ -266,7 +324,7 @@ fun EditarReporteScreen(
                                                     tint = if (likeActive) Color.White else Color.White.copy(alpha = 0.5f)
                                                 )
                                                 Text(
-                                                    text = "1",
+                                                    text = likeCount.toString(),
                                                     fontSize = 11.sp,
                                                     color = Color.White
                                                 )
@@ -287,8 +345,17 @@ fun EditarReporteScreen(
                                         Spacer(modifier = Modifier.height(6.dp))
                                         IconButton(
                                             onClick = {
-                                                dislikeActive = !dislikeActive
-                                                if (dislikeActive && likeActive) likeActive = false
+                                                if (dislikeActive) {
+                                                    dislikeActive = false
+                                                    dislikeCount--
+                                                } else {
+                                                    dislikeActive = true
+                                                    dislikeCount++
+                                                    if (likeActive) {
+                                                        likeActive = false
+                                                        likeCount--
+                                                    }
+                                                }
                                             },
                                             modifier = Modifier.size(28.dp)
                                         ) {
@@ -305,7 +372,7 @@ fun EditarReporteScreen(
                                                     tint = if (dislikeActive) Color.White else Color.White.copy(alpha = 0.3f)
                                                 )
                                                 Text(
-                                                    text = "0",
+                                                    text = dislikeCount.toString(),
                                                     fontSize = 11.sp,
                                                     color = Color.White
                                                 )
@@ -429,7 +496,7 @@ fun EditarReporteScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // SECCIÓN DE COMENTARIOS
                 Column(
@@ -444,104 +511,26 @@ fun EditarReporteScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Comentario 1
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFB76998)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "FL",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Fernanda Ladino",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = BlackFull
-                                )
-                                Icon(
-                                    painter = painterResource(id = R.drawable.check),
-                                    contentDescription = "Verified",
-                                    modifier = Modifier.size(14.dp),
-                                    tint = Color(0xFF00BCD4)
-                                )
+                    // Mostrar comentarios
+                    comments.forEach { comment ->
+                        CommentItem(
+                            comment = comment,
+                            showMenu = showOptionsDialog == comment.id,
+                            onMenuClick = {
+                                showOptionsDialog = if (showOptionsDialog == comment.id) null else comment.id
+                            },
+                            onEditClick = {
+                                commentToEdit = comment
+                                showEditDialog = true
+                                showOptionsDialog = null
+                            },
+                            onDeleteClick = {
+                                comments = comments.filter { it.id != comment.id }
+                                showOptionsDialog = null
                             }
-                            Text(
-                                text = "Estamos procesando el reporte.",
-                                fontSize = 12.sp,
-                                color = Color(0xFF666666)
-                            )
-                        }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Comentario 2
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFDEB6D1)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "DG",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Dylan Gutierrez",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = BlackFull
-                                )
-                                Text(
-                                    text = "hace 1d",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF999999)
-                                )
-                            }
-                            Text(
-                                text = "Ya estoy cansado de esa situación, espero lo arreglen pronto.",
-                                fontSize = 12.sp,
-                                color = Color(0xFF666666)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 
@@ -557,7 +546,7 @@ fun EditarReporteScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color(0xFFB76998))
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = 12.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -573,7 +562,7 @@ fun EditarReporteScreen(
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp),
+                                .height(44.dp),
                             shape = RoundedCornerShape(24.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedContainerColor = Color.White,
@@ -586,20 +575,33 @@ fun EditarReporteScreen(
 
                         IconButton(
                             onClick = {
-                                // Enviar comentario
                                 if (commentText.isNotBlank()) {
+                                    val newComment = Comment(
+                                        id = System.currentTimeMillis().toString(),
+                                        author = "Dylan Gutierrez",
+                                        initials = "DG",
+                                        text = commentText,
+                                        time = "ahora",
+                                        isVerified = false,
+                                        backgroundColor = Color(0xFFA8DADC),
+                                        isCurrentUser = true
+                                    )
+                                    comments = listOf(newComment) + comments
                                     commentText = ""
                                 }
                             },
                             modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFFB76998), CircleShape),
+                                .size(56.dp)
+                                .background(
+                                    if (commentText.isNotBlank()) Color(0xFF8B4A6F) else Color(0xFFB76998),
+                                    CircleShape
+                                ),
                             enabled = commentText.isNotBlank()
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.icono_enviar_comentario),
                                 contentDescription = stringResource(R.string.send_comment),
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(28.dp),
                                 tint = Color.White
                             )
                         }
@@ -607,6 +609,310 @@ fun EditarReporteScreen(
 
                     // Barra de navegación inferior
                     BottomNavBar(navController = navController)
+                }
+            }
+        }
+    }
+
+    // Diálogo para editar comentario
+    if (showEditDialog && commentToEdit != null) {
+        EditCommentDialog(
+            comment = commentToEdit!!,
+            onDismiss = {
+                showEditDialog = false
+                commentToEdit = null
+            },
+            onSave = { editedText ->
+                comments = comments.map {
+                    if (it.id == commentToEdit?.id) it.copy(text = editedText) else it
+                }
+                showEditDialog = false
+                commentToEdit = null
+            }
+        )
+    }
+
+    // Diálogo de opciones de comentario
+    if (showOptionsDialog != null && commentToEdit == null) {
+        CommentOptionsDialog(
+            onDismiss = { showOptionsDialog = null },
+            onEdit = {
+                val comment = comments.find { it.id == showOptionsDialog }
+                if (comment != null) {
+                    commentToEdit = comment
+                    showEditDialog = true
+                    showOptionsDialog = null
+                }
+            },
+            onDelete = {
+                comments = comments.filter { it.id != showOptionsDialog }
+                showOptionsDialog = null
+            }
+        )
+    }
+}
+
+@Composable
+fun CommentItem(
+    comment: Comment,
+    showMenu: Boolean,
+    onMenuClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(comment.backgroundColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = comment.initials,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (comment.isCurrentUser) Color.Black else Color.White
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = comment.author,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BlackFull
+                    )
+
+                    if (comment.isVerified) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.check),
+                            contentDescription = "Verified",
+                            modifier = Modifier.size(14.dp),
+                            tint = Color(0xFF00BCD4)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    // "Ahora" o tiempo
+                    Text(
+                        text = comment.time,
+                        fontSize = 11.sp,
+                        color = Color(0xFF999999)
+                    )
+
+                    // 🔹 Icono de 3 puntos al lado del tiempo
+                    if (comment.isCurrentUser) {
+                        IconButton(
+                            onClick = onMenuClick,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.edit_comentario),
+                                contentDescription = "Opciones",
+                                modifier = Modifier.size(16.dp),
+                                tint = Color(0xFF666666)
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = comment.text,
+                    fontSize = 12.sp,
+                    color = Color.Black
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CommentOptionsDialog(
+    onDismiss: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .padding(3.dp)
+                .shadow(
+                    elevation = 12.dp,
+                    shape = RoundedCornerShape(2.dp),
+                    clip = false
+                ),
+            shape = RoundedCornerShape(2.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)), // fondo verdoso claro
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+
+            ) {
+                // Header con X
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFE0F5E1)),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "¿Qué deseas hacer con tu comentario?",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Black,
+                        modifier = Modifier
+                            .weight(1f)
+                             .padding(top= 10.dp, bottom = 10.dp, end= 10.dp, start = 10.dp),
+                    )
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.icono_x_salir),
+                            contentDescription = "Cerrar",
+                            modifier = Modifier.size(20.dp),
+                            tint = Color(0xFF666666)
+                        )
+                    }
+                }
+
+                Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
+
+                // Opción Editar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onEdit() }
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.icono_edit_coment),
+                        contentDescription = "Editar",
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(Color(0xFFE0F5E1), RoundedCornerShape(8.dp))
+                            .padding(4.dp),
+                        tint = Color(0xFF000000)
+                    )
+                    Text(
+                        text = "Editar",
+                        fontSize = 15.sp,
+                        color = Color.Black
+                    )
+                }
+
+                Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
+
+                // Opción Eliminar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onDelete() }
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.icono_elim_coment),
+                        contentDescription = "Eliminar",
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(Color(0xFFE0F5E1), RoundedCornerShape(8.dp))
+                            .padding(4.dp),
+                        tint = Color(0xFF000000)
+                    )
+                    Text(
+                        text = "Eliminar",
+                        fontSize = 15.sp,
+                        color = Color(0xFF000000)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EditCommentDialog(
+    comment: Comment,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var editedText by remember { mutableStateOf(comment.text) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Editar comentario",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+
+                OutlinedTextField(
+                    value = editedText,
+                    onValueChange = { editedText = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFCCCCCC),
+                        focusedBorderColor = Color(0xFF4F7D94)
+                    ),
+                    minLines = 3
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Cancelar", color = Color(0xFF666666))
+                    }
+
+                    Button(
+                        onClick = { onSave(editedText) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4F7D94)
+                        ),
+                        enabled = editedText.isNotBlank()
+                    ) {
+                        Text("Guardar", color = Color.White)
+                    }
                 }
             }
         }
