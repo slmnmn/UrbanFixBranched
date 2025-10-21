@@ -101,6 +101,7 @@ fun ReportarDosScreen(
     val isGeneratingDescription by viewModel.isGeneratingDescription.collectAsState()
     val reportState by viewModel.reportState.collectAsState()
 
+
     // Estados locales para UI
     var expanded by remember { mutableStateOf(false) }
     var expandedImageIndex by remember { mutableStateOf<Int?>(null) }

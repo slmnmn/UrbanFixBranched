@@ -48,7 +48,8 @@ data class CreateReporteRequest(
     val latitud: Float, //Requerido
     val longitud: Float, //Requerido
     val usuario_creador_id: String, //Requerido
-    val categoria_id: Int //Requerido.
+    val categoria_id: Int, //Requerido.
+    val tipo_evento: String //Requerido
 )
 
 // Data you EXPECT TO RECEIVE on a failed login

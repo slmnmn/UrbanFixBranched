@@ -126,6 +126,7 @@ class ReportViewModel(
                 val photo1Base64 = if (_photos.value.isNotEmpty()) {
                     ImageUtils.bitmapToBase64(_photos.value[0])
                 } else {
+                    // Si la primera foto es obligatoria, validamos aquí
                     _reportState.value = ReportState.Error(R.string.error_no_photos)
                     return@launch
                 }
@@ -155,8 +156,9 @@ class ReportViewModel(
                     img_prueba_2 = photo2Base64,
                     latitud = location.latitude().toFloat(),
                     longitud = location.longitude().toFloat(),
-                    usuario_creador_id = userId.toString(),
-                    categoria_id = categoryId
+                    usuario_creador_id = userId.toString(), // Asegúrate de que el backend espera String
+                    categoria_id = categoryId,
+                    tipo_evento = _selectedSubtype.value, // <-- LÍNEA CORREGIDA
                 )
 
                 // Enviar al servidor
