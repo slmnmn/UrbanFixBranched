@@ -45,9 +45,14 @@ import androidx.core.content.FileProvider
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat
-import com.mapbox.maps.MapView
-import com.example.urbanfix.data.ReportDataHolder
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.example.urbanfix.R
 import com.example.urbanfix.navigation.Pantallas
+import com.example.urbanfix.ui.theme.*
+import com.example.urbanfix.viewmodel.ReportViewModel
+import com.example.urbanfix.viewmodel.ViewModelFactory
+import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.gestures.addOnMapClickListener
@@ -56,9 +61,6 @@ import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
-import androidx.navigation.NavHostController
-import com.example.urbanfix.R
-import com.example.urbanfix.ui.theme.*
 import java.io.File
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +68,6 @@ import kotlinx.coroutines.withContext
 import java.net.URLEncoder
 import org.json.JSONObject
 import java.net.URL
-
 
 private fun rotateImageIfNeeded(bitmap: Bitmap, uri: Uri, context: android.content.Context): Bitmap {
     return try {
@@ -93,7 +94,6 @@ private fun rotateImageIfNeeded(bitmap: Bitmap, uri: Uri, context: android.conte
     }
 }
 
-// Función para geocodificar dirección a coordenadas
 private suspend fun geocodeAddress(address: String, context: android.content.Context): Point? {
     return withContext(Dispatchers.IO) {
         try {
@@ -120,7 +120,6 @@ private suspend fun geocodeAddress(address: String, context: android.content.Con
     }
 }
 
-// Función para geocodificación inversa (coordenadas a dirección)
 private suspend fun reverseGeocode(point: Point, context: android.content.Context): String? {
     return withContext(Dispatchers.IO) {
         try {
@@ -141,10 +140,8 @@ private suspend fun reverseGeocode(point: Point, context: android.content.Contex
     }
 }
 
-// Función para actualizar la ubicación en el mapa
 private fun updateMapLocation(mapView: MapView, point: Point) {
     try {
-        // Mover la cámara al punto
         mapView.getMapboxMap().setCamera(
             CameraOptions.Builder()
                 .center(point)
@@ -152,7 +149,6 @@ private fun updateMapLocation(mapView: MapView, point: Point) {
                 .build()
         )
 
-        // Agregar marcador
         val annotationApi = mapView.annotations
         val pointAnnotationManager = annotationApi.createPointAnnotationManager()
         pointAnnotationManager.deleteAll()
@@ -173,25 +169,23 @@ fun ReportarScreen(
     reportType: String = "huecos"
 ) {
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
+    val viewModel: ReportViewModel = viewModel(factory = ViewModelFactory(context))
     val coroutineScope = rememberCoroutineScope()
 
-    var eventAddress by remember { mutableStateOf("") }
-    var referencePoint by remember { mutableStateOf("") }
-    var photos by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
+    // Estados del ViewModel
+    val eventAddress by viewModel.eventAddress.collectAsState()
+    val referencePoint by viewModel.referencePoint.collectAsState()
+    val photos by viewModel.photos.collectAsState()
+    val selectedLocation by viewModel.selectedLocation.collectAsState()
+
+    // Estados locales para UI
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    // Estados para el mapa
-    var selectedLocation by remember { mutableStateOf<Point?>(null) }
     var mapView by remember { mutableStateOf<MapView?>(null) }
-
     var showExitDialog by remember { mutableStateOf(false) }
     var showIncompleteFieldsDialog by remember { mutableStateOf(false) }
     var showMaxPhotosDialog by remember { mutableStateOf(false) }
     var expandedImageIndex by remember { mutableStateOf<Int?>(null) }
 
-
-    // Estado para permisos de ubicación
     var hasLocationPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -212,7 +206,6 @@ fun ReportarScreen(
         }
     }
 
-    // Obtener el nombre del tipo de reporte
     val reportTypeName = when (reportType) {
         "huecos" -> stringResource(R.string.report_type_potholes)
         "alumbrado" -> stringResource(R.string.report_type_lighting)
@@ -223,7 +216,6 @@ fun ReportarScreen(
         else -> stringResource(R.string.report_type_potholes)
     }
 
-    // Launcher para galería
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -235,7 +227,7 @@ fun ReportarScreen(
                     val inputStream = context.contentResolver.openInputStream(it)
                     var bitmap = BitmapFactory.decodeStream(inputStream)
                     bitmap = rotateImageIfNeeded(bitmap, it, context)
-                    photos = photos + bitmap
+                    viewModel.addPhoto(bitmap)
                     inputStream?.close()
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -244,7 +236,6 @@ fun ReportarScreen(
         }
     }
 
-    // Launcher para cámara
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
@@ -256,7 +247,7 @@ fun ReportarScreen(
                     val inputStream = context.contentResolver.openInputStream(tempImageUri!!)
                     var bitmap = BitmapFactory.decodeStream(inputStream)
                     bitmap = rotateImageIfNeeded(bitmap, tempImageUri!!, context)
-                    photos = photos + bitmap
+                    viewModel.addPhoto(bitmap)
                     inputStream?.close()
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -265,7 +256,6 @@ fun ReportarScreen(
         }
     }
 
-    // Launcher para permisos de cámara
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -305,6 +295,7 @@ fun ReportarScreen(
                             if (eventAddress.isNotEmpty() || referencePoint.isNotEmpty() || photos.isNotEmpty()) {
                                 showExitDialog = true
                             } else {
+                                viewModel.clearReportData()
                                 navController.popBackStack()
                             }
                         }) {
@@ -355,13 +346,12 @@ fun ReportarScreen(
             OutlinedTextField(
                 value = eventAddress,
                 onValueChange = { newAddress ->
-                    eventAddress = newAddress
-                    // Geocodificar cuando el usuario termine de escribir
+                    viewModel.onEventAddressChange(newAddress)
                     if (newAddress.length > 5) {
                         coroutineScope.launch {
                             val location = geocodeAddress(newAddress, context)
                             location?.let { point ->
-                                selectedLocation = point
+                                viewModel.updateLocation(point)
                                 mapView?.let { mv ->
                                     updateMapLocation(mv, point)
                                 }
@@ -392,7 +382,6 @@ fun ReportarScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Punto de referencia
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 4.dp)
@@ -414,7 +403,7 @@ fun ReportarScreen(
 
             OutlinedTextField(
                 value = referencePoint,
-                onValueChange = { referencePoint = it },
+                onValueChange = { viewModel.onReferencePointChange(it) },
                 placeholder = {
                     Text(
                         stringResource(R.string.reference_point_placeholder),
@@ -438,7 +427,6 @@ fun ReportarScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Mapa con sincronización bidireccional
             Card(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
@@ -454,12 +442,11 @@ fun ReportarScreen(
                     selectedLocation = selectedLocation,
                     onMapReady = { mv -> mapView = mv },
                     onLocationSelected = { point ->
-                        selectedLocation = point
-                        // Geocodificación inversa: obtener dirección del punto
+                        viewModel.updateLocation(point)
                         coroutineScope.launch {
                             val address = reverseGeocode(point, context)
                             if (address != null) {
-                                eventAddress = address
+                                viewModel.onEventAddressChange(address)
                             }
                         }
                     }
@@ -468,7 +455,6 @@ fun ReportarScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Adjuntar fotos
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -492,7 +478,6 @@ fun ReportarScreen(
             }
             Spacer(modifier = Modifier.height(5.dp))
 
-            // Mostrar fotos agregadas o botones
             if (photos.isEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -560,7 +545,7 @@ fun ReportarScreen(
                                 )
                                 IconButton(
                                     onClick = {
-                                        photos = photos.filterIndexed { i, _ -> i != index }
+                                        viewModel.removePhoto(index)
                                     },
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
@@ -631,19 +616,10 @@ fun ReportarScreen(
 
             Button(
                 onClick = {
-                    if (eventAddress.isEmpty() || referencePoint.isEmpty()) {
-                        showIncompleteFieldsDialog = true
-                    } else {
-                        // Guardar datos temporalmente incluyendo la ubicación
-                        ReportDataHolder.setData(
-                            address = eventAddress,
-                            reference = referencePoint,
-                            photoList = photos,
-                            location = selectedLocation
-                        )
-
-                        // Navegar a la segunda pantalla
+                    if (viewModel.validateStep1()) {
                         navController.navigate(Pantallas.ReportarDos.crearRuta(reportType))
+                    } else {
+                        showIncompleteFieldsDialog = true
                     }
                 },
                 modifier = Modifier
@@ -664,11 +640,11 @@ fun ReportarScreen(
         }
     }
 
-    // Diálogos
     if (showExitDialog) {
         ExitConfirmationDialog(
             onConfirm = {
                 showExitDialog = false
+                viewModel.clearReportData()
                 navController.popBackStack()
             },
             onDismiss = {
@@ -688,30 +664,16 @@ fun ReportarScreen(
             onDismiss = { showMaxPhotosDialog = false }
         )
     }
+
     if (expandedImageIndex != null && expandedImageIndex!! < photos.size) {
         ImagePreviewDialog(
             bitmap = photos[expandedImageIndex!!],
             onDismiss = { expandedImageIndex = null }
         )
     }
-
 }
 
-
-private fun initLocationComponent(mapView: MapView) {
-    val context = mapView.context
-    if (ActivityCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    ) {
-        val locationComponentPlugin = mapView.location
-        locationComponentPlugin.updateSettings {
-            this.enabled = true
-            this.pulsingEnabled = true
-        }
-    }
-}
+// ===== COMPOSABLES AUXILIARES =====
 
 @Composable
 fun PhotoActionButton(
@@ -1025,6 +987,7 @@ fun MaxPhotosErrorDialog(
         }
     }
 }
+
 @Composable
 fun ImagePreviewDialog(
     bitmap: Bitmap,
@@ -1052,7 +1015,6 @@ fun ImagePreviewDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Imagen ampliada
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = "Imagen ampliada",
@@ -1065,7 +1027,6 @@ fun ImagePreviewDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Botón Volver
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(
@@ -1087,6 +1048,7 @@ fun ImagePreviewDialog(
         }
     }
 }
+
 @Composable
 fun MapboxMapComponent(
     modifier: Modifier = Modifier,
@@ -1104,16 +1066,13 @@ fun MapboxMapComponent(
                 getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS)
             }
 
-            // Callback cuando el mapa está listo
             onMapReady(mapView)
 
-            // Detectar clics en el mapa
             mapView.getMapboxMap().addOnMapClickListener { point ->
                 onLocationSelected(point)
                 true
             }
 
-            // Activar ubicación si hay permiso
             if (hasPermission) {
                 try {
                     val locationComponent = mapView.location
@@ -1129,7 +1088,6 @@ fun MapboxMapComponent(
             mapView
         },
         update = { mapView ->
-            // Mover cámara si hay una ubicación seleccionada
             selectedLocation?.let { point ->
                 mapView.getMapboxMap().setCamera(
                     CameraOptions.Builder()
@@ -1137,9 +1095,16 @@ fun MapboxMapComponent(
                         .zoom(15.0)
                         .build()
                 )
+
+                val annotationApi = mapView.annotations
+                val pointAnnotationManager = annotationApi.createPointAnnotationManager()
+                pointAnnotationManager.deleteAll()
+
+                val pointAnnotationOptions = PointAnnotationOptions()
+                    .withPoint(point)
+
+                pointAnnotationManager.create(pointAnnotationOptions)
             }
         }
     )
 }
-
-

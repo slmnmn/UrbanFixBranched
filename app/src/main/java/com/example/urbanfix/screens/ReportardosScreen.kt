@@ -15,7 +15,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -41,10 +40,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
+import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
-import com.example.urbanfix.data.ReportDataHolder
+import com.example.urbanfix.viewmodel.ReportViewModel
+import com.example.urbanfix.viewmodel.ReportState
+import com.example.urbanfix.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -79,27 +82,43 @@ fun ReportarDosScreen(
     navController: NavHostController,
     reportType: String = "huecos"
 ) {
-    val eventAddress = ReportDataHolder.eventAddress
-    val referencePoint = ReportDataHolder.referencePoint
-    var photos by remember { mutableStateOf(ReportDataHolder.photos) }
-    val savedLocation = ReportDataHolder.selectedLocation
-
     val context = LocalContext.current
+    val viewModel: ReportViewModel = viewModel(factory = ViewModelFactory(context))
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedSubtype by remember { mutableStateOf("") }
+    // Estados del ViewModel
+    val eventAddress by viewModel.eventAddress.collectAsState()
+    val referencePoint by viewModel.referencePoint.collectAsState()
+    val photos by viewModel.photos.collectAsState()
+    val selectedLocation by viewModel.selectedLocation.collectAsState()
+    val selectedSubtype by viewModel.selectedSubtype.collectAsState()
+    val description by viewModel.description.collectAsState()
+    val isGeneratingDescription by viewModel.isGeneratingDescription.collectAsState()
+    val reportState by viewModel.reportState.collectAsState()
+
+    // Estados locales para UI
     var expanded by remember { mutableStateOf(false) }
-    var description by remember { mutableStateOf("") }
-    var isGeneratingDescription by remember { mutableStateOf(false) }
     var expandedImageIndex by remember { mutableStateOf<Int?>(null) }
     var showExitDialog by remember { mutableStateOf(false) }
     var showIncompleteFieldsDialog by remember { mutableStateOf(false) }
     var showMaxPhotosDialog by remember { mutableStateOf(false) }
     var showPhotoOptionsDialog by remember { mutableStateOf(false) }
-    var showUploadDialog by remember { mutableStateOf(false) }
     var showNoImageDialog by remember { mutableStateOf(false) }
     var showNoSubtypeDialog by remember { mutableStateOf(false) }
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Observar estado del reporte
+    LaunchedEffect(reportState) {
+        when (reportState) {
+            is ReportState.Success -> {
+                // El éxito se maneja en el diálogo
+            }
+            is ReportState.Error -> {
+                // El error se maneja en el diálogo
+            }
+            else -> { /* Idle o Loading */ }
+        }
+    }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -112,7 +131,7 @@ fun ReportarDosScreen(
                     val inputStream = context.contentResolver.openInputStream(it)
                     var bitmap = BitmapFactory.decodeStream(inputStream)
                     bitmap = rotateImageIfNeeded(bitmap, it, context)
-                    photos = photos + bitmap
+                    viewModel.addPhoto(bitmap)
                     inputStream?.close()
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -132,7 +151,7 @@ fun ReportarDosScreen(
                     val inputStream = context.contentResolver.openInputStream(tempImageUri!!)
                     var bitmap = BitmapFactory.decodeStream(inputStream)
                     bitmap = rotateImageIfNeeded(bitmap, tempImageUri!!, context)
-                    photos = photos + bitmap
+                    viewModel.addPhoto(bitmap)
                     inputStream?.close()
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -153,12 +172,6 @@ fun ReportarDosScreen(
             )
             tempImageUri = uri
             cameraLauncher.launch(uri)
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            ReportDataHolder.clearData()
         }
     }
 
@@ -212,19 +225,22 @@ fun ReportarDosScreen(
         else -> emptyList()
     }
 
-    suspend fun generateDescription(regenerate: Boolean = false) {
-        isGeneratingDescription = true
+    suspend fun generateDescription() {
+        viewModel.setGeneratingDescription(true)
         try {
-            description = AIService.generateDescription(
+            val generatedDesc = AIService.generateDescription(
                 address = eventAddress,
                 referencePoint = referencePoint,
                 subtype = selectedSubtype,
                 reportType = reportType
             )
+            viewModel.onDescriptionChange(generatedDesc)
         } catch (e: Exception) {
-            description = context.getString(R.string.error_generating_description, e.message ?: "")
+            viewModel.onDescriptionChange(
+                context.getString(R.string.error_generating_description, e.message ?: "")
+            )
         }
-        isGeneratingDescription = false
+        viewModel.setGeneratingDescription(false)
     }
 
     Scaffold(
@@ -292,7 +308,7 @@ fun ReportarDosScreen(
                         .fillMaxSize()
                         .nestedScroll(connection = object : NestedScrollConnection {}),
                     hasPermission = true,
-                    selectedLocation = savedLocation,
+                    selectedLocation = selectedLocation,
                     onMapReady = {},
                     onLocationSelected = {}
                 )
@@ -389,7 +405,7 @@ fun ReportarDosScreen(
                                 }
                             },
                             onClick = {
-                                selectedSubtype = subtype
+                                viewModel.onSubtypeChange(subtype)
                                 expanded = false
                             },
                             modifier = Modifier.background(Color.White)
@@ -446,7 +462,7 @@ fun ReportarDosScreen(
                         )
                         IconButton(
                             onClick = {
-                                photos = photos.filterIndexed { i, _ -> i != index }
+                                viewModel.removePhoto(index)
                             },
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
@@ -518,7 +534,7 @@ fun ReportarDosScreen(
                                     showNoImageDialog = true
                                 } else {
                                     coroutineScope.launch {
-                                        generateDescription(regenerate = false)
+                                        generateDescription()
                                     }
                                 }
                             },
@@ -546,7 +562,7 @@ fun ReportarDosScreen(
                             .clickable {
                                 if (description.isNotEmpty()) {
                                     coroutineScope.launch {
-                                        generateDescription(regenerate = true)
+                                        generateDescription()
                                     }
                                 }
                             },
@@ -613,10 +629,15 @@ fun ReportarDosScreen(
 
             Button(
                 onClick = {
-                    if (selectedSubtype.isEmpty()) {
-                        showIncompleteFieldsDialog = true
+                    if (viewModel.validateStep2()) {
+                        viewModel.createReport(
+                            reportType = reportType,
+                            onSuccess = {
+                                // El éxito se maneja en el diálogo
+                            }
+                        )
                     } else {
-                        showUploadDialog = true
+                        showIncompleteFieldsDialog = true
                     }
                 },
                 modifier = Modifier
@@ -637,6 +658,7 @@ fun ReportarDosScreen(
         }
     }
 
+    // Diálogos
     if (showPhotoOptionsDialog) {
         PhotoOptionsDialog(
             onCamera = {
@@ -674,7 +696,7 @@ fun ReportarDosScreen(
         ExitConfirmationDialog(
             onConfirm = {
                 showExitDialog = false
-                ReportDataHolder.clearData()
+                viewModel.clearReportData()
                 navController.popBackStack()
             },
             onDismiss = {
@@ -713,16 +735,29 @@ fun ReportarDosScreen(
             onDismiss = { showNoSubtypeDialog = false }
         )
     }
-    if (showUploadDialog) {
+
+    // Diálogo de carga/éxito/error
+    if (reportState != ReportState.Idle) {
         LoadingReportDialog(
+            reportState = reportState,
+            onRetry = {
+                viewModel.resetReportState()
+                viewModel.createReport(
+                    reportType = reportType,
+                    onSuccess = {}
+                )
+            },
             onDismiss = {
-                showUploadDialog = false
-                ReportDataHolder.clearData()
+                viewModel.resetReportState()
+                viewModel.clearReportData()
+                // Volver a la pantalla anterior (home/inicio)
                 navController.popBackStack()
             }
         )
     }
 }
+
+// ===== COMPOSABLES AUXILIARES =====
 
 @Composable
 fun PhotoOptionsDialog(
@@ -850,6 +885,7 @@ fun PhotoOptionsDialog(
         }
     }
 }
+
 @Composable
 fun NoImageDialog(
     onDismiss: () -> Unit
@@ -985,82 +1021,58 @@ fun NoSubtypeDialog(
         }
     }
 }
+
+// Diálogo actualizado para usar ReportState
 @Composable
 fun LoadingReportDialog(
+    reportState: ReportState,
+    onRetry: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var uploadState by remember { mutableStateOf<UploadState>(UploadState.Loading) }
-
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(onDismissRequest = { if (reportState is ReportState.Success) onDismiss() }) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                modifier = Modifier.fillMaxWidth().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                when (uploadState) {
-                    is UploadState.Loading -> {
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clickable { uploadState = UploadState.Error }
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(8.dp),
-                                color = Color(0xFF6366F1),
-                                strokeWidth = 6.dp
-                            )
-                        }
-
+                when (reportState) {
+                    is ReportState.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(80.dp).padding(8.dp),
+                            color = Color(0xFF6366F1),
+                            strokeWidth = 6.dp
+                        )
                         Spacer(modifier = Modifier.height(20.dp))
-
                         Text(
                             text = stringResource(R.string.loading_report),
                             fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            modifier = Modifier.clickable { uploadState = UploadState.Success }
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
-                    is UploadState.Error -> {
+                    is ReportState.Error -> {
                         Image(
                             painter = painterResource(id = R.drawable.error_subir_reporte),
-                            contentDescription = stringResource(R.string.error_uploading_report),
+                            contentDescription = null,
                             modifier = Modifier.size(80.dp)
                         )
-
                         Spacer(modifier = Modifier.height(20.dp))
-
                         Text(
-                            text = stringResource(R.string.error_uploading_report),
+                            text = stringResource(reportState.messageId),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black,
                             textAlign = TextAlign.Center
                         )
-
                         Spacer(modifier = Modifier.height(20.dp))
-
                         Button(
-                            onClick = { uploadState = UploadState.Loading },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
+                            onClick = onRetry,
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFB76998)
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB76998))
                         ) {
                             Text(
                                 text = stringResource(R.string.retry_button),
@@ -1071,33 +1083,24 @@ fun LoadingReportDialog(
                         }
                     }
 
-                    is UploadState.Success -> {
+                    is ReportState.Success -> {
                         Image(
                             painter = painterResource(id = R.drawable.subido_correcto_reporte),
-                            contentDescription = stringResource(R.string.report_completed),
+                            contentDescription = null,
                             modifier = Modifier.size(80.dp)
                         )
-
                         Spacer(modifier = Modifier.height(20.dp))
-
                         Text(
                             text = stringResource(R.string.report_completed),
                             fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            fontWeight = FontWeight.Bold
                         )
-
                         Spacer(modifier = Modifier.height(20.dp))
-
                         Button(
                             onClick = onDismiss,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFB76998)
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB76998))
                         ) {
                             Text(
                                 text = stringResource(R.string.home_button),
@@ -1107,14 +1110,10 @@ fun LoadingReportDialog(
                             )
                         }
                     }
+
+                    is ReportState.Idle -> { /* No mostrar */ }
                 }
             }
         }
     }
-}
-
-sealed class UploadState {
-    object Loading : UploadState()
-    object Error : UploadState()
-    object Success : UploadState()
 }

@@ -2,7 +2,6 @@
 
 package com.example.urbanfix.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -19,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,7 +37,8 @@ import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.ProfileViewModel
 import com.example.urbanfix.viewmodel.ViewModelFactory
-import coil.compose.AsyncImage
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,21 +53,14 @@ fun EditProfileScreen(
     val password by viewModel.password.collectAsState()
     val confirmPassword by viewModel.confirmPassword.collectAsState()
     val errorMessageId by viewModel.editError.collectAsState()
-
-    val profilePicUri by viewModel.profilePicUri.collectAsState()
+    val profilePicBitmap by viewModel.profilePicBitmap.collectAsState()
 
     var passwordVisible by remember { mutableStateOf(false) }
-
-    // Estados para los diálogos
     var showExitDialog by remember { mutableStateOf(false) }
     var showSaveDialog by remember { mutableStateOf(false) }
 
-    // Función para validar los campos antes de mostrar el diálogo
-
     DisposableEffect(Unit) {
-        onDispose {
-            viewModel.clearEditError()
-        }
+        onDispose { viewModel.clearEditError() }
     }
 
     Scaffold(
@@ -121,16 +115,29 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Box(contentAlignment = Alignment.BottomEnd) {
-                AsyncImage(
-                    model = profilePicUri, // <-- USA LA NUEVA VARIABLE
-                    contentDescription = stringResource(id = R.string.profile_picture_cd),
-                    modifier = Modifier
-                        .size(180.dp)
-                        .clip(CircleShape)
-                        .background(WhiteFull),
-                    error = painterResource(id = R.drawable.circular_logo),
-                    placeholder = painterResource(id = R.drawable.circular_logo)
-                )
+                // Mostrar Bitmap si existe, sino logo por defecto
+                if (profilePicBitmap != null) {
+                    Image(
+                        bitmap = profilePicBitmap!!.asImageBitmap(),
+                        contentDescription = stringResource(id = R.string.profile_picture_cd),
+                        modifier = Modifier
+                            .size(180.dp)
+                            .clip(CircleShape)
+                            .background(WhiteFull),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.circular_logo),
+                        contentDescription = stringResource(id = R.string.profile_picture_cd),
+                        modifier = Modifier
+                            .size(180.dp)
+                            .clip(CircleShape)
+                            .background(WhiteFull),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
                 FloatingActionButton(
                     onClick = { navController.navigate(Pantallas.Fotoperfil.ruta) },
                     shape = CircleShape,
@@ -162,7 +169,6 @@ fun EditProfileScreen(
                 },
                 isError = errorMessageId == R.string.error_user_name_empty || errorMessageId == R.string.error_official_name_empty,
                 supportingText = {
-                    // Muestra el mensaje solo si es un error de nombre
                     if (errorMessageId == R.string.error_user_name_empty || errorMessageId == R.string.error_official_name_empty) {
                         Text(text = stringResource(id = errorMessageId!!), color = MaterialTheme.colorScheme.error)
                     }
@@ -213,12 +219,9 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {
-                    // Ahora llamamos a la nueva función de validación del ViewModel
                     if (viewModel.validateForSave()) {
-                        // Si no hay errores, mostramos el diálogo de confirmación
                         showSaveDialog = true
                     }
-                    // Si hay errores, el ViewModel ya actualizó el estado y se mostrarán en los campos
                 },
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = AquaSoft),
@@ -232,7 +235,6 @@ fun EditProfileScreen(
         }
     }
 
-    // Diálogo de confirmación para salir
     if (showExitDialog) {
         ExitEditDialog(
             onDismiss = { showExitDialog = false },
@@ -243,7 +245,6 @@ fun EditProfileScreen(
         )
     }
 
-    // Diálogo de confirmación para guardar
     if (showSaveDialog) {
         SaveChangesDialog(
             onDismiss = { showSaveDialog = false },

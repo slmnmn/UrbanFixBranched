@@ -2,6 +2,7 @@ package com.example.urbanfix.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -32,7 +34,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
 import com.example.urbanfix.R
 import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.navigation.Pantallas
@@ -47,62 +48,43 @@ fun FotoperfilScreen(navController: NavHostController) {
     val context = LocalContext.current
     val userPreferencesManager = remember { UserPreferencesManager(context) }
 
-    fun navigateBackToProfile() {
-        navController.popBackStack(Pantallas.Perfil.ruta, inclusive = false)
-        navController.currentBackStackEntry?.savedStateHandle?.set("update_success", true)
-    }
-
-    // Cargar imagen inicial
-    val initialUri = remember { userPreferencesManager.getProfilePicUri()?.let { Uri.parse(it) } }
-    var imageUri by remember { mutableStateOf(initialUri) }
+    // Estado simple: solo el Bitmap actual
+    var imageBitmap by remember { mutableStateOf(userPreferencesManager.getProfilePicBitmap()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Launcher para seleccionar de galería
-    val galleryLauncher = rememberLauncherForActivityResult(
-
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            try {
-                context.contentResolver.takePersistableUriPermission(
-                    it,
-                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (e: Exception) {
-                // Ignorar si no se pueden obtener permisos persistentes
-            }
-
-            val uriString = it.toString()
-            imageUri = it
-            userPreferencesManager.saveProfilePicUri(uriString)
-            navigateBackToProfile()
+    // Función para actualizar imagen y volver
+    fun updateAndGoBack(uri: Uri) {
+        if (userPreferencesManager.saveProfilePicFromUri(uri)) {
+            imageBitmap = userPreferencesManager.getProfilePicBitmap()
+            navController.popBackStack(Pantallas.Perfil.ruta, inclusive = false)
+            navController.currentBackStackEntry?.savedStateHandle?.set("update_success", true)
         }
     }
 
-    // Launcher para tomar foto
+    // Launcher galería
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { updateAndGoBack(it) }
+    }
+
+    // Launcher cámara
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && tempImageUri != null) {
-            val uriString = tempImageUri.toString()
-            imageUri = tempImageUri
-            userPreferencesManager.saveProfilePicUri(uriString)
-            navigateBackToProfile()
+            updateAndGoBack(tempImageUri!!)
         }
     }
 
-    // Launcher para permisos de cámara
+    // Launcher permisos
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            val photoFile = File(context.cacheDir, "profile_photo_${System.currentTimeMillis()}.jpg")
-            val uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                photoFile
-            )
+            val photoFile = File(context.cacheDir, "profile_${System.currentTimeMillis()}.jpg")
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
             tempImageUri = uri
             cameraLauncher.launch(uri)
         }
@@ -114,7 +96,6 @@ fun FotoperfilScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .background(Color.White)
         ) {
-            // Top Bar
             TopAppBar(
                 title = {
                     Box(
@@ -132,9 +113,7 @@ fun FotoperfilScreen(navController: NavHostController) {
                     }
                 },
                 navigationIcon = {
-                    Box(
-                        modifier = Modifier.padding(top = 20.dp)
-                    ) {
+                    Box(modifier = Modifier.padding(top = 20.dp)) {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -144,13 +123,10 @@ fun FotoperfilScreen(navController: NavHostController) {
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF457B9D)
-                ),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF457B9D)),
                 modifier = Modifier.height(72.dp)
             )
 
-            // Contenido principal
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -160,15 +136,12 @@ fun FotoperfilScreen(navController: NavHostController) {
             ) {
                 Spacer(modifier = Modifier.height(40.dp))
 
-                // Card contenedor
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight(),
                     shape = RoundedCornerShape(32.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFE8F4F8)
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F4F8)),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
@@ -185,9 +158,9 @@ fun FotoperfilScreen(navController: NavHostController) {
                                 .background(Color(0xFFB0BEC5)),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (imageUri != null) {
-                                AsyncImage(
-                                    model = imageUri,
+                            if (imageBitmap != null) {
+                                Image(
+                                    bitmap = imageBitmap!!.asImageBitmap(),
                                     contentDescription = stringResource(R.string.profile_photo_description),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
@@ -207,32 +180,19 @@ fun FotoperfilScreen(navController: NavHostController) {
                         // Botón Tomar Foto
                         Button(
                             onClick = {
-                                when (PackageManager.PERMISSION_GRANTED) {
-                                    ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.CAMERA
-                                    ) -> {
-                                        val photoFile = File(context.cacheDir, "profile_photo_${System.currentTimeMillis()}.jpg")
-                                        val uri = FileProvider.getUriForFile(
-                                            context,
-                                            "${context.packageName}.fileprovider",
-                                            photoFile
-                                        )
+                                when (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)) {
+                                    PackageManager.PERMISSION_GRANTED -> {
+                                        val photoFile = File(context.cacheDir, "profile_${System.currentTimeMillis()}.jpg")
+                                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
                                         tempImageUri = uri
                                         cameraLauncher.launch(uri)
                                     }
-                                    else -> {
-                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                    }
+                                    else -> cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                                 }
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = BlueProfile
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = BlueProfile)
                         ) {
                             Text(
                                 text = stringResource(R.string.take_photo),
@@ -244,18 +204,12 @@ fun FotoperfilScreen(navController: NavHostController) {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Botón Seleccionar de la Galería
+                        // Botón Galería
                         Button(
-                            onClick = {
-                                galleryLauncher.launch("image/*")
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
+                            onClick = { galleryLauncher.launch("image/*") },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = BlueProfile
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = BlueProfile)
                         ) {
                             Text(
                                 text = stringResource(R.string.select_from_gallery),
@@ -267,21 +221,13 @@ fun FotoperfilScreen(navController: NavHostController) {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Botón Eliminar Foto
+                        // Botón Eliminar
                         Button(
-                            onClick = {
-                                if (imageUri != null) {
-                                    showDeleteDialog = true
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
+                            onClick = { if (imageBitmap != null) showDeleteDialog = true },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = BlueProfile
-                            ),
-                            enabled = imageUri != null
+                            colors = ButtonDefaults.buttonColors(containerColor = BlueProfile),
+                            enabled = imageBitmap != null
                         ) {
                             Text(
                                 text = stringResource(R.string.delete_photo),
@@ -295,16 +241,10 @@ fun FotoperfilScreen(navController: NavHostController) {
 
                         // Botón Cancelar
                         Button(
-                            onClick = {
-                                navController.popBackStack()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = RedProfile
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = RedProfile)
                         ) {
                             Text(
                                 text = stringResource(R.string.cancel_button),
@@ -318,7 +258,6 @@ fun FotoperfilScreen(navController: NavHostController) {
             }
         }
 
-        // Bottom Navigation
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -328,18 +267,16 @@ fun FotoperfilScreen(navController: NavHostController) {
         }
     }
 
-    // Diálogo de confirmación para eliminar foto
     if (showDeleteDialog) {
         DeletePhotoConfirmationDialog(
             onConfirm = {
                 showDeleteDialog = false
-                imageUri = null
-                userPreferencesManager.saveProfilePicUri(null)
-                navigateBackToProfile()
+                userPreferencesManager.deleteProfilePic()
+                imageBitmap = null
+                navController.popBackStack(Pantallas.Perfil.ruta, inclusive = false)
+                navController.currentBackStackEntry?.savedStateHandle?.set("update_success", true)
             },
-            onDismiss = {
-                showDeleteDialog = false
-            }
+            onDismiss = { showDeleteDialog = false }
         )
     }
 }
@@ -351,13 +288,9 @@ fun DeletePhotoConfirmationDialog(
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 1.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 1.dp),
             shape = RoundedCornerShape(1.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -399,13 +332,9 @@ fun DeletePhotoConfirmationDialog(
                 ) {
                     Button(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1D3557)
-                        ),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
+                        modifier = Modifier.weight(1f).height(48.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.no_button),
@@ -417,13 +346,9 @@ fun DeletePhotoConfirmationDialog(
 
                     Button(
                         onClick = onConfirm,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = RedProfile
-                        ),
+                        colors = ButtonDefaults.buttonColors(containerColor = RedProfile),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
+                        modifier = Modifier.weight(1f).height(48.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.yes_button),

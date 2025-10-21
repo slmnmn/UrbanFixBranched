@@ -39,7 +39,7 @@ data class UpdateUserRequest(
     val contrasena: String? // Opcional
 )
 
-data class ReporteRequest(
+data class CreateReporteRequest(
     val descripcion: String, //Requerido
     val direccion: String, //Requerido
     val referencia: String, //Requerido

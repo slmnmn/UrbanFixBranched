@@ -28,4 +28,7 @@ interface ApiService {
         @Path("role") role: String,
         @Path("userId") userId: Int
     ): Response<Unit>
+
+    @POST("/reportes")
+    suspend fun createReporte(@Body request: CreateReporteRequest): Response<Unit>
 }

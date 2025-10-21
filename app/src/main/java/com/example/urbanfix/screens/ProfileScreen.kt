@@ -1,5 +1,6 @@
 package com.example.urbanfix.screens
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,10 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,8 +41,6 @@ import com.example.urbanfix.viewmodel.ProfileViewModel
 import com.example.urbanfix.viewmodel.ViewModelFactory
 import java.text.SimpleDateFormat
 import java.util.Locale
-import coil.compose.AsyncImage
-import com.example.urbanfix.screens.CompanyProfileContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +52,7 @@ fun ProfileScreen(
     val profileState by viewModel.profileState.collectAsState()
     val navigateToLogin by viewModel.navigateToLogin.collectAsState()
     val accountDeleted by viewModel.accountDeleted.collectAsState()
-    // Variables de estado para los diálogos
+
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showDeleteSuccessDialog by remember { mutableStateOf(false) }
@@ -79,10 +82,7 @@ fun ProfileScreen(
 
     LaunchedEffect(accountDeleted) {
         if (accountDeleted) {
-            // 1. Muestra el diálogo de éxito
             showDeleteSuccessDialog = true
-
-            // 2. Llama a la función para "apagar la alarma" y evitar bugs
             viewModel.onAccountDeletedHandled()
         }
     }
@@ -153,7 +153,7 @@ fun ProfileScreen(
                             personalName = state.personalName ?: "",
                             userEmail = state.userEmail,
                             registrationDate = state.registrationDate,
-                            profilePicUri = state.profilePicUri,
+                            profilePicBitmap = state.profilePicBitmap,
                             onLogoutClick = { showLogoutDialog = true },
                             onEditClick = { navController.navigate(Pantallas.EditProfile.ruta) },
                             onDeleteClick = { showDeleteDialog = true },
@@ -166,7 +166,7 @@ fun ProfileScreen(
                             userName = state.userName ?: "",
                             userEmail = state.userEmail,
                             registrationDate = state.registrationDate,
-                            profilePicUri = state.profilePicUri,
+                            profilePicBitmap = state.profilePicBitmap,
                             onLogoutClick = { showLogoutDialog = true },
                             onEditClick = { navController.navigate(Pantallas.EditProfile.ruta) },
                             onDeleteClick = { showDeleteDialog = true }
@@ -220,7 +220,6 @@ fun ProfileScreen(
         }
     }
 
-    // Diálogo de confirmación de cierre de sesión
     if (showLogoutDialog) {
         LogoutDialog(
             onDismiss = { showLogoutDialog = false },
@@ -231,7 +230,6 @@ fun ProfileScreen(
         )
     }
 
-    // Diálogo de confirmación de eliminación de cuenta
     if (showDeleteDialog) {
         DeleteDialog(
             onDismiss = { showDeleteDialog = false },
@@ -242,7 +240,6 @@ fun ProfileScreen(
         )
     }
 
-    // Diálogo de éxito de eliminación
     if (showDeleteSuccessDialog) {
         SuccessDialogo(
             onDismiss = {
@@ -283,14 +280,12 @@ private fun CompanyProfileContent(
     personalName: String,
     userEmail: String,
     registrationDate: String,
-    profilePicUri: String?,
+    profilePicBitmap: Bitmap?,
     onLogoutClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     navController: NavHostController
 ) {
-    val verifiedColor = Color(0xFF00BFFF)
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -302,19 +297,30 @@ private fun CompanyProfileContent(
         Spacer(modifier = Modifier.height(20.dp))
 
         Box(contentAlignment = Alignment.BottomEnd) {
-            AsyncImage(
-                model = profilePicUri,
-                contentDescription = stringResource(id = R.string.profile_picture_cd),
-                modifier = Modifier
-                    .size(180.dp)
-                    .clip(CircleShape)
-                    .background(WhiteFull),
-                // Muestra el logo por defecto si no hay foto o mientras carga
-                error = painterResource(id = R.drawable.circular_logo),
-                placeholder = painterResource(id = R.drawable.circular_logo)
-            )
+            if (profilePicBitmap != null) {
+                Image(
+                    bitmap = profilePicBitmap.asImageBitmap(),
+                    contentDescription = stringResource(id = R.string.profile_picture_cd),
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(CircleShape)
+                        .background(WhiteFull),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.circular_logo),
+                    contentDescription = stringResource(id = R.string.profile_picture_cd),
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(CircleShape)
+                        .background(WhiteFull),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
             FloatingActionButton(
-                onClick = { navController.navigate(Pantallas.Fotoperfil.ruta)},
+                onClick = { navController.navigate(Pantallas.Fotoperfil.ruta) },
                 shape = CircleShape,
                 containerColor = RedSignOut,
                 modifier = Modifier.size(40.dp)
@@ -351,7 +357,7 @@ private fun CompanyProfileContent(
 
         Card(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor=Color(0xFF663251)),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF663251)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)) {
@@ -385,7 +391,7 @@ private fun CompanyProfileContent(
                     Icon(
                         Icons.Filled.CheckCircle,
                         contentDescription = stringResource(R.string.verified_profile),
-                        tint = verifiedColor,
+                        tint = Color(0xFF00BFFF),
                         modifier = Modifier.padding(start = 4.dp, top = 10.dp)
                     )
                 }
@@ -403,9 +409,7 @@ private fun CompanyProfileContent(
                 onClick = onEditClick,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = AquaSoft),
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 50.dp)
+                modifier = Modifier.weight(1f).defaultMinSize(minHeight = 50.dp)
             ) {
                 Text(stringResource(id = R.string.edit_profile_button), color = BlackFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
@@ -413,16 +417,13 @@ private fun CompanyProfileContent(
                 onClick = onLogoutClick,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = RedSignOut),
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 50.dp)
+                modifier = Modifier.weight(1f).defaultMinSize(minHeight = 50.dp)
             ) {
                 Text(stringResource(id = R.string.logout_button), color = WhiteFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
         TextButton(onClick = onDeleteClick) {
             Text(stringResource(id = R.string.delete_account_button), color = RedSignOut)
         }
@@ -437,7 +438,7 @@ private fun UserProfileContent(
     userName: String,
     userEmail: String,
     registrationDate: String,
-    profilePicUri: String?,
+    profilePicBitmap: Bitmap?,
     onLogoutClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -453,17 +454,28 @@ private fun UserProfileContent(
         Spacer(modifier = Modifier.height(20.dp))
 
         Box(contentAlignment = Alignment.BottomEnd) {
-            AsyncImage(
-                model = profilePicUri,
-                contentDescription = stringResource(id = R.string.profile_picture_cd),
-                modifier = Modifier
-                    .size(180.dp)
-                    .clip(CircleShape)
-                    .background(WhiteFull),
-                // Muestra el logo por defecto si no hay foto o mientras carga
-                error = painterResource(id = R.drawable.circular_logo),
-                placeholder = painterResource(id = R.drawable.circular_logo)
-            )
+            if (profilePicBitmap != null) {
+                Image(
+                    bitmap = profilePicBitmap.asImageBitmap(),
+                    contentDescription = stringResource(id = R.string.profile_picture_cd),
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(CircleShape)
+                        .background(WhiteFull),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.circular_logo),
+                    contentDescription = stringResource(id = R.string.profile_picture_cd),
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(CircleShape)
+                        .background(WhiteFull),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
             FloatingActionButton(
                 onClick = { navController.navigate(Pantallas.Fotoperfil.ruta) },
                 shape = CircleShape,
@@ -478,7 +490,7 @@ private fun UserProfileContent(
 
         Card(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor=Color(0xFF663251)),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF663251)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)) {
@@ -502,9 +514,7 @@ private fun UserProfileContent(
             onClick = onEditClick,
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(containerColor = AquaSoft),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
+            modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             Text(stringResource(id = R.string.edit_profile_button), color = BlackFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
@@ -515,9 +525,7 @@ private fun UserProfileContent(
             onClick = onLogoutClick,
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(containerColor = RedSignOut),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
+            modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             Text(stringResource(id = R.string.logout_button), color = WhiteFull, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
@@ -534,9 +542,7 @@ private fun UserProfileContent(
 private fun UserInfoRow(icon: ImageVector, label: String, value: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(vertical = 12.dp)
-            .fillMaxWidth()
+        modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth()
     ) {
         Icon(icon, contentDescription = label, tint = WhiteFull, modifier = Modifier.size(32.dp))
         Spacer(modifier = Modifier.width(16.dp))
@@ -547,77 +553,45 @@ private fun UserInfoRow(icon: ImageVector, label: String, value: String) {
     }
 }
 
-// DIÁLOGOS DE CONFIRMACIÓN
-
 @Composable
-fun LogoutDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
+fun LogoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 1.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 1.dp),
             shape = RoundedCornerShape(1.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(0xFFFF4B3A)),
+                    modifier = Modifier.fillMaxWidth().height(48.dp).background(Color(0xFFFF4B3A)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = stringResource(R.string.est_s_seguro_de_que_quieres_cerrar_sesi_n),
-                        color = Color.Black,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
-
                 Text(
                     text = stringResource(R.string.podr_s_volver_a_iniciar_sesi_n_en_cualquier_momento),
-                    fontSize = 15.sp,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
-                    color = Color.Black,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                    fontSize = 15.sp, fontFamily = FontFamily.SansSerif, color = Color.Black,
+                    fontStyle = FontStyle.Italic, textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 24.dp)
                 )
-
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
-                        .height(48.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).height(48.dp)
                 ) {
                     Text(stringResource(R.string.cancelar), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-
                 Spacer(modifier = Modifier.height(12.dp))
-
                 Button(
                     onClick = onConfirm,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4B3A)),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
-                        .padding(bottom = 24.dp)
-                        .height(48.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).padding(bottom = 24.dp).height(48.dp)
                 ) {
                     Text(stringResource(R.string.confirmar), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
@@ -627,74 +601,44 @@ fun LogoutDialog(
 }
 
 @Composable
-fun DeleteDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
+fun DeleteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 1.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 1.dp),
             shape = RoundedCornerShape(1.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(0xFFFF4B3A)),
+                    modifier = Modifier.fillMaxWidth().height(48.dp).background(Color(0xFFFF4B3A)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = stringResource(R.string.est_s_seguro_de_que_quieres_eliminar_tu_cuenta),
-                        color = Color.Black,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
-
                 Text(
                     text = stringResource(R.string.esta_acci_n_es_permanente_y_no_se_puede_deshacer_se_borrar_n_todos_tus_datos_de_forma_definitiva),
-                    fontSize = 15.sp,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
-                    color = Color.Black,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                    fontSize = 15.sp, fontFamily = FontFamily.SansSerif, color = Color.Black,
+                    fontStyle = FontStyle.Italic, textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 24.dp)
                 )
-
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
-                        .height(48.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).height(48.dp)
                 ) {
                     Text(stringResource(R.string.cancelar), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-
                 Spacer(modifier = Modifier.height(12.dp))
-
                 Button(
                     onClick = onConfirm,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4B3A)),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
-                        .padding(bottom = 24.dp)
-                        .height(48.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).padding(bottom = 24.dp).height(48.dp)
                 ) {
                     Text(stringResource(R.string.confirmar), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
@@ -704,68 +648,41 @@ fun DeleteDialog(
 }
 
 @Composable
-fun SuccessDialogo(
-    onDismiss: () -> Unit
-) {
+fun SuccessDialogo(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 1.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 1.dp),
             shape = RoundedCornerShape(1.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(0xFFC8E6C9)),
+                    modifier = Modifier.fillMaxWidth().height(48.dp).background(Color(0xFFC8E6C9)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                         Text(
                             text = stringResource(R.string.cuenta_eliminada_con_xito),
-                            color = Color.Black,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
+                            color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold
                         )
                         Icon(
                             Icons.Default.CheckCircle,
                             contentDescription = stringResource(R.string.exito),
-                            tint = Color(0xFF2E7D32),
-                            modifier = Modifier.size(24.dp)
+                            tint = Color(0xFF2E7D32), modifier = Modifier.size(24.dp)
                         )
                     }
                 }
-
                 Text(
                     text = stringResource(R.string.hemos_eliminado_tu_cuenta_y_todos_tus_datos_de_urban_fix_de_forma_permanente_lamentamos_verte_partir_y_te_agradecemos_por_haber_sido_parte_de_nuestra_comunidad),
-                    fontSize = 15.sp,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
-                    color = Color.Black,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                    fontSize = 15.sp, fontFamily = FontFamily.SansSerif, color = Color.Black,
+                    fontStyle = FontStyle.Italic, textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 24.dp)
                 )
-
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
-                        .padding(bottom = 24.dp)
-                        .height(48.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).padding(bottom = 24.dp).height(48.dp)
                 ) {
                     Text(stringResource(R.string.salir), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }

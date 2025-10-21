@@ -1,5 +1,8 @@
+// ProfileViewModel.kt - ACTUALIZACIÓN COMPLETA
+
 package com.example.urbanfix.viewmodel
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.urbanfix.R
@@ -18,8 +21,7 @@ sealed interface ProfileState {
         val role: String,
         val userEmail: String,
         val registrationDate: String,
-        //SIMULACRO IMAGEN PERFIL
-        val profilePicUri: String?,
+        val profilePicBitmap: Bitmap?,
         val userName: String? = null,
         val companyName: String? = null,
         val personalName: String? = null
@@ -53,8 +55,8 @@ class ProfileViewModel(
     private val _editError = MutableStateFlow<Int?>(null)
     val editError: StateFlow<Int?> = _editError.asStateFlow()
 
-    private val _profilePicUri = MutableStateFlow<String?>(null)
-    val profilePicUri: StateFlow<String?> = _profilePicUri.asStateFlow()
+    private val _profilePicBitmap = MutableStateFlow<Bitmap?>(null)
+    val profilePicBitmap: StateFlow<Bitmap?> = _profilePicBitmap.asStateFlow()
 
     init {
         loadProfile()
@@ -68,9 +70,9 @@ class ProfileViewModel(
                 val userRole = userPreferencesManager.getUserRole()
                 val email = userPreferencesManager.getUserEmail()
                 val registrationDate = userPreferencesManager.getRegistrationDate()
-                //SIMULACRO IMAGEN PERFIL
-                val picUri = userPreferencesManager.getProfilePicUri()
-                _profilePicUri.value = picUri
+
+                val picBitmap = userPreferencesManager.getProfilePicBitmap()
+                _profilePicBitmap.value = picBitmap
 
                 if (userRole.isEmpty() || email.isEmpty()) {
                     _profileState.value = ProfileState.Error(R.string.error_profile_not_found)
@@ -88,8 +90,7 @@ class ProfileViewModel(
                             userEmail = email,
                             userName = userName,
                             registrationDate = registrationDate,
-                            //SIMULACRO IMAGEN PERFIL
-                            profilePicUri = picUri
+                            profilePicBitmap = picBitmap  // ← USAR picBitmap
                         )
                     }
                     "funcionario" -> {
@@ -102,8 +103,7 @@ class ProfileViewModel(
                             companyName = companyName,
                             personalName = personalName,
                             registrationDate = registrationDate,
-                            //SIMULACRO IMAGEN PERFIL
-                            profilePicUri = picUri
+                            profilePicBitmap = picBitmap  // ← USAR picBitmap
                         )
                     }
                     else -> {
@@ -212,26 +212,24 @@ class ProfileViewModel(
     }
 
     fun validateForSave(): Boolean {
-        // Reutilizamos la misma lógica de validación de onSaveChanges
         if (_name.value.isBlank()) {
             _editError.value = if (_role.value == "funcionario") {
                 R.string.error_official_name_empty
             } else {
                 R.string.error_user_name_empty
             }
-            return false // Hay un error
+            return false
         }
         if (_password.value.isNotEmpty() || _confirmPassword.value.isNotEmpty()) {
             if (_password.value.length < 6) {
                 _editError.value = R.string.error_password_length
-                return false // Hay un error
+                return false
             }
             if (_password.value != _confirmPassword.value) {
                 _editError.value = R.string.error_password_mismatch
-                return false // Hay un error
+                return false
             }
         }
-        // Si llegamos aquí, no hay errores
         _editError.value = null
         return true
     }
@@ -254,7 +252,7 @@ class ProfileViewModel(
         viewModelScope.launch {
             try {
                 val userId = userPreferencesManager.getUserId()
-                if (userId == -1) {return@launch }
+                if (userId == -1) { return@launch }
 
                 val pathRole = if (_role.value == "funcionario") "funcionarios" else "usuarios"
                 val response = RetrofitInstance.api.deleteUser(pathRole, userId)
@@ -262,9 +260,9 @@ class ProfileViewModel(
                 if (response.isSuccessful) {
                     userPreferencesManager.deleteAllData()
                     _accountDeleted.value = true
-                } else {
                 }
             } catch (e: Exception) {
+                // Manejo de error
             }
         }
     }
@@ -273,4 +271,3 @@ class ProfileViewModel(
         _accountDeleted.value = false
     }
 }
-

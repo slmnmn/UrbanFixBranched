@@ -2,8 +2,11 @@ package com.example.urbanfix.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.net.Uri
+import com.example.urbanfix.utils.ImageUtils
 
-class UserPreferencesManager(context: Context) {
+class UserPreferencesManager(private val context: Context) {
 
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences("urbanfix_prefs", Context.MODE_PRIVATE)
@@ -20,8 +23,7 @@ class UserPreferencesManager(context: Context) {
         private const val USER_ROLE_KEY = "user_role"
         private const val COMPANY_NAME_KEY = "company_name"
         private const val REGISTRATION_DATE_KEY = "registration_date"
-        //SIMULACRO IMAGEN PERFIL
-        private const val PROFILE_PIC_URI_KEY = "profile_pic_uri"
+        private const val PROFILE_PIC_BASE64_KEY = "profile_pic_base64"
     }
 
     fun saveUserData(id: Int, name: String, email: String, phone: String?, role: String, companyName: String?, registrationDate: String) {
@@ -39,16 +41,12 @@ class UserPreferencesManager(context: Context) {
 
     fun getUserId(): Int = sharedPreferences.getInt(USER_ID_KEY, -1)
     fun getUserName(): String = sharedPreferences.getString(USER_NAME_KEY, "Usuario") ?: "Usuario"
-
     fun getCompanyName(): String = sharedPreferences.getString(COMPANY_NAME_KEY, "") ?: ""
     fun getUserEmail(): String = sharedPreferences.getString(USER_EMAIL_KEY, "") ?: ""
     fun getUserPhone(): String = sharedPreferences.getString(USER_PHONE_KEY, "") ?: ""
     fun getUserRole(): String = sharedPreferences.getString(USER_ROLE_KEY, "usuario") ?: "usuario"
-
     fun getRegistrationDate(): String = sharedPreferences.getString(REGISTRATION_DATE_KEY, "") ?: ""
 
-
-    // --- FUNCIONES PARA "RECORDARME" ---
     fun saveCredentials(email: String, password: String, rememberMe: Boolean) {
         sharedPreferences.edit().apply {
             putBoolean(REMEMBER_ME_KEY, rememberMe)
@@ -67,7 +65,6 @@ class UserPreferencesManager(context: Context) {
     fun getSavedEmail(): String = sharedPreferences.getString(EMAIL_KEY, "") ?: ""
     fun getSavedPassword(): String = sharedPreferences.getString(PASSWORD_KEY, "") ?: ""
 
-    // --- FUNCIÓN DE LIMPIEZA CORREGIDA ---
     fun clearCredentials() {
         sharedPreferences.edit().apply {
             remove(USER_ID_KEY)
@@ -80,15 +77,52 @@ class UserPreferencesManager(context: Context) {
             apply()
         }
     }
+
     fun deleteAllData() {
         sharedPreferences.edit().clear().apply()
     }
 
-    //SIMULACRO IMAGEN PERFIL
-    fun saveProfilePicUri(uriString: String?) {
-        sharedPreferences.edit().apply {
-            putString(PROFILE_PIC_URI_KEY, uriString)
-        }.apply()
+    // FUNCIONES SIMPLIFICADAS PARA IMAGEN DE PERFIL
+
+    fun saveProfilePicFromUri(uri: Uri): Boolean {
+        return try {
+            val bitmap = ImageUtils.processImageFromUri(context, uri)
+            if (bitmap != null) {
+                saveProfilePicBitmap(bitmap)
+                bitmap.recycle()
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
-    fun getProfilePicUri(): String? = sharedPreferences.getString(PROFILE_PIC_URI_KEY, null)}
+    fun saveProfilePicBitmap(bitmap: Bitmap) {
+        try {
+            val base64String = ImageUtils.bitmapToBase64(bitmap)
+            sharedPreferences.edit().putString(PROFILE_PIC_BASE64_KEY, base64String).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun getProfilePicBitmap(): Bitmap? {
+        val base64String = sharedPreferences.getString(PROFILE_PIC_BASE64_KEY, null)
+        return base64String?.let { ImageUtils.base64ToBitmap(it) }
+    }
+
+    fun getProfilePicBase64(): String? {
+        return sharedPreferences.getString(PROFILE_PIC_BASE64_KEY, null)
+    }
+
+    fun deleteProfilePic() {
+        sharedPreferences.edit().remove(PROFILE_PIC_BASE64_KEY).apply()
+    }
+
+    fun hasProfilePic(): Boolean {
+        return sharedPreferences.contains(PROFILE_PIC_BASE64_KEY)
+    }
+}

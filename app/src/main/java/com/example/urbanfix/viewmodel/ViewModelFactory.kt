@@ -13,6 +13,9 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
                 ProfileViewModel(userPreferencesManager) as T
             }
+            modelClass.isAssignableFrom(ReportViewModel::class.java) -> {
+                ReportViewModel(userPreferencesManager) as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }
