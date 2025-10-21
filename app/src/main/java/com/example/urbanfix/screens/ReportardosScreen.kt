@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.ExifInterface
 import android.net.Uri
+import androidx.activity.ComponentActivity
 import com.example.urbanfix.services.AIService
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -83,8 +84,12 @@ fun ReportarDosScreen(
     reportType: String = "huecos"
 ) {
     val context = LocalContext.current
-    val viewModel: ReportViewModel = viewModel(factory = ViewModelFactory(context))
-    val coroutineScope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()  // MOVER ANTES del activity
+    val activity = context as? ComponentActivity ?: error("No Activity found")
+    val viewModel: ReportViewModel = viewModel(
+        viewModelStoreOwner = activity,
+        factory = ViewModelFactory(context)
+    )
 
     // Estados del ViewModel
     val eventAddress by viewModel.eventAddress.collectAsState()

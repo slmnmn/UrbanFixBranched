@@ -343,11 +343,5 @@
     <string name="error_no_photos">Debe agregar al menos una foto</string>
     <string name="error_creating_report">Error al crear el reporte. Inténtalo de nuevo</string>
 
-    <!-- Estados de carga -->
-    <string name="loading_report">Subiendo reporte…</string>
-    <string name="error_uploading_report">Error al subir el reporte</string>
-    <string name="report_completed">¡Reporte creado exitosamente!</string>
-    <string name="retry_button">Reintentar</string>
-    <string name="home_button">Ir al inicio</string>
 </resources>
 

@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.ExifInterface
 import android.net.Uri
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.unit.Dp
@@ -14,9 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -40,11 +39,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.DialogProperties
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
@@ -169,10 +167,14 @@ fun ReportarScreen(
     reportType: String = "huecos"
 ) {
     val context = LocalContext.current
-    val viewModel: ReportViewModel = viewModel(factory = ViewModelFactory(context))
-    val coroutineScope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()  // MOVER ANTES del activity
+    val activity = context as? ComponentActivity ?: error("No Activity found")
+    val viewModel: ReportViewModel = viewModel(
+        viewModelStoreOwner = activity,
+        factory = ViewModelFactory(context)
+    )
 
-    // Estados del ViewModel
+    // CAMBIO CLAVE: Usar estados del ViewModel
     val eventAddress by viewModel.eventAddress.collectAsState()
     val referencePoint by viewModel.referencePoint.collectAsState()
     val photos by viewModel.photos.collectAsState()
@@ -403,7 +405,9 @@ fun ReportarScreen(
 
             OutlinedTextField(
                 value = referencePoint,
-                onValueChange = { viewModel.onReferencePointChange(it) },
+                onValueChange = {
+                    viewModel.onReferencePointChange(it)
+                },
                 placeholder = {
                     Text(
                         stringResource(R.string.reference_point_placeholder),
@@ -673,23 +677,15 @@ fun ReportarScreen(
     }
 }
 
-// ===== COMPOSABLES AUXILIARES =====
-
 @Composable
-fun PhotoActionButton(
-    iconId: Int,
-    text: String,
-    onClick: () -> Unit
-) {
+fun PhotoActionButton(iconId: Int, text: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(160.dp)
             .height(120.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFB8E6E1)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFB8E6E1)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -728,9 +724,7 @@ fun SmallPhotoButton(
             .height(height)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFB8E6E1)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFB8E6E1)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -757,19 +751,14 @@ fun SmallPhotoButton(
 }
 
 @Composable
-fun ExitConfirmationDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
+fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 1.dp),
             shape = RoundedCornerShape(1.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -783,106 +772,12 @@ fun ExitConfirmationDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = stringResource(R.string.exit_confirmation_title),
-                        color = Color.Black,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Text(
-                    text = stringResource(R.string.exit_confirmation_message),
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily.SansSerif,
-                    color = Color.Black,
-                    fontStyle = FontStyle.Italic,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp, horizontal = 24.dp)
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .padding(bottom = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = onDismiss,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1D3557)
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.exit_no_button),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Button(
-                        onClick = onConfirm,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFE63946)
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.exit_yes_button),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun IncompleteFieldsDialog(
-    onDismiss: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 1.dp),
-            shape = RoundedCornerShape(1.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(0xFFFF4B3A)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
                         text = stringResource(R.string.incomplete_fields_title),
                         color = Color.Black,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
-
                 Text(
                     text = stringResource(R.string.incomplete_fields_message),
                     fontSize = 15.sp,
@@ -894,12 +789,9 @@ fun IncompleteFieldsDialog(
                         .fillMaxWidth()
                         .padding(vertical = 32.dp, horizontal = 24.dp)
                 )
-
                 Button(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1D3557)
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -920,18 +812,14 @@ fun IncompleteFieldsDialog(
 }
 
 @Composable
-fun MaxPhotosErrorDialog(
-    onDismiss: () -> Unit
-) {
+fun MaxPhotosErrorDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 1.dp),
             shape = RoundedCornerShape(1.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -951,7 +839,6 @@ fun MaxPhotosErrorDialog(
                         fontWeight = FontWeight.Bold
                     )
                 }
-
                 Text(
                     text = stringResource(R.string.max_photos_error_message),
                     fontSize = 15.sp,
@@ -963,12 +850,9 @@ fun MaxPhotosErrorDialog(
                         .fillMaxWidth()
                         .padding(vertical = 32.dp, horizontal = 24.dp)
                 )
-
                 Button(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1D3557)
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -989,10 +873,7 @@ fun MaxPhotosErrorDialog(
 }
 
 @Composable
-fun ImagePreviewDialog(
-    bitmap: Bitmap,
-    onDismiss: () -> Unit
-) {
+fun ImagePreviewDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -1024,14 +905,10 @@ fun ImagePreviewDialog(
                         .clip(RoundedCornerShape(12.dp)),
                     contentScale = ContentScale.Fit
                 )
-
                 Spacer(modifier = Modifier.height(16.dp))
-
                 Button(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1D3557)
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1058,21 +935,17 @@ fun MapboxMapComponent(
     onLocationSelected: (Point) -> Unit = {}
 ) {
     val context = LocalContext.current
-
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
             val mapView = MapView(ctx).apply {
                 getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS)
             }
-
             onMapReady(mapView)
-
             mapView.getMapboxMap().addOnMapClickListener { point ->
                 onLocationSelected(point)
                 true
             }
-
             if (hasPermission) {
                 try {
                     val locationComponent = mapView.location
@@ -1084,7 +957,6 @@ fun MapboxMapComponent(
                     e.printStackTrace()
                 }
             }
-
             mapView
         },
         update = { mapView ->
@@ -1095,16 +967,73 @@ fun MapboxMapComponent(
                         .zoom(15.0)
                         .build()
                 )
-
                 val annotationApi = mapView.annotations
                 val pointAnnotationManager = annotationApi.createPointAnnotationManager()
                 pointAnnotationManager.deleteAll()
-
-                val pointAnnotationOptions = PointAnnotationOptions()
-                    .withPoint(point)
-
+                val pointAnnotationOptions = PointAnnotationOptions().withPoint(point)
                 pointAnnotationManager.create(pointAnnotationOptions)
             }
         }
     )
+}
+
+@Composable
+fun IncompleteFieldsDialog(onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(Color(0xFFFF4B3A)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.incomplete_fields_title),
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.incomplete_fields_message),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    fontStyle = FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                )
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .padding(bottom = 24.dp)
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.back_button),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
 }

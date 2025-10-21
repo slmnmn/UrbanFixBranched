@@ -139,9 +139,16 @@ class ReportViewModel(
                 // Obtener ID de categoría según el tipo de reporte
                 val categoryId = getCategoryId(reportType)
 
+                // Usar descripción o generar una por defecto con el subtipo
+                val finalDescription = if (_description.value.isNotEmpty()) {
+                    _description.value
+                } else {
+                    "Reporte de ${_selectedSubtype.value}"
+                }
+
                 // Crear request
                 val request = CreateReporteRequest(
-                    descripcion = _description.value.ifEmpty { "Reporte de $_selectedSubtype.value" },
+                    descripcion = finalDescription,
                     direccion = _eventAddress.value,
                     referencia = _referencePoint.value,
                     img_prueba_1 = photo1Base64,
@@ -157,7 +164,6 @@ class ReportViewModel(
 
                 if (response.isSuccessful) {
                     _reportState.value = ReportState.Success
-                    clearReportData()
                     onSuccess()
                 } else {
                     _reportState.value = ReportState.Error(R.string.error_creating_report)
@@ -198,30 +204,20 @@ class ReportViewModel(
         _reportState.value = ReportState.Idle
     }
 
-    // ===== FUNCIONES PARA MANTENER DATOS ENTRE PANTALLAS =====
-    fun setReportData(
-        address: String,
-        reference: String,
-        photoList: List<Bitmap>,
-        location: Point?
-    ) {
-        _eventAddress.value = address
-        _referencePoint.value = reference
-        _photos.value = photoList
-        _selectedLocation.value = location
-    }
-
-    fun getReportData(): ReportData {
-        return ReportData(
-            eventAddress = _eventAddress.value,
-            referencePoint = _referencePoint.value,
-            photos = _photos.value,
-            selectedLocation = _selectedLocation.value
-        )
+    // ===== FUNCIONES PARA DEBUGGING =====
+    fun getReportSummary(): String {
+        return """
+            Address: ${_eventAddress.value}
+            Reference: ${_referencePoint.value}
+            Photos: ${_photos.value.size}
+            Location: ${_selectedLocation.value?.let { "(${it.latitude()}, ${it.longitude()})" } ?: "null"}
+            Subtype: ${_selectedSubtype.value}
+            Description: ${_description.value}
+        """.trimIndent()
     }
 }
 
-// Data class para facilitar el paso de datos entre pantallas
+// Data class para facilitar el paso de datos entre pantallas (opcional, ya no necesario)
 data class ReportData(
     val eventAddress: String,
     val referencePoint: String,
