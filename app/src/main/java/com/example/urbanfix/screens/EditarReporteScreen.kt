@@ -1,5 +1,6 @@
 package com.example.urbanfix.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,8 +13,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
@@ -32,6 +37,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.window.Dialog
 
 data class Comment(
@@ -58,6 +65,16 @@ fun EditarReporteScreen(
     var likeCount by remember { mutableStateOf(1) }
     var dislikeCount by remember { mutableStateOf(0) }
     val scrollState = rememberScrollState()
+    val clipboardManager = LocalClipboardManager.current
+    var showDialog by remember { mutableStateOf(false) }
+    val code = "#2025-0001"
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var commentToDelete by remember { mutableStateOf<String?>(null) }
+    var showImageGallery by remember { mutableStateOf(false) }
+    val reportImages = listOf(
+        R.drawable.alumbrado_foto,
+        R.drawable.prueba_circulo
+    )
 
     var comments by remember {
         mutableStateOf(
@@ -140,13 +157,11 @@ fun EditarReporteScreen(
                     .background(Color(0xFFF1FAEE))
                     .paddingFromBaseline(bottom = 180.dp)
             ) {
-                // SECCIÓN DEL MAPA CON OVERLAYS Y TARJETA
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(420.dp)
                 ) {
-                    // Mapa de fondo
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -162,45 +177,8 @@ fun EditarReporteScreen(
                             onMapReady = {},
                             onLocationSelected = {}
                         )
-
-                        // Ícono bombillo a la izquierda
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(12.dp)
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color.Black),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.gen_ia),
-                                contentDescription = "Bombillo",
-                                modifier = Modifier.size(24.dp),
-                                tint = Color.White
-                            )
-                        }
-
-                        // Ícono marcador a la derecha
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(12.dp)
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFB76998)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.gen_ia),
-                                contentDescription = "Ubicación",
-                                modifier = Modifier.size(24.dp),
-                                tint = Color.White
-                            )
-                        }
                     }
 
-                    // TARJETA AZUL OSCURA CON INFORMACIÓN (encima del mapa)
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -220,9 +198,8 @@ fun EditarReporteScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                // Título centrado
                                 Text(
-                                    text = "Alumbrado Público",
+                                    text = stringResource(R.string.report_category_lighting),
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
@@ -234,9 +211,8 @@ fun EditarReporteScreen(
 
                                 Spacer(modifier = Modifier.height(12.dp))
 
-                                // Descripción
                                 Text(
-                                    text = "Se reporta que en la Calle 31A #13 – a 91 Sur el alumbrado está intermitente, específicamente al lado del CAI del Gustavo Restrepo",
+                                    text = stringResource(R.string.report_description_example),
                                     fontSize = 13.sp,
                                     color = Color.White,
                                     lineHeight = 18.sp,
@@ -245,7 +221,6 @@ fun EditarReporteScreen(
 
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                // Fila inferior con líneas individuales encima de cada ícono
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -253,7 +228,6 @@ fun EditarReporteScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // 🔹 Código
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         modifier = Modifier.offset(y = -2.dp)
@@ -277,14 +251,21 @@ fun EditarReporteScreen(
                                             )
                                             Icon(
                                                 painter = painterResource(id = R.drawable.copiar_code),
-                                                contentDescription = "Copiar",
-                                                modifier = Modifier.size(18.dp),
+                                                contentDescription = stringResource(R.string.copy_code),
+                                                modifier = Modifier
+                                                    .size(18.dp)
+                                                    .clickable {
+                                                        clipboardManager.setText(AnnotatedString(code))
+                                                        showDialog = true
+                                                    },
                                                 tint = Color.White.copy(alpha = 0.7f)
                                             )
                                         }
                                     }
+                                    if (showDialog) {
+                                        CodeCopiedDialog(onDismiss = { showDialog = false })
+                                    }
 
-                                    // 🔹 Like
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
@@ -319,7 +300,7 @@ fun EditarReporteScreen(
                                                     painter = painterResource(
                                                         id = if (likeActive) R.drawable.like_relleno else R.drawable.sin_like
                                                     ),
-                                                    contentDescription = "Like",
+                                                    contentDescription = stringResource(R.string.like_button),
                                                     modifier = Modifier.size(16.dp),
                                                     tint = if (likeActive) Color.White else Color.White.copy(alpha = 0.5f)
                                                 )
@@ -332,7 +313,6 @@ fun EditarReporteScreen(
                                         }
                                     }
 
-                                    // 🔹 Dislike
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
@@ -367,7 +347,7 @@ fun EditarReporteScreen(
                                                     painter = painterResource(
                                                         id = if (dislikeActive) R.drawable.dislike_relleno else R.drawable.no_like
                                                     ),
-                                                    contentDescription = "Dislike",
+                                                    contentDescription = stringResource(R.string.dislike_button),
                                                     modifier = Modifier.size(16.dp),
                                                     tint = if (dislikeActive) Color.White else Color.White.copy(alpha = 0.3f)
                                                 )
@@ -380,7 +360,6 @@ fun EditarReporteScreen(
                                         }
                                     }
 
-                                    // 🔹 Estado
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         modifier = Modifier.offset(y = 4.dp)
@@ -393,7 +372,7 @@ fun EditarReporteScreen(
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text(
-                                            text = "En Proceso",
+                                            text = stringResource(R.string.status_in_progress),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.Black,
@@ -405,7 +384,6 @@ fun EditarReporteScreen(
                                 }
                             }
 
-                            // Botón editar en la parte superior derecha (FUERA del Column)
                             Button(
                                 onClick = {
                                     navController.navigate("reportar/alumbrado")
@@ -420,7 +398,7 @@ fun EditarReporteScreen(
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "EDITAR",
+                                    text = stringResource(R.string.edit_button),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.Black
@@ -429,7 +407,6 @@ fun EditarReporteScreen(
                         }
                     }
 
-                    // Círculo con imagen en el centro (debe estar encima de todo)
                     Box(
                         modifier = Modifier
                             .size(120.dp)
@@ -437,23 +414,31 @@ fun EditarReporteScreen(
                             .offset(y = (-50).dp)
                             .clip(CircleShape)
                             .background(Color.White, CircleShape)
-                            .padding(4.dp),
+                            .padding(4.dp)
+                            .clickable { showImageGallery = true },
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.alumbrado_foto),
-                            contentDescription = "Foto del reporte",
+                            contentDescription = stringResource(R.string.report_photo),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
                     }
+
+                    if (showImageGallery) {
+                        ImageGalleryDialog(
+                            images = reportImages,
+                            initialIndex = 0,
+                            onDismiss = { showImageGallery = false }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(1.dp))
 
-                // Información de fecha y creador
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -463,7 +448,7 @@ fun EditarReporteScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Reportado el 06 - 09 - 2025 - 19:45",
+                        text = stringResource(R.string.reported_date_example),
                         fontSize = 10.sp,
                         color = Color(0xFF333333),
                         lineHeight = 13.sp
@@ -474,7 +459,7 @@ fun EditarReporteScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Creado por Dylan Gutierrez",
+                            text = stringResource(R.string.created_by_example),
                             fontSize = 10.sp,
                             color = Color(0xFF333333),
                             textDecoration = TextDecoration.Underline
@@ -498,7 +483,6 @@ fun EditarReporteScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // SECCIÓN DE COMENTARIOS
                 Column(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 ) {
@@ -511,7 +495,6 @@ fun EditarReporteScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Mostrar comentarios
                     comments.forEach { comment ->
                         CommentItem(
                             comment = comment,
@@ -534,14 +517,12 @@ fun EditarReporteScreen(
                 }
             }
 
-            // Campo de comentario fijo en la parte inferior
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
             ) {
                 Column {
-                    // Barra de comentario
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -562,7 +543,8 @@ fun EditarReporteScreen(
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(44.dp),
+                                .height(56.dp)
+                                .padding(vertical = 2.dp),
                             shape = RoundedCornerShape(24.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedContainerColor = Color.White,
@@ -607,14 +589,12 @@ fun EditarReporteScreen(
                         }
                     }
 
-                    // Barra de navegación inferior
                     BottomNavBar(navController = navController)
                 }
             }
         }
     }
 
-    // Diálogo para editar comentario
     if (showEditDialog && commentToEdit != null) {
         EditCommentDialog(
             comment = commentToEdit!!,
@@ -632,7 +612,6 @@ fun EditarReporteScreen(
         )
     }
 
-    // Diálogo de opciones de comentario
     if (showOptionsDialog != null && commentToEdit == null) {
         CommentOptionsDialog(
             onDismiss = { showOptionsDialog = null },
@@ -645,13 +624,27 @@ fun EditarReporteScreen(
                 }
             },
             onDelete = {
-                comments = comments.filter { it.id != showOptionsDialog }
+                commentToDelete = showOptionsDialog
+                showDeleteDialog = true
                 showOptionsDialog = null
             }
         )
     }
-}
 
+    if (showDeleteDialog && commentToDelete != null) {
+        DeleteCommentDialog(
+            onDismiss = {
+                showDeleteDialog = false
+                commentToDelete = null
+            },
+            onConfirm = {
+                comments = comments.filter { it.id != commentToDelete }
+                showDeleteDialog = false
+                commentToDelete = null
+            }
+        )
+    }
+}
 @Composable
 fun CommentItem(
     comment: Comment,
@@ -660,7 +653,18 @@ fun CommentItem(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = if (comment.isCurrentUser) Color(0xFF2C3E50) else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(
+                horizontal = if (comment.isCurrentUser) 12.dp else 0.dp,
+                vertical = if (comment.isCurrentUser) 10.dp else 0.dp
+            )
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -692,13 +696,13 @@ fun CommentItem(
                         text = comment.author,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BlackFull
+                        color = if (comment.isCurrentUser) Color.White else BlackFull
                     )
 
                     if (comment.isVerified) {
                         Icon(
                             painter = painterResource(id = R.drawable.check),
-                            contentDescription = "Verified",
+                            contentDescription = stringResource(R.string.verified_description),
                             modifier = Modifier.size(14.dp),
                             tint = Color(0xFF00BCD4)
                         )
@@ -706,14 +710,12 @@ fun CommentItem(
 
                     Spacer(modifier = Modifier.width(4.dp))
 
-                    // "Ahora" o tiempo
                     Text(
                         text = comment.time,
                         fontSize = 11.sp,
-                        color = Color(0xFF999999)
+                        color = if (comment.isCurrentUser) Color(0xFFCCCCCC) else Color(0xFF999999)
                     )
 
-                    // 🔹 Icono de 3 puntos al lado del tiempo
                     if (comment.isCurrentUser) {
                         IconButton(
                             onClick = onMenuClick,
@@ -721,9 +723,9 @@ fun CommentItem(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.edit_comentario),
-                                contentDescription = "Opciones",
+                                contentDescription = stringResource(R.string.options_description),
                                 modifier = Modifier.size(16.dp),
-                                tint = Color(0xFF666666)
+                                tint = Color.White
                             )
                         }
                     }
@@ -731,7 +733,7 @@ fun CommentItem(
                 Text(
                     text = comment.text,
                     fontSize = 12.sp,
-                    color = Color.Black
+                    color = if (comment.isCurrentUser) Color.White else Color.Black
                 )
             }
         }
@@ -747,7 +749,7 @@ fun CommentOptionsDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
-                .fillMaxWidth(1f)
+                .fillMaxWidth()
                 .padding(3.dp)
                 .shadow(
                     elevation = 12.dp,
@@ -755,42 +757,29 @@ fun CommentOptionsDialog(
                     clip = false
                 ),
             shape = RoundedCornerShape(2.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)), // fondo verdoso claro
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-
             ) {
-                // Header con X
-                Row(
+                // Header
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFE0F5E1)),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .background(Color(0xFFE0F5E1))
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "¿Qué deseas hacer con tu comentario?",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        text = stringResource(R.string.comment_options_title),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
                         color = Color.Black,
-                        modifier = Modifier
-                            .weight(1f)
-                             .padding(top= 10.dp, bottom = 10.dp, end= 10.dp, start = 10.dp),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.icono_x_salir),
-                            contentDescription = "Cerrar",
-                            modifier = Modifier.size(20.dp),
-                            tint = Color(0xFF666666)
-                        )
-                    }
                 }
 
                 Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
@@ -806,7 +795,7 @@ fun CommentOptionsDialog(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.icono_edit_coment),
-                        contentDescription = "Editar",
+                        contentDescription = stringResource(R.string.edit_description),
                         modifier = Modifier
                             .size(28.dp)
                             .background(Color(0xFFE0F5E1), RoundedCornerShape(8.dp))
@@ -814,8 +803,9 @@ fun CommentOptionsDialog(
                         tint = Color(0xFF000000)
                     )
                     Text(
-                        text = "Editar",
-                        fontSize = 15.sp,
+                        text = stringResource(R.string.edit_option),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = Color.Black
                     )
                 }
@@ -833,7 +823,7 @@ fun CommentOptionsDialog(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.icono_elim_coment),
-                        contentDescription = "Eliminar",
+                        contentDescription = stringResource(R.string.delete_description),
                         modifier = Modifier
                             .size(28.dp)
                             .background(Color(0xFFE0F5E1), RoundedCornerShape(8.dp))
@@ -841,9 +831,28 @@ fun CommentOptionsDialog(
                         tint = Color(0xFF000000)
                     )
                     Text(
-                        text = "Eliminar",
-                        fontSize = 15.sp,
+                        text = stringResource(R.string.delete_option),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF000000)
+                    )
+                }
+
+                Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
+
+                // Botón Volver
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557))
+                ) {
+                    Text(
+                        text = stringResource(R.string.back_button),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
                     )
                 }
             }
@@ -863,33 +872,53 @@ fun EditCommentDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            shape = RoundedCornerShape(20.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF3FAF3))
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
+                // Título del diálogo
                 Text(
-                    text = "Editar comentario",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    text = stringResource(R.string.edit_comment_title),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF2F4F4F),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
                 )
 
+                // Campo de texto con fondo blanco y sombras suaves
                 OutlinedTextField(
                     value = editedText,
                     onValueChange = { editedText = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(2.dp, shape = RoundedCornerShape(12.dp)),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFCCCCCC),
-                        focusedBorderColor = Color(0xFF4F7D94)
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White,
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedBorderColor = Color(0xFF4F7D94),
+                        cursorColor = Color(0xFF4F7D94)
                     ),
+                    textStyle = LocalTextStyle.current.copy(fontSize = 14.sp, color = Color.Black),
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.comment_placeholder),
+                            fontSize = 14.sp,
+                            color = Color(0xFF999999)
+                        )
+                    },
                     minLines = 3
                 )
 
+                // Botones de acción
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -897,22 +926,333 @@ fun EditCommentDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, Color(0xFFB0BEC5)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.Gray,
+                            contentColor = Color(0xFFFFFFFF)
+                        )
                     ) {
-                        Text("Cancelar", color = Color(0xFF666666))
+                        Text(stringResource(R.string.cancel_button))
                     }
 
                     Button(
                         onClick = { onSave(editedText) },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF4F7D94)
+                            containerColor = Color(0xFF4F7D94),
+                            contentColor = Color.White,
+                            disabledContainerColor = Color(0xFFB0BEC5)
                         ),
                         enabled = editedText.isNotBlank()
                     ) {
-                        Text("Guardar", color = Color.White)
+                        Text(stringResource(R.string.save_button))
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CodeCopiedDialog(onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .background(Color(0xFF90BE6D)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.code_copied_title),
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.code_copied_message),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 28.dp, horizontal = 24.dp)
+                )
+
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1D3557)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .padding(bottom = 24.dp)
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.accept_button),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DeleteCommentDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header rojo
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp)
+                        .background(Color(0xFFE63946)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.delete_comment_title),
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+
+                // Texto de advertencia
+                Text(
+                    text = stringResource(R.string.delete_warning),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 28.dp, horizontal = 24.dp)
+                )
+
+                // Botones
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Botón Volver
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1D3557)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.back_button),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Botón Borrar
+                    Button(
+                        onClick = onConfirm,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE63946)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.delete_button),
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ImageGalleryDialog(
+    images: List<Int>,
+    initialIndex: Int = 0,
+    onDismiss: () -> Unit
+) {
+    var currentIndex by remember { mutableStateOf(initialIndex) }
+    var isLeftPressed by remember { mutableStateOf(false) }
+    var isRightPressed by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .background(Color.White, RoundedCornerShape(24.dp))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
+                // Contenedor de la imagen
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1.3f)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = images[currentIndex]),
+                        contentDescription = stringResource(R.string.image_description),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(16.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                // Botón Volver
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1D3557)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.back_button),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Flechas de navegación
+            if (images.size > 1) {
+                // Flecha izquierda
+                IconButton(
+                    onClick = {
+                        currentIndex = if (currentIndex > 0) currentIndex - 1 else images.size - 1
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 8.dp)
+                        .size(56.dp)
+                        .offset(y = (-40).dp)
+                        .background(
+                            color = if (isLeftPressed) {
+                                Color.Black.copy(alpha = 0.7f)
+                            } else {
+                                Color.Black.copy(alpha = 0.3f)
+                            },
+                            shape = CircleShape
+                        )
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    isLeftPressed = true
+                                    tryAwaitRelease()
+                                    isLeftPressed = false
+                                }
+                            )
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.previous_description),
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.White
+                    )
+                }
+
+                // Flecha derecha
+                IconButton(
+                    onClick = {
+                        currentIndex = if (currentIndex < images.size - 1) currentIndex + 1 else 0
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp)
+                        .offset(y = (-38).dp)
+                        .size(56.dp)
+                        .background(
+                            color = if (isRightPressed) {
+                                Color.Black.copy(alpha = 0.7f)
+                            } else {
+                                Color.Black.copy(alpha = 0.3f)
+                            },
+                            shape = CircleShape
+                        )
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    isRightPressed = true
+                                    tryAwaitRelease()
+                                    isRightPressed = false
+                                }
+                            )
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = stringResource(R.string.next_description),
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.White
+                    )
                 }
             }
         }
