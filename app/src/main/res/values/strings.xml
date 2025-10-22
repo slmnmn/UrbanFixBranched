@@ -340,8 +340,73 @@
     <string name="error_no_location">No se ha seleccionado una ubicación</string>
     <string name="error_no_photos">Debe agregar al menos una foto</string>
     <string name="error_creating_report">Error al crear el reporte. Inténtalo de nuevo</string>
+    <!-- CommentItem -->
+    <string name="verified_description">Verified</string>
+    <string name="options_description">Opciones</string>
 
     <!-- Mis reportes -->
     <string name="mis_reportes_title">Mis reportes</string>
+=======
+    <!-- CommentOptionsDialog -->
+    <string name="comment_options_title">¿Qué deseas hacer con tu comentario?</string>
+    <string name="edit_option">Editar</string>
+    <string name="delete_option">Eliminar</string>
+    <string name="edit_description">Editar</string>
+    <string name="delete_description">Eliminar</string>
+
+    <!-- EditCommentDialog -->
+    <string name="edit_comment_title">Editar comentario</string>
+    <string name="comment_placeholder">Escribe tu comentario...</string>
+    <string name="save_button">Guardar</string>
+
+    <!-- CodeCopiedDialog -->
+    <string name="code_copied_title">Código copiado</string>
+    <string name="code_copied_message">Si deseas consultar el reporte posteriormente, puedes pegar este código en la barra de busqueda del menú.</string>
+    <string name="accept_button">Aceptar</string>
+
+    <!-- DeleteCommentDialog -->
+    <string name="delete_comment_title">Seguro que quieres eliminar el comentario?</string>
+    <string name="delete_warning">No se podrá recuperar</string>
+    <string name="delete_button">Borrar</string>
+
+    <!-- ImageGalleryDialog -->
+    <string name="image_description">Imagen del reporte</string>
+    <string name="previous_description">Anterior</string>
+    <string name="next_description">Siguiente</string>
+
+    <!-- Content descriptions -->
+    <string name="copy_code">Copiar código</string>
+    <string name="like_button">Me gusta</string>
+    <string name="dislike_button">No me gusta</string>
+    <string name="report_photo">Foto del reporte</string>
+    <string name="verified_badge">Verificado</string>
+    <string name="comment_options">Opciones de comentario</string>
+    <string name="report_image">Imagen del reporte</string>
+    <string name="previous_image">Imagen anterior</string>
+    <string name="next_image">Imagen siguiente</string>
+
+    <!-- Categorías y estados -->
+    <string name="report_category_lighting">Alumbrado Público</string>
+    <string name="status_in_progress">En Proceso</string>
+
+    <!-- Descripción del reporte (ejemplo) -->
+    <string name="report_description_example">Se reporta que en la Calle 31A #13 – a 91 Sur el alumbrado está intermitente, específicamente al lado del CAI del Gustavo Restrepo</string>
+
+    <!-- Información de fecha y usuario (ejemplos) -->
+    <string name="reported_date_example">Reportado el 06 - 09 - 2025 - 19:45</string>
+    <string name="created_by_example">Creado por Dylan Gutierrez</string>
+
+    <!-- Diálogo de opciones de comentario -->
+    <string name="comment_dialog_title">¿Qué deseas hacer con tu comentario?</string>
+    <string name="edit_comment">Editar</string>
+    <string name="delete_comment">Eliminar</string>
+
+    <!-- Diálogo de editar comentario -->
+    <string name="edit_comment_placeholder">Escribe tu comentario...</string>
+
+    <!-- Diálogo de eliminar comentario -->
+    <string name="delete_comment_confirm_title">Seguro que quieres eliminar el comentario?</string>
+    <string name="delete_comment_warning">No se podrá recuperar</string>
+
 </resources>
 

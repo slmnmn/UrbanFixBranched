@@ -7,6 +7,7 @@ object RetrofitInstance {
     // Usar la IP de tu computadora.
     private const val BASE_URL = "http://192.168.80.12:5000" //
 
+
     val api: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
