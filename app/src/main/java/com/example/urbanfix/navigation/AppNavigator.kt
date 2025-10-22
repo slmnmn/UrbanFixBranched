@@ -25,6 +25,8 @@ sealed class Pantallas(val ruta: String) {
     object Verperfilempresa : Pantallas("verperfilempresa")
     object Verperfilusuario : Pantallas("verperfilusuario")
 
+    object MisReportes : Pantallas("misreportes")
+
     object Reportar : Pantallas("reportar/{reportType}") {
         fun crearRuta(reportType: String) = "reportar/$reportType"
     }
@@ -55,6 +57,7 @@ fun AppNavigator(navController: NavHostController) {
         composable(Pantallas.Fotoperfil.ruta) { FotoperfilScreen(navController) }
         composable(Pantallas.Verperfilempresa.ruta) { VerperfilempresaScreen(navController) }
         composable(Pantallas.Verperfilusuario.ruta) { VerperfilusuarioScreen(navController) }
+        composable(Pantallas.MisReportes.ruta) {MisReportesScreen(navController)}
 
         composable(route = Pantallas.Perfil.ruta) {
             ProfileScreen(navController = navController)

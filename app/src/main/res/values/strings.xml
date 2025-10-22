@@ -237,8 +237,6 @@
     <string name="est_s_seguro_que_quieres_salir">¿Estás seguro que quieres salir?</string>
 
 
-
-
     <!-- MIS CAMBIOOOS -->
     <!-- Report Screen -->
     <string name="report_title">Reportar %1$s</string>
@@ -343,5 +341,7 @@
     <string name="error_no_photos">Debe agregar al menos una foto</string>
     <string name="error_creating_report">Error al crear el reporte. Inténtalo de nuevo</string>
 
+    <!-- Mis reportes -->
+    <string name="mis_reportes_title">Mis reportes</string>
 </resources>
 
