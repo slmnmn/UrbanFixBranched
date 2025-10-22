@@ -231,6 +231,7 @@ fun MisReportesScreen(
             reporte = reporte,
             context = context,
             onDismiss = { reporteSeleccionado = null },
+            navController = navController,
             onDetalles = {
                 // Acción para ver detalles
                 Toast.makeText(context, "Ver detalles de ${reporte.id}", Toast.LENGTH_SHORT).show()
@@ -638,7 +639,8 @@ fun ReporteDialog(
     context: Context,
     onDismiss: () -> Unit,
     onDetalles: () -> Unit,
-    onEliminar: () -> Unit
+    onEliminar: () -> Unit,
+    navController: NavHostController
 ) {
     val colores = listOf(
         Color(0xFFB76998),
@@ -786,7 +788,7 @@ fun ReporteDialog(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Button(
-                                onClick = onDetalles,
+                                onClick = {navController.navigate(Pantallas.EditarReporte.ruta)},
                                 modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = WhiteFull
