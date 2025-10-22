@@ -5,7 +5,10 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.DELETE
+import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
+
 interface ApiService {
     @POST("/login") // The path of your login endpoint
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
@@ -28,6 +31,11 @@ interface ApiService {
         @Path("role") role: String,
         @Path("userId") userId: Int
     ): Response<Unit>
+
+    @GET("misreportes")
+    suspend fun getMisReportes(
+        @Query("user_id") userId: Int
+    ): List<MiReporte>
 
     @POST("/reportes")
     suspend fun createReporte(@Body request: CreateReporteRequest): Response<Unit>

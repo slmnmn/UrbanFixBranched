@@ -25,7 +25,11 @@ sealed class Pantallas(val ruta: String) {
     object Verperfilempresa : Pantallas("verperfilempresa")
     object Verperfilusuario : Pantallas("verperfilusuario")
 
-    object MisReportes : Pantallas("misreportes")
+    // CAMBIO: La ruta ahora debe definir que espera un argumento "userId"
+    object MisReportes : Pantallas("misreportes/{userId}") {
+        // CAMBIO: Añadimos una función helper para construir la ruta fácilmente
+        fun crearRuta(userId: Int) = "misreportes/$userId"
+    }
 
     object Reportar : Pantallas("reportar/{reportType}") {
         fun crearRuta(reportType: String) = "reportar/$reportType"
@@ -57,7 +61,23 @@ fun AppNavigator(navController: NavHostController) {
         composable(Pantallas.Fotoperfil.ruta) { FotoperfilScreen(navController) }
         composable(Pantallas.Verperfilempresa.ruta) { VerperfilempresaScreen(navController) }
         composable(Pantallas.Verperfilusuario.ruta) { VerperfilusuarioScreen(navController) }
-        composable(Pantallas.MisReportes.ruta) {MisReportesScreen(navController)}
+
+        // CAMBIO: La llamada al composable de MisReportes ahora debe extraer el argumento
+        composable(
+            route = Pantallas.MisReportes.ruta,
+            arguments = listOf(
+                navArgument("userId") {
+                    type = NavType.IntType
+                    defaultValue = 0 // Define un valor por defecto en caso de error
+                }
+            )
+        ) { backStackEntry ->
+            // Extraemos el userId de la ruta
+            val userId = backStackEntry.arguments?.getInt("userId") ?: 0
+
+            // Se lo pasamos a la pantalla
+            MisReportesScreen(navController = navController, userId = userId)
+        }
 
         composable(route = Pantallas.Perfil.ruta) {
             ProfileScreen(navController = navController)

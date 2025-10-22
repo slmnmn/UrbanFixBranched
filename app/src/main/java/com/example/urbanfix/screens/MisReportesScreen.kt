@@ -31,63 +31,67 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.viewmodel.compose.viewModel // CAMBIO: Importación del ViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage // CAMBIO: Importación para Coil
 import com.example.urbanfix.R
 import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.navigation.Pantallas
+import com.example.urbanfix.network.MiReporte // CAMBIO: Importación del modelo de datos de la red
 import com.example.urbanfix.ui.theme.*
+import com.example.urbanfix.viewmodel.MisReportesViewModel // CAMBIO: Importación del ViewModel
 
-data class Reporte(
-    val id: String,
-    val tipo: String,
-    val imagen: Int,
-    val colorIndex: Int,
-    val estado: String,
-    val fechaEnvio: String,
-    val direccion: String
-)
-
+// CAMBIO: La firma de la función ahora recibe userId de la navegación y un ViewModel.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MisReportesScreen(
     navController: NavHostController,
+    userId: Int, // Recibimos el ID del usuario desde la navegación
+    viewModel: MisReportesViewModel = viewModel() // Instanciamos el ViewModel
 ) {
     val context = LocalContext.current
-    var reporteSeleccionado by remember { mutableStateOf<Reporte?>(null) }
+
+    // CAMBIO: Los reportes y el estado de carga ahora provienen del ViewModel.
+    val reportesFromApi by viewModel.reportes.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    // Los estados locales para la UI (diálogos y filtros) se mantienen.
+    var reporteSeleccionado by remember { mutableStateOf<MiReporte?>(null) } // CAMBIO: Usa MiReporte
     var mostrarFiltro by remember { mutableStateOf(false) }
     var tipoReporteFiltro by remember { mutableStateOf<String?>(null) }
     var estadoReporteFiltro by remember { mutableStateOf<String?>(null) }
     var mostrarDialogoEliminar by remember { mutableStateOf(false) }
     var mostrarDialogoError by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Lista de reportes de ejemplo
-    val reportes = remember {
-        listOf(
-            Reporte("2025-00006", "Hueco", R.drawable.huecoeje, 0, "Nuevo", "08-09-2025 20:05", "Carrera 12 #30c 47 Sur"),
-            Reporte("2025-00004", "Alumbrado", R.drawable.huecoeje, 1, "En proceso", "07-09-2025 18:30", "Calle 45 #12-34"),
-            Reporte("2025-00003", "Alumbrado", R.drawable.huecoeje, 2, "Nuevo", "06-09-2025 14:20", "Avenida 68 #23-45"),
-            Reporte("2025-00002", "Alumbrado", R.drawable.huecoeje, 1, "Nuevo", "05-09-2025 10:15", "Carrera 7 #100-50"),
-            Reporte("2025-00001", "Hueco", R.drawable.huecoeje, 0, "Resuelto", "04-09-2025 09:00", "Calle 26 #50-30")
-        )
+    // CAMBIO: LaunchedEffect para iniciar la carga de datos cuando la pantalla se compone.
+    LaunchedEffect(key1 = userId) {
+        // Asegurarse de que el userId sea válido antes de hacer la llamada.
+        if (userId > 0) {
+            viewModel.fetchMisReportes(userId)
+        }
     }
 
-    // Filtrar reportes según los filtros aplicados
-    val reportesFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro) {
-        reportes.filter { reporte ->
-            val coincideTipo = tipoReporteFiltro == null || reporte.tipo == tipoReporteFiltro
+    // CAMBIO: Eliminada la lista de reportes hardcodeada.
+    // val reportes = remember { listOf(...) }
+
+    // CAMBIO: El filtro ahora se aplica sobre los reportes obtenidos de la API.
+    val reportesFiltrados = remember(reportesFromApi, tipoReporteFiltro, estadoReporteFiltro) {
+        reportesFromApi.filter { reporte ->
+            // `reporte.nombre` de la API corresponde a `tipo` en el modelo original
+            val coincideTipo = tipoReporteFiltro == null || reporte.nombre == tipoReporteFiltro
             val coincideEstado = estadoReporteFiltro == null || reporte.estado == estadoReporteFiltro
             coincideTipo && coincideEstado
         }
     }
-
-    val snackbarHostState = remember { SnackbarHostState() }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -138,25 +142,34 @@ fun MisReportesScreen(
             },
             containerColor = GrayBg
         ) { paddingValues ->
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(reportesFiltrados) { reporte ->
-                    ReporteCard(
-                        reporte = reporte,
-                        context = context,
-                        onClick = { reporteSeleccionado = reporte }
-                    )
+            // CAMBIO: Muestra un indicador de carga o el contenido de la lista.
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(reportesFiltrados) { reporte ->
+                        ReporteCard( // CAMBIO: Pasa el objeto MiReporte
+                            reporte = reporte,
+                            context = context,
+                            onClick = { reporteSeleccionado = reporte }
+                        )
+                    }
                 }
             }
 
-            // Snackbar personalizado en la parte superior
             SnackbarHost(
                 hostState = snackbarHostState,
                 modifier = Modifier
@@ -207,7 +220,6 @@ fun MisReportesScreen(
         }
     }
 
-    // Mostrar diálogo de filtro
     if (mostrarFiltro) {
         FiltroDialog(
             tipoSeleccionado = tipoReporteFiltro,
@@ -225,20 +237,18 @@ fun MisReportesScreen(
         )
     }
 
-    // Mostrar diálogo cuando se selecciona un reporte
     reporteSeleccionado?.let { reporte ->
-        ReporteDialog(
+        ReporteDialog( // CAMBIO: Pasa el objeto MiReporte
             reporte = reporte,
             context = context,
             onDismiss = { reporteSeleccionado = null },
             navController = navController,
             onDetalles = {
-                // Acción para ver detalles
                 Toast.makeText(context, "Ver detalles de ${reporte.id}", Toast.LENGTH_SHORT).show()
                 reporteSeleccionado = null
             },
             onEliminar = {
-                // Verificar si el estado permite eliminar
+                // Verificar si el estado permite eliminar (asumo que los estados son Strings)
                 if (reporte.estado == "Nuevo" || reporte.estado == "Resuelto") {
                     mostrarDialogoEliminar = true
                 } else {
@@ -248,7 +258,6 @@ fun MisReportesScreen(
         )
     }
 
-    // Diálogo de confirmación de eliminación
     if (mostrarDialogoEliminar) {
         DeleteReporteDialog(
             onDismiss = { mostrarDialogoEliminar = false },
@@ -265,7 +274,6 @@ fun MisReportesScreen(
         )
     }
 
-    // Diálogo de error
     if (mostrarDialogoError) {
         ErrorEliminarDialog(
             onDismiss = {
@@ -319,7 +327,6 @@ fun FiltroDialog(
                             .fillMaxWidth()
                             .padding(20.dp)
                     ) {
-                        // Título centrado
                         Text(
                             text = "Filtrar Reportes",
                             fontSize = 18.sp,
@@ -331,7 +338,6 @@ fun FiltroDialog(
                                 .padding(bottom = 16.dp)
                         )
 
-                        // Tipo de Reporte
                         Text(
                             text = "Tipo de Reporte",
                             fontSize = 14.sp,
@@ -340,7 +346,6 @@ fun FiltroDialog(
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
 
-                        // Grid de tipos de reporte (3 columnas)
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -360,7 +365,6 @@ fun FiltroDialog(
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
-                                    // Rellenar espacios vacíos
                                     repeat(3 - fila.size) {
                                         Spacer(modifier = Modifier.weight(1f))
                                     }
@@ -370,7 +374,6 @@ fun FiltroDialog(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Estado del Reporte
                         Text(
                             text = "Estado del Reporte",
                             fontSize = 14.sp,
@@ -379,7 +382,6 @@ fun FiltroDialog(
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
 
-                        // Botones de estado (en una fila)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -398,7 +400,6 @@ fun FiltroDialog(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Botones de acción
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -443,7 +444,6 @@ fun FiltroDialog(
                         }
                     }
 
-                    // Botón X en la esquina superior izquierda
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
@@ -492,23 +492,23 @@ fun FiltroBoton(
     }
 }
 
+// CAMBIO: ReporteCard ahora recibe un objeto `MiReporte` de la red.
 @Composable
 fun ReporteCard(
-    reporte: Reporte,
+    reporte: MiReporte,
     context: Context,
     onClick: () -> Unit
 ) {
+    // ... (la lógica de colores y estados se mantiene igual)
     val colores = listOf(
         Color(0xFFB76998),
         Color(0xFF4AB7B6),
         Color(0xFF1D3557)
     )
-
-    val backgroundColor = colores[reporte.colorIndex % colores.size]
-    val esColorClaro = reporte.colorIndex == 1
+    val backgroundColor = colores[reporte.id % colores.size]
+    val esColorClaro = backgroundColor == Color(0xFF4AB7B6)
     val iconoCopiar = if (esColorClaro) R.drawable.copiarneg else R.drawable.copiarbla
     val textColor = if (esColorClaro) Color.Black else WhiteFull
-
     val imagenEstado = when (reporte.estado) {
         "Nuevo" -> R.drawable.nuevo
         "En proceso" -> R.drawable.proceso
@@ -536,13 +536,14 @@ fun ReporteCard(
                     .padding(horizontal = 0.5.dp)
                     .height(100.dp)
             ) {
-                Image(
-                    painter = painterResource(id = reporte.imagen),
-                    contentDescription = reporte.tipo,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
+                AsyncImage(
+                    model = reporte.imagen_prueba_1,
+                    contentDescription = reporte.nombre,
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop,
+                    // Solución Rápida:
+                    placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                    error = painterResource(id = R.drawable.ic_launcher_foreground)
                 )
             }
 
@@ -553,17 +554,25 @@ fun ReporteCard(
                     .fillMaxSize()
                     .padding(horizontal = 12.dp, vertical = 0.dp)
             ) {
+                // ▼▼▼ CAMBIO PRINCIPAL AQUÍ ▼▼▼
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    // Se elimina Arrangement.SpaceBetween
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = reporte.tipo,
+                        text = reporte.nombre,
                         color = textColor,
                         fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        // 1. Añade un peso para que ocupe el espacio disponible
+                        modifier = Modifier.weight(1f)
                     )
+
+                    // 2. Añade un pequeño espacio para que no queden pegados
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     Box(
                         modifier = Modifier
@@ -579,6 +588,7 @@ fun ReporteCard(
                         )
                     }
                 }
+                // ▲▲▲ FIN DEL CAMBIO ▲▲▲
 
                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -596,7 +606,7 @@ fun ReporteCard(
 
                     IconButton(
                         onClick = {
-                            copiarAlPortapapeles(context, reporte.id)
+                            copiarAlPortapapeles(context, reporte.id.toString())
                         },
                         modifier = Modifier
                             .size(38.dp)
@@ -609,18 +619,14 @@ fun ReporteCard(
                         )
                     }
                 }
-
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
-                    text = "Enviado el ${reporte.fechaEnvio}",
+                    text = "Enviado el ${reporte.fecha_creacion}",
                     color = textColor.copy(alpha = 0.9f),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Normal
                 )
-
                 Spacer(modifier = Modifier.height(2.dp))
-
                 Text(
                     text = reporte.direccion,
                     color = textColor.copy(alpha = 0.9f),
@@ -633,9 +639,10 @@ fun ReporteCard(
     }
 }
 
+// CAMBIO: ReporteDialog ahora recibe un objeto `MiReporte` de la red.
 @Composable
 fun ReporteDialog(
-    reporte: Reporte,
+    reporte: MiReporte, // CAMBIO: Usamos el modelo de datos de la API
     context: Context,
     onDismiss: () -> Unit,
     onDetalles: () -> Unit,
@@ -648,8 +655,9 @@ fun ReporteDialog(
         Color(0xFF1D3557)
     )
 
-    val backgroundColor = colores[reporte.colorIndex % colores.size]
-    val esColorClaro = reporte.colorIndex == 1
+    // CAMBIO: Usa el ID del reporte para determinar un color de fondo dinámico.
+    val backgroundColor = colores[reporte.id % colores.size]
+    val esColorClaro = backgroundColor == Color(0xFF4AB7B6) // Ejemplo de lógica de color
     val iconoCopiar = if (esColorClaro) R.drawable.copiarneg else R.drawable.copiarbla
     val textColor = if (esColorClaro) Color.Black else WhiteFull
 
@@ -685,32 +693,32 @@ fun ReporteDialog(
                             .fillMaxWidth()
                             .padding(16.dp)
                     ) {
-                        // Imagen
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(180.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = reporte.imagen),
-                                contentDescription = reporte.tipo,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(12.dp)),
-                                contentScale = ContentScale.Crop
+                            // CAMBIO: Usa AsyncImage para cargar desde una URL.
+                            AsyncImage(
+                                model = reporte.imagen_prueba_1,
+                                contentDescription = reporte.nombre,
+                                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop,
+                                // Solución Rápida:
+                                placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                                error = painterResource(id = R.drawable.ic_launcher_foreground)
                             )
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Tipo de reporte y estado
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = reporte.tipo,
+                                text = reporte.nombre, // CAMBIO: Usamos reporte.nombre
                                 color = textColor,
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold
@@ -733,14 +741,13 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // ID con botón copiar
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "# ${reporte.id}",
+                                text = "# ${reporte.id}", // CAMBIO: ID es Int, lo convertimos a String
                                 color = textColor,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
@@ -748,7 +755,7 @@ fun ReporteDialog(
 
                             IconButton(
                                 onClick = {
-                                    copiarAlPortapapeles(context, reporte.id)
+                                    copiarAlPortapapeles(context, reporte.id.toString()) // CAMBIO: ID a String
                                 },
                                 modifier = Modifier.size(42.dp)
                             ) {
@@ -762,9 +769,8 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // Fecha
                         Text(
-                            text = "Enviado el ${reporte.fechaEnvio}",
+                            text = "Enviado el ${reporte.fecha_creacion}", // CAMBIO: Usamos fecha_creacion
                             color = textColor.copy(alpha = 0.9f),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Normal
@@ -772,7 +778,6 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // Dirección
                         Text(
                             text = reporte.direccion,
                             color = textColor.copy(alpha = 0.9f),
@@ -782,7 +787,6 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Botones
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -821,7 +825,6 @@ fun ReporteDialog(
                         }
                     }
 
-                    // Botón X en la esquina superior derecha
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
@@ -937,7 +940,8 @@ fun ErrorEliminarDialog(onDismiss: () -> Unit) {
 @Composable
 fun MisReportesScreenPreview() {
     UrbanFixTheme {
-        MisReportesScreen(navController = rememberNavController())
+        // CAMBIO: Pasa un userId de ejemplo para la preview.
+        MisReportesScreen(navController = rememberNavController(), userId = 1)
     }
 }
 

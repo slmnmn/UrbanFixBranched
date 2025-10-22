@@ -52,6 +52,15 @@ data class CreateReporteRequest(
     val tipo_evento: String //Requerido
 )
 
+data class MiReporte(
+    val id: Int,
+    val nombre: String,
+    val imagen_prueba_1: String,
+    val fecha_creacion: String,
+    val direccion: String,
+    val estado: String? // El estado puede ser nulo si no se ha definido
+)
+
 // Data you EXPECT TO RECEIVE on a failed login
 data class ErrorResponse(
     val message: String

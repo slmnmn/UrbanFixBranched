@@ -3,6 +3,7 @@ package com.example.urbanfix.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -595,8 +596,8 @@ fun BottomNavBar(navController: NavHostController) {
     ) {
         Spacer(modifier = Modifier.width(3.dp))
         NavigationBarItem(
-            selected = true,
-            onClick = { navController.navigate(Pantallas.Home.ruta)},
+            selected = false, // Ajusta esta lógica si es necesario
+            onClick = { navController.navigate(Pantallas.Home.ruta) },
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.menu),
@@ -622,8 +623,21 @@ fun BottomNavBar(navController: NavHostController) {
             )
         )
         NavigationBarItem(
-            selected = false,
-            onClick = { navController.navigate(Pantallas.MisReportes.ruta)},
+            selected = false, // Ajusta esta lógica si es necesario
+            // CAMBIO: La lógica ahora está dentro del onClick.
+            onClick = {
+                // 1. Obtenemos el ID del usuario guardado en SharedPreferences.
+                val userId = userPreferencesManager.getUserId()
+
+                // 2. Comprobamos que el ID sea válido (no -1).
+                if (userId != -1) {
+                    // 3. Usamos la función `crearRuta` para navegar con el ID real.
+                    navController.navigate(Pantallas.MisReportes.crearRuta(userId))
+                } else {
+                    // Si no hay usuario, mostramos un mensaje para evitar el crash.
+                    Toast.makeText(context, "Debes iniciar sesión para ver tus reportes", Toast.LENGTH_SHORT).show()
+                }
+            },
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.misreportes),
@@ -649,7 +663,7 @@ fun BottomNavBar(navController: NavHostController) {
         Spacer(modifier = Modifier.width(3.dp))
         NavigationBarItem(
             selected = false,
-            onClick = { },
+            onClick = { /* Lógica para notificaciones */ },
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.notificaciones),
