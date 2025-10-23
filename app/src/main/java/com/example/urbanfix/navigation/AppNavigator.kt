@@ -25,6 +25,8 @@ sealed class Pantallas(val ruta: String) {
     object Verperfilempresa : Pantallas("verperfilempresa")
     object Verperfilusuario : Pantallas("verperfilusuario")
 
+    object MisApoyos : Pantallas("misapoyos")
+
     // CAMBIO: La ruta ahora debe definir que espera un argumento "userId"
     object MisReportes : Pantallas("misreportes/{userId}") {
         // CAMBIO: Añadimos una función helper para construir la ruta fácilmente
@@ -61,6 +63,10 @@ fun AppNavigator(navController: NavHostController) {
         composable(Pantallas.Fotoperfil.ruta) { FotoperfilScreen(navController) }
         composable(Pantallas.Verperfilempresa.ruta) { VerperfilempresaScreen(navController) }
         composable(Pantallas.Verperfilusuario.ruta) { VerperfilusuarioScreen(navController) }
+
+        composable(Pantallas.MisApoyos.ruta) {
+            MisApoyosScreen(navController = navController)
+        }
 
         // CAMBIO: La llamada al composable de MisReportes ahora debe extraer el argumento
         composable(

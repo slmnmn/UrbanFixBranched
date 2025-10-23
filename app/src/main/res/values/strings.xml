@@ -449,5 +449,7 @@
     <string name="error_title">Error</string>
     <string name="error_eliminar_en_proceso">No puedes borrar este reporte ya que se encuentra en proceso actualmente.</string>
     <string name="volver_button">Volver</string>
+    <string name="no_reportes">Sin reportes</string>
+    <string name="no_reportes_mensaje">Todavía no has generado ningún reporte,\ncuando lo generes te va a aparecer aquí.</string>
 </resources>
 

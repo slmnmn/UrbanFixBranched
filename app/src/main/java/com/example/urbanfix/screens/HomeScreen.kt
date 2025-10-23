@@ -297,7 +297,7 @@ fun HomeScreen(navController: NavHostController) {
                             modifier = Modifier
                                 .width(167.dp)
                                 .height(48.dp)
-                                .clickable { }
+                                .clickable {navController.navigate(Pantallas.MisApoyos.ruta) }
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Image(
