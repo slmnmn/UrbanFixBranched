@@ -344,9 +344,6 @@
     <string name="verified_description">Verified</string>
     <string name="options_description">Opciones</string>
 
-    <!-- Mis reportes -->
-    <string name="mis_reportes_title">Mis reportes</string>
-=======
     <!-- CommentOptionsDialog -->
     <string name="comment_options_title">¿Qué deseas hacer con tu comentario?</string>
     <string name="edit_option">Editar</string>
@@ -408,5 +405,47 @@
     <string name="delete_comment_confirm_title">Seguro que quieres eliminar el comentario?</string>
     <string name="delete_comment_warning">No se podrá recuperar</string>
 
+    <!-- Mis Reportes Screen -->
+    <string name="mis_reportes_title">Mis reportes</string>
+    <string name="filtrar_button">Filtrar</string>
+    <string name="reporte_eliminado">Reporte eliminado exitosamente.</string>
+
+    <!-- Filtro Dialog -->
+    <string name="filtrar_reportes_title">Filtrar Reportes</string>
+    <string name="tipo_reporte_label">Tipo de Reporte</string>
+    <string name="estado_reporte_label">Estado del Reporte</string>
+    <string name="filtro_hueco">Hueco</string>
+    <string name="filtro_alumbrado">Alumbrado</string>
+    <string name="filtro_basura">Basura</string>
+    <string name="filtro_semaforo">Semáforo</string>
+    <string name="filtro_hidrante">Hidrante</string>
+    <string name="filtro_alcantarilla">Alcantarilla</string>
+    <string name="filtro_estado_nuevo">Nuevo</string>
+    <string name="filtro_estado_resuelto">Resuelto</string>
+    <string name="filtro_estado_en_proceso">En proceso</string>
+    <string name="filtro_restablecer">Restablecer</string>
+    <string name="filtro_aplicar">Aplicar</string>
+    <string name="cerrar_button">Cerrar</string>
+
+    <!-- Reporte Card -->
+    <string name="copiar_id">Copiar ID</string>
+    <string name="enviado_el">Enviado el %1$s</string>
+    <string name="reporte_id"># %1$s</string>
+    <string name="id_copiado">ID copiado: %1$s</string>
+
+    <!-- Reporte Dialog -->
+    <string name="detalles_button">Detalles</string>
+    <string name="eliminar_button">Eliminar</string>
+
+    <!-- Delete Dialog -->
+    <string name="eliminar_confirmacion_title">¿Estás seguro de que quieres eliminar este reporte?</string>
+    <string name="eliminar_confirmacion_mensaje">Esta acción es PERMANENTE y no se puede deshacer. Se borrarán todos tus datos relacionados de forma definitiva.</string>
+    <string name="cancelar_button">Cancelar</string>
+    <string name="confirmar_button">Confirmar</string>
+
+    <!-- Error Dialog -->
+    <string name="error_title">Error</string>
+    <string name="error_eliminar_en_proceso">No puedes borrar este reporte ya que se encuentra en proceso actualmente.</string>
+    <string name="volver_button">Volver</string>
 </resources>
 

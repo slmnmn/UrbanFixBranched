@@ -31,39 +31,60 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.viewmodel.compose.viewModel // CAMBIO: Importación del ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage // CAMBIO: Importación para Coil
+import coil.compose.AsyncImage
 import com.example.urbanfix.R
 import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.navigation.Pantallas
-import com.example.urbanfix.network.MiReporte // CAMBIO: Importación del modelo de datos de la red
+import com.example.urbanfix.network.MiReporte
 import com.example.urbanfix.ui.theme.*
-import com.example.urbanfix.viewmodel.MisReportesViewModel // CAMBIO: Importación del ViewModel
+import com.example.urbanfix.viewmodel.MisReportesViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
-// CAMBIO: La firma de la función ahora recibe userId de la navegación y un ViewModel.
+fun formatearFecha(fechaISO: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault())
+        val date = inputFormat.parse(fechaISO)
+        outputFormat.format(date ?: Date())
+    } catch (e: Exception) {
+        fechaISO
+    }
+}
+
+fun mapearCategoria(nombreBD: String): String {
+    return when (nombreBD.lowercase().trim()) {
+        "huecos" -> "Hueco"
+        "alumbrado publico" -> "Alumbrado"
+        "basura acumulada" -> "Basura"
+        "semaforo dañado" -> "Semáforo"
+        "hidrante roto" -> "Hidrante"
+        "alcantarilla sin tapa" -> "Alcantarilla"
+        else -> nombreBD
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MisReportesScreen(
     navController: NavHostController,
-    userId: Int, // Recibimos el ID del usuario desde la navegación
-    viewModel: MisReportesViewModel = viewModel() // Instanciamos el ViewModel
+    userId: Int,
+    viewModel: MisReportesViewModel = viewModel()
 ) {
     val context = LocalContext.current
 
-    // CAMBIO: Los reportes y el estado de carga ahora provienen del ViewModel.
     val reportesFromApi by viewModel.reportes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    // Los estados locales para la UI (diálogos y filtros) se mantienen.
-    var reporteSeleccionado by remember { mutableStateOf<MiReporte?>(null) } // CAMBIO: Usa MiReporte
+    var reporteSeleccionado by remember { mutableStateOf<MiReporte?>(null) }
     var mostrarFiltro by remember { mutableStateOf(false) }
     var tipoReporteFiltro by remember { mutableStateOf<String?>(null) }
     var estadoReporteFiltro by remember { mutableStateOf<String?>(null) }
@@ -72,22 +93,16 @@ fun MisReportesScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // CAMBIO: LaunchedEffect para iniciar la carga de datos cuando la pantalla se compone.
     LaunchedEffect(key1 = userId) {
-        // Asegurarse de que el userId sea válido antes de hacer la llamada.
         if (userId > 0) {
             viewModel.fetchMisReportes(userId)
         }
     }
 
-    // CAMBIO: Eliminada la lista de reportes hardcodeada.
-    // val reportes = remember { listOf(...) }
-
-    // CAMBIO: El filtro ahora se aplica sobre los reportes obtenidos de la API.
     val reportesFiltrados = remember(reportesFromApi, tipoReporteFiltro, estadoReporteFiltro) {
         reportesFromApi.filter { reporte ->
-            // `reporte.nombre` de la API corresponde a `tipo` en el modelo original
-            val coincideTipo = tipoReporteFiltro == null || reporte.nombre == tipoReporteFiltro
+            val categoriaMapeada = mapearCategoria(reporte.categoria_nombre)
+            val coincideTipo = tipoReporteFiltro == null || categoriaMapeada == tipoReporteFiltro
             val coincideEstado = estadoReporteFiltro == null || reporte.estado == estadoReporteFiltro
             coincideTipo && coincideEstado
         }
@@ -100,7 +115,7 @@ fun MisReportesScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "Mis reportes",
+                            text = stringResource(R.string.mis_reportes_title),
                             color = WhiteFull,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
@@ -125,7 +140,7 @@ fun MisReportesScreen(
                             IconButton(onClick = { mostrarFiltro = true }) {
                                 Image(
                                     painter = painterResource(id = R.drawable.filtrar),
-                                    contentDescription = "Filtrar",
+                                    contentDescription = stringResource(R.string.filtrar_button),
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -142,7 +157,6 @@ fun MisReportesScreen(
             },
             containerColor = GrayBg
         ) { paddingValues ->
-            // CAMBIO: Muestra un indicador de carga o el contenido de la lista.
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -161,7 +175,7 @@ fun MisReportesScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(reportesFiltrados) { reporte ->
-                        ReporteCard( // CAMBIO: Pasa el objeto MiReporte
+                        ReporteCard(
                             reporte = reporte,
                             context = context,
                             onClick = { reporteSeleccionado = reporte }
@@ -208,7 +222,7 @@ fun MisReportesScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Cerrar",
+                                    contentDescription = stringResource(R.string.cerrar_button),
                                     tint = WhiteFull,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -242,20 +256,11 @@ fun MisReportesScreen(
             reporte = reporte,
             context = context,
             onDismiss = { reporteSeleccionado = null },
-
-            // ▼▼▼ AQUÍ ESTÁ LA LÓGICA CORRECTA ▼▼▼
             onDetalles = {
-                // 1. Navega a la pantalla de detalles usando el ID del reporte
                 navController.navigate(Pantallas.EditarReporte.crearRuta(reporte.id.toString()))
-
-                // 2. Cierra el diálogo
                 reporteSeleccionado = null
             },
-            // ▲▲▲ FIN DEL CAMBIO ▲▲▲
-
             onEliminar = {
-                // Simplemente muestra la confirmación siempre.
-                // La lógica de si se puede o no, la debería tener el backend.
                 mostrarDialogoEliminar = true
             }
         )
@@ -266,18 +271,13 @@ fun MisReportesScreen(
             onDismiss = { mostrarDialogoEliminar = false },
             onConfirm = {
                 reporteSeleccionado?.let { reporteParaBorrar ->
-                    // llama función
                     viewModel.deleteReporte(reporteParaBorrar.id)
                 }
-
-                // cierra los diálogos y resetea el estado
                 mostrarDialogoEliminar = false
                 reporteSeleccionado = null
-
-                // le dicen ok
                 scope.launch {
                     snackbarHostState.showSnackbar(
-                        message = "Reporte eliminado exitosamente.",
+                        message = context.getString(R.string.reporte_eliminado),
                         duration = SnackbarDuration.Short
                     )
                 }
@@ -307,11 +307,19 @@ fun FiltroDialog(
     var estadoTemporal by remember { mutableStateOf(estadoSeleccionado) }
 
     val tiposReporte = listOf(
-        "Hueco", "Alumbrado", "Basura",
-        "Semáforo", "Hidrante", "Alcantarilla"
+        stringResource(R.string.filtro_hueco),
+        stringResource(R.string.filtro_alumbrado),
+        stringResource(R.string.filtro_basura),
+        stringResource(R.string.filtro_semaforo),
+        stringResource(R.string.filtro_hidrante),
+        stringResource(R.string.filtro_alcantarilla)
     )
 
-    val estadosReporte = listOf("Nuevo", "Resuelto", "En proceso")
+    val estadosReporte = listOf(
+        stringResource(R.string.filtro_estado_nuevo),
+        stringResource(R.string.filtro_estado_resuelto),
+        stringResource(R.string.filtro_estado_en_proceso)
+    )
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -339,7 +347,7 @@ fun FiltroDialog(
                             .padding(20.dp)
                     ) {
                         Text(
-                            text = "Filtrar Reportes",
+                            text = stringResource(R.string.filtrar_reportes_title),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Black,
@@ -350,7 +358,7 @@ fun FiltroDialog(
                         )
 
                         Text(
-                            text = "Tipo de Reporte",
+                            text = stringResource(R.string.tipo_reporte_label),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.Black,
@@ -386,7 +394,7 @@ fun FiltroDialog(
                         Spacer(modifier = Modifier.height(20.dp))
 
                         Text(
-                            text = "Estado del Reporte",
+                            text = stringResource(R.string.estado_reporte_label),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.Black,
@@ -428,7 +436,7 @@ fun FiltroDialog(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = "Restablecer",
+                                    text = stringResource(R.string.filtro_restablecer),
                                     color = WhiteFull,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
@@ -446,7 +454,7 @@ fun FiltroDialog(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = "Aplicar",
+                                    text = stringResource(R.string.filtro_aplicar),
                                     color = Color.Black,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
@@ -464,7 +472,7 @@ fun FiltroDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Cerrar",
+                            contentDescription = stringResource(R.string.cerrar_button),
                             tint = Color.Black,
                             modifier = Modifier.size(20.dp)
                         )
@@ -503,29 +511,32 @@ fun FiltroBoton(
     }
 }
 
-// CAMBIO: ReporteCard ahora recibe un objeto `MiReporte` de la red.
 @Composable
 fun ReporteCard(
     reporte: MiReporte,
     context: Context,
     onClick: () -> Unit
 ) {
-    // ... (la lógica de colores y estados se mantiene igual)
     val colores = listOf(
         Color(0xFFB76998),
         Color(0xFF4AB7B6),
         Color(0xFF1D3557)
     )
+
     val backgroundColor = colores[reporte.id % colores.size]
     val esColorClaro = backgroundColor == Color(0xFF4AB7B6)
     val iconoCopiar = if (esColorClaro) R.drawable.copiarneg else R.drawable.copiarbla
     val textColor = if (esColorClaro) Color.Black else WhiteFull
+
     val imagenEstado = when (reporte.estado) {
         "Nuevo" -> R.drawable.nuevo
         "En proceso" -> R.drawable.proceso
         "Resuelto" -> R.drawable.resuelto
         else -> R.drawable.nuevo
     }
+
+    val categoriaMapeada = mapearCategoria(reporte.categoria_nombre)
+    val fechaFormateada = formatearFecha(reporte.fecha_creacion)
 
     Card(
         modifier = Modifier
@@ -544,15 +555,16 @@ fun ReporteCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 0.5.dp)
+                    .padding(horizontal = 7.dp)
                     .height(100.dp)
             ) {
                 AsyncImage(
                     model = reporte.imagen_prueba_1,
-                    contentDescription = reporte.nombre,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
+                    contentDescription = categoriaMapeada,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(12.dp)),
                     contentScale = ContentScale.Crop,
-                    // Solución Rápida:
                     placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
                     error = painterResource(id = R.drawable.ic_launcher_foreground)
                 )
@@ -567,21 +579,15 @@ fun ReporteCard(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // ▼▼▼ CAMBIO PRINCIPAL AQUÍ ▼▼▼
                     Text(
-                        text = reporte.categoria_nombre, // <-- CAMBIO
+                        text = categoriaMapeada,
                         color = textColor,
                         fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        fontWeight = FontWeight.Bold
                     )
-                    // ▲▲▲ FIN DEL CAMBIO ▲▲▲
-
-                    Spacer(modifier = Modifier.width(8.dp))
 
                     Box(
                         modifier = Modifier
@@ -606,7 +612,7 @@ fun ReporteCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "# ${reporte.id}",
+                        text = stringResource(R.string.reporte_id, reporte.id),
                         color = textColor,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium
@@ -622,19 +628,19 @@ fun ReporteCard(
                     ) {
                         Image(
                             painter = painterResource(id = iconoCopiar),
-                            contentDescription = "Copiar ID",
+                            contentDescription = stringResource(R.string.copiar_id),
                             modifier = Modifier.size(28.dp)
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
-                    text = "Enviado el ${reporte.fecha_creacion}",
+                    text = stringResource(R.string.enviado_el, fechaFormateada),
                     color = textColor.copy(alpha = 0.9f),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Normal
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+
                 Text(
                     text = reporte.direccion,
                     color = textColor.copy(alpha = 0.9f),
@@ -647,7 +653,6 @@ fun ReporteCard(
     }
 }
 
-// CAMBIO: ReporteDialog ahora recibe un objeto `MiReporte` de la red.
 @Composable
 fun ReporteDialog(
     reporte: MiReporte,
@@ -674,6 +679,9 @@ fun ReporteDialog(
         else -> R.drawable.nuevo
     }
 
+    val categoriaMapeada = mapearCategoria(reporte.categoria_nombre)
+    val fechaFormateada = formatearFecha(reporte.fecha_creacion)
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -699,7 +707,6 @@ fun ReporteDialog(
                             .fillMaxWidth()
                             .padding(16.dp)
                     ) {
-                        // Imagen
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -707,10 +714,11 @@ fun ReporteDialog(
                         ) {
                             AsyncImage(
                                 model = reporte.imagen_prueba_1,
-                                contentDescription = reporte.nombre,
-                                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
+                                contentDescription = categoriaMapeada,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(12.dp)),
                                 contentScale = ContentScale.Crop,
-                                // Solución Rápida:
                                 placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
                                 error = painterResource(id = R.drawable.ic_launcher_foreground)
                             )
@@ -718,22 +726,17 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Tipo de reporte y estado
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // ▼▼▼ CAMBIO PRINCIPAL AQUÍ ▼▼▼
                             Text(
-                                text = reporte.categoria_nombre, // Reemplazamos reporte.nombre
+                                text = categoriaMapeada,
                                 color = textColor,
                                 fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                // El diálogo tiene espacio, así que no necesitamos
-                                // maxLines o ellipsis, mostrará el nombre completo.
+                                fontWeight = FontWeight.Bold
                             )
-                            // ▲▲▲ FIN DEL CAMBIO ▲▲▲
 
                             Box(
                                 modifier = Modifier
@@ -752,14 +755,13 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // ID con botón copiar
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "# ${reporte.id}",
+                                text = stringResource(R.string.reporte_id, reporte.id),
                                 color = textColor,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
@@ -773,7 +775,7 @@ fun ReporteDialog(
                             ) {
                                 Image(
                                     painter = painterResource(id = iconoCopiar),
-                                    contentDescription = "Copiar ID",
+                                    contentDescription = stringResource(R.string.copiar_id),
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -781,9 +783,8 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // Fecha
                         Text(
-                            text = "Enviado el ${reporte.fecha_creacion}",
+                            text = stringResource(R.string.enviado_el, fechaFormateada),
                             color = textColor.copy(alpha = 0.9f),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Normal
@@ -791,7 +792,6 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // Dirección
                         Text(
                             text = reporte.direccion,
                             color = textColor.copy(alpha = 0.9f),
@@ -801,7 +801,6 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Botones
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -815,7 +814,7 @@ fun ReporteDialog(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = "Detalles",
+                                    text = stringResource(R.string.detalles_button),
                                     color = Color.Black,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
@@ -831,7 +830,7 @@ fun ReporteDialog(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = "Eliminar",
+                                    text = stringResource(R.string.eliminar_button),
                                     color = WhiteFull,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
@@ -840,7 +839,6 @@ fun ReporteDialog(
                         }
                     }
 
-                    // Botón X en la esquina superior derecha
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
@@ -850,7 +848,7 @@ fun ReporteDialog(
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.salirconreport),
-                            contentDescription = "Cerrar",
+                            contentDescription = stringResource(R.string.cerrar_button),
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -862,9 +860,9 @@ fun ReporteDialog(
 
 fun copiarAlPortapapeles(context: Context, texto: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val clip = ClipData.newPlainText("ID Reporte", texto)
+    val clip = ClipData.newPlainText(context.getString(R.string.copiar_id), texto)
     clipboard.setPrimaryClip(clip)
-    Toast.makeText(context, "ID copiado: $texto", Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, context.getString(R.string.id_copiado, texto), Toast.LENGTH_SHORT).show()
 }
 
 @Composable
@@ -881,13 +879,13 @@ fun DeleteReporteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "¿Estás seguro de que quieres eliminar este reporte?",
+                        text = stringResource(R.string.eliminar_confirmacion_title),
                         color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
                 Text(
-                    text = "Esta acción es PERMANENTE y no se puede deshacer. Se borrarán todos tus datos relacionados de forma definitiva.",
+                    text = stringResource(R.string.eliminar_confirmacion_mensaje),
                     fontSize = 15.sp, fontFamily = FontFamily.SansSerif, color = Color.Black,
                     fontStyle = FontStyle.Italic, textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 24.dp)
@@ -898,7 +896,7 @@ fun DeleteReporteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).height(48.dp)
                 ) {
-                    Text("Cancelar", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.cancelar_button), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
@@ -907,7 +905,7 @@ fun DeleteReporteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).padding(bottom = 24.dp).height(48.dp)
                 ) {
-                    Text("Confirmar", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirmar_button), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -928,13 +926,13 @@ fun ErrorEliminarDialog(onDismiss: () -> Unit) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Error",
+                        text = stringResource(R.string.error_title),
                         color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
                 }
                 Text(
-                    text = "No puedes borrar este reporte ya que se encuentra en proceso actualmente.",
+                    text = stringResource(R.string.error_eliminar_en_proceso),
                     fontSize = 15.sp, fontFamily = FontFamily.SansSerif, color = Color.Black,
                     fontStyle = FontStyle.Italic, textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 24.dp)
@@ -945,7 +943,7 @@ fun ErrorEliminarDialog(onDismiss: () -> Unit) {
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 48.dp).padding(bottom = 24.dp).height(48.dp)
                 ) {
-                    Text("Volver", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.volver_button), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -956,7 +954,6 @@ fun ErrorEliminarDialog(onDismiss: () -> Unit) {
 @Composable
 fun MisReportesScreenPreview() {
     UrbanFixTheme {
-        // CAMBIO: Pasa un userId de ejemplo para la preview.
         MisReportesScreen(navController = rememberNavController(), userId = 1)
     }
 }
