@@ -30,4 +30,22 @@ class MisReportesViewModel : ViewModel() {
             }
         }
     }
+
+    fun deleteReporte(reporteId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.deleteReporte(reporteId)
+
+                if (response.isSuccessful) {
+                    //RECARGA LA VISTA
+                    _reportes.value = _reportes.value.filter { it.id != reporteId }
+                } else {
+                    println("Error al eliminar el reporte: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                // Manejar un error de red (ej. sin internet)
+                e.printStackTrace()
+            }
+        }
+    }
 }

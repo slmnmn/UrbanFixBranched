@@ -32,11 +32,16 @@ interface ApiService {
         @Path("userId") userId: Int
     ): Response<Unit>
 
+    @POST("/reportes")
+    suspend fun createReporte(@Body request: CreateReporteRequest): Response<Unit>
+
     @GET("misreportes")
     suspend fun getMisReportes(
         @Query("user_id") userId: Int
     ): List<MiReporte>
 
-    @POST("/reportes")
-    suspend fun createReporte(@Body request: CreateReporteRequest): Response<Unit>
+    @DELETE("reportes/{id}")
+    suspend fun deleteReporte(
+        @Path("id") reporteId: Int
+    ): Response<Unit>
 }

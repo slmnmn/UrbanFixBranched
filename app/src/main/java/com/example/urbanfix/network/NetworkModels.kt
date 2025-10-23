@@ -54,11 +54,12 @@ data class CreateReporteRequest(
 
 data class MiReporte(
     val id: Int,
-    val nombre: String,
+    val nombre: String, // Este es tipo de evento perros
     val imagen_prueba_1: String,
     val fecha_creacion: String,
     val direccion: String,
-    val estado: String? // El estado puede ser nulo si no se ha definido
+    val estado: String?,// El estado puede ser nulo si no se ha definido
+    val categoria_nombre: String // este es categoria
 )
 
 // Data you EXPECT TO RECEIVE on a failed login

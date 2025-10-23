@@ -238,22 +238,25 @@ fun MisReportesScreen(
     }
 
     reporteSeleccionado?.let { reporte ->
-        ReporteDialog( // CAMBIO: Pasa el objeto MiReporte
+        ReporteDialog(
             reporte = reporte,
             context = context,
             onDismiss = { reporteSeleccionado = null },
-            navController = navController,
+
+            // ▼▼▼ AQUÍ ESTÁ LA LÓGICA CORRECTA ▼▼▼
             onDetalles = {
-                Toast.makeText(context, "Ver detalles de ${reporte.id}", Toast.LENGTH_SHORT).show()
+                // 1. Navega a la pantalla de detalles usando el ID del reporte
+                navController.navigate(Pantallas.EditarReporte.crearRuta(reporte.id.toString()))
+
+                // 2. Cierra el diálogo
                 reporteSeleccionado = null
             },
+            // ▲▲▲ FIN DEL CAMBIO ▲▲▲
+
             onEliminar = {
-                // Verificar si el estado permite eliminar (asumo que los estados son Strings)
-                if (reporte.estado == "Nuevo" || reporte.estado == "Resuelto") {
-                    mostrarDialogoEliminar = true
-                } else {
-                    mostrarDialogoError = true
-                }
+                // Simplemente muestra la confirmación siempre.
+                // La lógica de si se puede o no, la debería tener el backend.
+                mostrarDialogoEliminar = true
             }
         )
     }
@@ -262,8 +265,16 @@ fun MisReportesScreen(
         DeleteReporteDialog(
             onDismiss = { mostrarDialogoEliminar = false },
             onConfirm = {
+                reporteSeleccionado?.let { reporteParaBorrar ->
+                    // llama función
+                    viewModel.deleteReporte(reporteParaBorrar.id)
+                }
+
+                // cierra los diálogos y resetea el estado
                 mostrarDialogoEliminar = false
                 reporteSeleccionado = null
+
+                // le dicen ok
                 scope.launch {
                     snackbarHostState.showSnackbar(
                         message = "Reporte eliminado exitosamente.",
@@ -554,24 +565,22 @@ fun ReporteCard(
                     .fillMaxSize()
                     .padding(horizontal = 12.dp, vertical = 0.dp)
             ) {
-                // ▼▼▼ CAMBIO PRINCIPAL AQUÍ ▼▼▼
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    // Se elimina Arrangement.SpaceBetween
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // ▼▼▼ CAMBIO PRINCIPAL AQUÍ ▼▼▼
                     Text(
-                        text = reporte.nombre,
+                        text = reporte.categoria_nombre, // <-- CAMBIO
                         color = textColor,
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        // 1. Añade un peso para que ocupe el espacio disponible
                         modifier = Modifier.weight(1f)
                     )
+                    // ▲▲▲ FIN DEL CAMBIO ▲▲▲
 
-                    // 2. Añade un pequeño espacio para que no queden pegados
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Box(
@@ -588,7 +597,6 @@ fun ReporteCard(
                         )
                     }
                 }
-                // ▲▲▲ FIN DEL CAMBIO ▲▲▲
 
                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -642,12 +650,11 @@ fun ReporteCard(
 // CAMBIO: ReporteDialog ahora recibe un objeto `MiReporte` de la red.
 @Composable
 fun ReporteDialog(
-    reporte: MiReporte, // CAMBIO: Usamos el modelo de datos de la API
+    reporte: MiReporte,
     context: Context,
     onDismiss: () -> Unit,
     onDetalles: () -> Unit,
-    onEliminar: () -> Unit,
-    navController: NavHostController
+    onEliminar: () -> Unit
 ) {
     val colores = listOf(
         Color(0xFFB76998),
@@ -655,9 +662,8 @@ fun ReporteDialog(
         Color(0xFF1D3557)
     )
 
-    // CAMBIO: Usa el ID del reporte para determinar un color de fondo dinámico.
     val backgroundColor = colores[reporte.id % colores.size]
-    val esColorClaro = backgroundColor == Color(0xFF4AB7B6) // Ejemplo de lógica de color
+    val esColorClaro = backgroundColor == Color(0xFF4AB7B6)
     val iconoCopiar = if (esColorClaro) R.drawable.copiarneg else R.drawable.copiarbla
     val textColor = if (esColorClaro) Color.Black else WhiteFull
 
@@ -693,12 +699,12 @@ fun ReporteDialog(
                             .fillMaxWidth()
                             .padding(16.dp)
                     ) {
+                        // Imagen
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(180.dp)
                         ) {
-                            // CAMBIO: Usa AsyncImage para cargar desde una URL.
                             AsyncImage(
                                 model = reporte.imagen_prueba_1,
                                 contentDescription = reporte.nombre,
@@ -712,17 +718,22 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Tipo de reporte y estado
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // ▼▼▼ CAMBIO PRINCIPAL AQUÍ ▼▼▼
                             Text(
-                                text = reporte.nombre, // CAMBIO: Usamos reporte.nombre
+                                text = reporte.categoria_nombre, // Reemplazamos reporte.nombre
                                 color = textColor,
                                 fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                // El diálogo tiene espacio, así que no necesitamos
+                                // maxLines o ellipsis, mostrará el nombre completo.
                             )
+                            // ▲▲▲ FIN DEL CAMBIO ▲▲▲
 
                             Box(
                                 modifier = Modifier
@@ -741,13 +752,14 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
+                        // ID con botón copiar
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "# ${reporte.id}", // CAMBIO: ID es Int, lo convertimos a String
+                                text = "# ${reporte.id}",
                                 color = textColor,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
@@ -755,7 +767,7 @@ fun ReporteDialog(
 
                             IconButton(
                                 onClick = {
-                                    copiarAlPortapapeles(context, reporte.id.toString()) // CAMBIO: ID a String
+                                    copiarAlPortapapeles(context, reporte.id.toString())
                                 },
                                 modifier = Modifier.size(42.dp)
                             ) {
@@ -769,8 +781,9 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
+                        // Fecha
                         Text(
-                            text = "Enviado el ${reporte.fecha_creacion}", // CAMBIO: Usamos fecha_creacion
+                            text = "Enviado el ${reporte.fecha_creacion}",
                             color = textColor.copy(alpha = 0.9f),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Normal
@@ -778,6 +791,7 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
+                        // Dirección
                         Text(
                             text = reporte.direccion,
                             color = textColor.copy(alpha = 0.9f),
@@ -787,12 +801,13 @@ fun ReporteDialog(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Botones
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Button(
-                                onClick = {navController.navigate(Pantallas.EditarReporte.ruta)},
+                                onClick = onDetalles,
                                 modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = WhiteFull
@@ -825,6 +840,7 @@ fun ReporteDialog(
                         }
                     }
 
+                    // Botón X en la esquina superior derecha
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
