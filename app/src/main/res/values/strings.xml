@@ -168,6 +168,8 @@
     <string name="error_profile_not_found">Perfil no encontrado</string>
     <string name="error_loading_profile">Perfil no encontrado</string>
     <string name="error_invalid_role">Rol de usuario no válido</string>
+    <string name="error_deleting_account">Error al eliminar la cuenta. Inténtalo de nuevo.</string>
+    <string name="photo_upload_success">Foto de perfil actualizada con éxito</string>
 
     <!-- Company registration -->
     <string name="uaesp_unidad_administrativa_especial_de_servicios_p_blicos">UAESP (Unidad Administrativa Especial de Servicios Públicos)</string>

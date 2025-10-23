@@ -14,7 +14,7 @@ interface ApiService {
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     @POST("/usuarios")
-    suspend fun createuser (@Body request: CreateUserRequest): Response<ErrorResponse> // TEMPORAL  REPONSE PQ SOLO TIENE MENSAJE
+    suspend fun createuser(@Body request: CreateUserRequest): Response<ErrorResponse> // TEMPORAL RESPONSE PQ SOLO TIENE MENSAJE
 
     @POST("/funcionarios")
     suspend fun createFuncionario(@Body request: CreateFuncionarioRequest): Response<Unit>
@@ -43,5 +43,17 @@ interface ApiService {
     @DELETE("reportes/{id}")
     suspend fun deleteReporte(
         @Path("id") reporteId: Int
+    ): Response<Unit>
+
+    @POST("/usuarios/{id}/foto_perfil")
+    suspend fun subirFotoUsuario(
+        @Path("id") userId: Int,
+        @Body request: FotoPerfilRequest
+    ): Response<Unit>
+
+    @POST("/funcionarios/{id}/foto_perfil")
+    suspend fun subirFotoFuncionario(
+        @Path("id") funcionarioId: Int,
+        @Body request: FotoPerfilRequest
     ): Response<Unit>
 }
