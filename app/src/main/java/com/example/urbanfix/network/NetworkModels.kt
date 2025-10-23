@@ -62,6 +62,9 @@ data class MiReporte(
     val categoria_nombre: String // este es categoria
 )
 
+data class FotoPerfilRequest(
+    val foto_base64: String
+)
 // Data you EXPECT TO RECEIVE on a failed login
 data class ErrorResponse(
     val message: String
