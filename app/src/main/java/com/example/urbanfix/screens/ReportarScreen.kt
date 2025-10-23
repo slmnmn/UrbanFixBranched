@@ -59,6 +59,7 @@ import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import java.io.File
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -938,14 +939,31 @@ fun MapboxMapComponent(
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
-            val mapView = MapView(ctx).apply {
-                getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS)
-            }
+            // 1. Crea el MapView
+            val mapView = MapView(ctx)
+            val mapboxMap = mapView.getMapboxMap()
+
+            // --- CAMBIO (PASO 1): Iniciar en Bogotá con setCamera ---
+            val bogotaCenter = Point.fromLngLat(-74.0817, 4.6097)
+            mapboxMap.setCamera(
+                CameraOptions.Builder()
+                    .center(bogotaCenter)
+                    .zoom(10.0) // Zoom general de la ciudad
+                    .build()
+            )
+            // --- FIN DEL CAMBIO (PASO 1) ---
+
+            // 2. Carga el estilo
+            mapboxMap.loadStyleUri(Style.MAPBOX_STREETS)
+
+            // 3. Registra los callbacks (esto se mantiene igual)
             onMapReady(mapView)
-            mapView.getMapboxMap().addOnMapClickListener { point ->
+            mapboxMap.addOnMapClickListener { point ->
                 onLocationSelected(point)
                 true
             }
+
+            // 4. Lógica de ubicación
             if (hasPermission) {
                 try {
                     val locationComponent = mapView.location
@@ -953,6 +971,24 @@ fun MapboxMapComponent(
                         enabled = true
                         pulsingEnabled = true
                     }
+
+                    // --- CAMBIO (PASO 2): Mover al usuario cuando se encuentre ---
+                    val listener = object : OnIndicatorPositionChangedListener {
+                        override fun onIndicatorPositionChanged(point: Point) {
+                            // Mueve la cámara a la ubicación del usuario
+                            mapboxMap.setCamera(
+                                CameraOptions.Builder()
+                                    .center(point)
+                                    .zoom(15.0) // Zoom más cercano
+                                    .build()
+                            )
+                            // Nos removemos para que el mapa no siga al usuario
+                            locationComponent.removeOnIndicatorPositionChangedListener(this)
+                        }
+                    }
+                    locationComponent.addOnIndicatorPositionChangedListener(listener)
+                    // --- FIN DEL CAMBIO (PASO 2) ---
+
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -960,6 +996,8 @@ fun MapboxMapComponent(
             mapView
         },
         update = { mapView ->
+            // Esta lógica es para la chincheta (cuando el usuario TOCA el mapa)
+            // Se mantiene exactamente igual.
             selectedLocation?.let { point ->
                 mapView.getMapboxMap().setCamera(
                     CameraOptions.Builder()

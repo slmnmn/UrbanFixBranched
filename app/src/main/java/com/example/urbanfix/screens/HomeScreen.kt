@@ -49,6 +49,10 @@ import com.example.urbanfix.ui.theme.*
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
 import com.example.urbanfix.navigation.Pantallas
+import com.mapbox.geojson.Point
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.MapOptions
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
 
 class MainActivity : ComponentActivity() {
@@ -517,15 +521,37 @@ fun MapDetailScreen(navController: NavHostController) {
 fun MapboxMapComponent(modifier: Modifier = Modifier, hasPermission: Boolean) {
     AndroidView(
         factory = { context ->
-            MapView(context).apply {
-                getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS) {
-                    if (hasPermission) {
-                        initLocationComponent(this)
-                    }
+            // 1. Crea el MapView
+            val mapView = MapView(context)
+
+            // 2. Obtiene la instancia de MapboxMap
+            val mapboxMap = mapView.getMapboxMap()
+
+            // --- PASO 1: Centrar en Bogotá ---
+            // 3. Define las coordenadas y el zoom inicial
+            val bogotaCenter = Point.fromLngLat(-74.0817, 4.6097)
+            val initialZoom = 10.0
+
+            // 4. Llama a setCamera para centrar en Bogotá INMEDIATAMENTE
+            mapboxMap.setCamera(
+                CameraOptions.Builder()
+                    .center(bogotaCenter)
+                    .zoom(initialZoom)
+                    .build()
+            )
+            // --- Fin Paso 1 ---
+            // 5. Carga el estilo. La lógica del Paso 2 (usuario) está en initLocationComponent
+            mapboxMap.loadStyleUri(Style.MAPBOX_STREETS) {
+                if (hasPermission) {
+                    initLocationComponent(mapView)
                 }
             }
+
+            // 6. Devuelve el MapView
+            mapView
         },
         update = { mapView ->
+            // Se llama si hasPermission cambia
             if (hasPermission) {
                 initLocationComponent(mapView)
             }
@@ -533,15 +559,37 @@ fun MapboxMapComponent(modifier: Modifier = Modifier, hasPermission: Boolean) {
         modifier = modifier
     )
 }
-
 private fun initLocationComponent(mapView: MapView) {
     val context = mapView.context
     if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
         val locationComponentPlugin = mapView.location
+
+        // Habilita el punto azul
         locationComponentPlugin.updateSettings {
             this.enabled = true
             this.pulsingEnabled = true
         }
+
+        // --- PASO 2: Moverse al Usuario ---
+        // Creamos un listener que se disparará cuando se encuentre la ubicación
+        val listener = object : OnIndicatorPositionChangedListener {
+            override fun onIndicatorPositionChanged(point: Point) {
+
+                // 1. Mueve la cámara a la nueva 'point' (ubicación del usuario)
+                mapView.getMapboxMap().setCamera(
+                    CameraOptions.Builder()
+                        .center(point)
+                        .zoom(14.0) // Un zoom más cercano
+                        .build()
+                )
+                locationComponentPlugin.removeOnIndicatorPositionChangedListener(this)
+            }
+        }
+
+        // 3. Añadimos el listener al plugin de ubicación
+        locationComponentPlugin.addOnIndicatorPositionChangedListener(listener)
+        // --- Fin Paso 2 ---
     }
 }
 
