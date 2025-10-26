@@ -306,7 +306,7 @@ fun HomeScreen(navController: NavHostController) {
                             modifier = Modifier
                                 .weight(1f)
                                 .height(48.dp)
-                                .clickable { }
+                                .clickable {navController.navigate(Pantallas.MisDenuncias.ruta)  }
                         )
                     }
                 }

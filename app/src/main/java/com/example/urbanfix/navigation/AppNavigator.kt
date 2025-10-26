@@ -26,6 +26,7 @@ sealed class Pantallas(val ruta: String) {
     object Verperfilusuario : Pantallas("verperfilusuario")
 
     object MisApoyos : Pantallas("misapoyos")
+    object MisDenuncias : Pantallas("misdenuncias")
 
     // CAMBIO: La ruta ahora debe definir que espera un argumento "userId"
     object MisReportes : Pantallas("misreportes/{userId}") {
@@ -66,6 +67,9 @@ fun AppNavigator(navController: NavHostController) {
 
         composable(Pantallas.MisApoyos.ruta) {
             MisApoyosScreen(navController = navController)
+        }
+        composable(Pantallas.MisDenuncias.ruta) {
+            MisDenunciasScreen(navController = navController)
         }
 
         // CAMBIO: La llamada al composable de MisReportes ahora debe extraer el argumento

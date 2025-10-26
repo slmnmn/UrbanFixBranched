@@ -43,7 +43,7 @@ import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
 
-data class Apoyo(
+data class Denuncia(
     val id: String,
     val tipo: String,
     val imagenes: List<Int>,
@@ -54,27 +54,27 @@ data class Apoyo(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MisApoyosScreen(
+fun MisDenunciasScreen(
     navController: NavHostController
 ) {
     val context = LocalContext.current
     var mostrarFiltro by remember { mutableStateOf(false) }
     var tipoReporteFiltro by remember { mutableStateOf<String?>(null) }
     var estadoReporteFiltro by remember { mutableStateOf<String?>(null) }
-    var apoyoSeleccionado by remember { mutableStateOf<Apoyo?>(null) }
-    var mostrarDialogoEliminar by remember { mutableStateOf<Apoyo?>(null) }
+    var denunciaSeleccionado by remember { mutableStateOf<Denuncia?>(null) }
+    var mostrarDialogoEliminar by remember { mutableStateOf<Denuncia?>(null) }
     var mostrarCopiado by remember { mutableStateOf(false) }
-    var mostrarImagenCompleta2 by remember { mutableStateOf<Apoyo?>(null) }
+    var mostrarImagenCompleta3 by remember { mutableStateOf<Denuncia?>(null) }
     val reportImages = listOf(
         R.drawable.alumbrado_foto,
         R.drawable.prueba_circulo
     )
 
-    // Lista mutable de apoyos
-    var apoyos by remember {
+    // Lista mutable de Denuncias
+    var denuncias by remember {
         mutableStateOf(
             listOf(
-                Apoyo(
+                Denuncia(
                     "2025-0001",
                     "Alumbrado Público",
                     listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
@@ -82,7 +82,7 @@ fun MisApoyosScreen(
                     "Nuevo",
                     true
                 ),
-                Apoyo(
+                Denuncia(
                     "2025-XXXX",
                     "Hueco",
                     listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
@@ -90,7 +90,7 @@ fun MisApoyosScreen(
                     "Resuelto",
                     true
                 ),
-                Apoyo(
+                Denuncia(
                     "2025-XXXX",
                     "Alumbrado Público",
                     listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
@@ -98,7 +98,7 @@ fun MisApoyosScreen(
                     "En proceso",
                     true
                 ),
-                Apoyo(
+                Denuncia(
                     "2025-XXXX",
                     "Alumbrado Público",
                     listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
@@ -110,11 +110,11 @@ fun MisApoyosScreen(
         )
     }
 
-    // Filtrar apoyos
-    val apoyosFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, apoyos) {
-        apoyos.filter { apoyo ->
-            val coincideTipo = tipoReporteFiltro == null || apoyo.tipo == tipoReporteFiltro
-            val coincideEstado = estadoReporteFiltro == null || apoyo.estado == estadoReporteFiltro
+    // Filtrar Denuncias
+    val denunciasFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, denuncias) {
+        denuncias.filter { denuncia ->
+            val coincideTipo = tipoReporteFiltro == null || denuncia.tipo == tipoReporteFiltro
+            val coincideEstado = estadoReporteFiltro == null || denuncia.estado == estadoReporteFiltro
             coincideTipo && coincideEstado
         }
     }
@@ -124,7 +124,7 @@ fun MisApoyosScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.mis_apoyos_title),
+                        text = stringResource(R.string.mis_denuncias_title),
                         color = WhiteFull,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -162,11 +162,11 @@ fun MisApoyosScreen(
             )
         },
         bottomBar = {
-            BottomNavBarThree2(navController = navController)
+            BottomNavBarThree3(navController = navController)
         },
         containerColor = GrayBg
     ) { paddingValues ->
-        if (apoyosFiltrados.isEmpty()) {
+        if (denunciasFiltrados.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -180,12 +180,12 @@ fun MisApoyosScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.alerta_no_nada),
-                        contentDescription = stringResource(R.string.no_apoyos_image_description),
+                        contentDescription = stringResource(R.string.no_denuncias_image_description),
                         modifier = Modifier.size(120.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = stringResource(R.string.no_apoyos_message),
+                        text = stringResource(R.string.no_denuncias_message),
                         fontSize = 14.sp,
                         color = Color.Gray,
                         textAlign = TextAlign.Center,
@@ -201,15 +201,15 @@ fun MisApoyosScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                items(apoyosFiltrados) { apoyo ->
-                    ApoyoCard(
-                        apoyo = apoyo,
-                        onClick = { mostrarImagenCompleta2 = apoyo },
+                items(denunciasFiltrados) { denuncia ->
+                    DenunciaCard(
+                        denuncia = denuncia,
+                        onClick = { mostrarImagenCompleta3 = denuncia },
                         onCorazonClick = {
-                            mostrarDialogoEliminar = apoyo
+                            mostrarDialogoEliminar = denuncia
                         },
                         onCopiarClick = {
-                            copiarAlPortapapeles2(context, apoyo.id)
+                            copiarAlPortapapeles3(context, denuncia.id)
                             mostrarCopiado = true
                         }
                     )
@@ -219,7 +219,7 @@ fun MisApoyosScreen(
     }
     // Diálogo de filtro
     if (mostrarFiltro) {
-        FiltroApoyosDialog(
+        FiltroDenunciasDialog(
             tipoSeleccionado = tipoReporteFiltro,
             estadoSeleccionado = estadoReporteFiltro,
             onDismiss = { mostrarFiltro = false },
@@ -236,11 +236,11 @@ fun MisApoyosScreen(
     }
 
     // Diálogo de eliminación
-    mostrarDialogoEliminar?.let { apoyo ->
-        EliminarApoyoDialog(
+    mostrarDialogoEliminar?.let { denuncia ->
+        EliminarDenunciaDialog(
             onDismiss = { mostrarDialogoEliminar = null },
             onConfirm = {
-                apoyos = apoyos.filter { it.id != apoyo.id }
+                denuncias = denuncias.filter { it.id != denuncia.id }
                 mostrarDialogoEliminar = null
             }
         )
@@ -248,29 +248,29 @@ fun MisApoyosScreen(
 
     // Diálogo de código copiado
     if (mostrarCopiado) {
-        CodigoCopiadoDialog(
+        CodigoCopiadoDialog2(
             onDismiss = { mostrarCopiado = false }
         )
     }
 
     // Diálogo de imagen completa
-    mostrarImagenCompleta2?.let { apoyo ->
-        ImageGalleryDialog2(
-            images = apoyo.imagenes, // 🔹 ahora sí pasa todas las imágenes
+    mostrarImagenCompleta3?.let { denuncia ->
+        ImageGalleryDialog3(
+            images = denuncia.imagenes, // 🔹 ahora sí pasa todas las imágenes
             initialIndex = 0,
-            onDismiss = { mostrarImagenCompleta2 = null }
+            onDismiss = { mostrarImagenCompleta3 = null }
         )
     }
 }
 
 @Composable
-fun ApoyoCard(
-    apoyo: Apoyo,
+fun DenunciaCard(
+    denuncia: Denuncia,
     onClick: () -> Unit,
     onCorazonClick: () -> Unit,
     onCopiarClick: () -> Unit
 ) {
-    val colorEstado = when (apoyo.estado) {
+    val colorEstado = when (denuncia.estado) {
         "Nuevo" -> Color(0xFFD6CF00)
         "En proceso" -> Color(0xFFFF8F0C)
         "Resuelto" -> Color(0xFF11F300)
@@ -282,7 +282,7 @@ fun ApoyoCard(
             .fillMaxWidth()
             .wrapContentHeight(),
         shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1D3557)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF663251)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
@@ -302,7 +302,7 @@ fun ApoyoCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = apoyo.estado,
+                    text = denuncia.estado,
                     color = Color.Black,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
@@ -318,7 +318,7 @@ fun ApoyoCard(
                 modifier = Modifier.clickable { onCopiarClick() }
             ) {
                 Text(
-                    text = "#${apoyo.id}",
+                    text = "#${denuncia.id}",
                     color = WhiteFull,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium
@@ -344,8 +344,8 @@ fun ApoyoCard(
                     .height(110.dp)
             ) {
                 Image(
-                    painter = painterResource(id = apoyo.imagenes.firstOrNull() ?: R.drawable.huecoeje),
-                    contentDescription = apoyo.tipo,
+                    painter = painterResource(id = denuncia.imagenes.firstOrNull() ?: R.drawable.huecoeje),
+                    contentDescription = denuncia.tipo,
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(8.dp))
@@ -366,7 +366,7 @@ fun ApoyoCard(
 
                 // Título del reporte
                 Text(
-                    text = apoyo.tipo,
+                    text = denuncia.tipo,
                     color = WhiteFull,
                     fontSize = 14.5.sp,
                     fontWeight = FontWeight.Bold,
@@ -383,7 +383,7 @@ fun ApoyoCard(
                 ) {
                     // Descripción
                     Text(
-                        text = apoyo.descripcion,
+                        text = denuncia.descripcion,
                         color = WhiteFull.copy(alpha = 0.9f),
                         fontSize = 12.sp,
                         lineHeight = 16.sp,
@@ -393,7 +393,7 @@ fun ApoyoCard(
                     )
 
                     // Corazón al lado derecho
-                    if (apoyo.tieneCorazon) {
+                    if (denuncia.tieneCorazon) {
                         IconButton(
                             onClick = onCorazonClick,
                             modifier = Modifier
@@ -401,8 +401,8 @@ fun ApoyoCard(
                                 .offset(x = 4.dp, y = (-4).dp)
                         ) {
                             Image(
-                                painter = painterResource(id = R.drawable.icono_corazon),
-                                contentDescription = stringResource(R.string.remove_support_description),
+                                painter = painterResource(id = R.drawable.eliminar_favoritos),
+                                contentDescription = stringResource(R.string.remove_denuncia_description),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -413,7 +413,7 @@ fun ApoyoCard(
     }
 }
 @Composable
-fun FiltroApoyosDialog(
+fun FiltroDenunciasDialog(
     tipoSeleccionado: String?,
     estadoSeleccionado: String?,
     onDismiss: () -> Unit,
@@ -484,7 +484,7 @@ fun FiltroApoyosDialog(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     fila.forEach { tipo ->
-                                        FiltroBoton2(
+                                        FiltroBoton3(
                                             texto = tipo,
                                             seleccionado = tipoTemporal == tipo,
                                             onClick = {
@@ -515,7 +515,7 @@ fun FiltroApoyosDialog(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             estadosReporte.forEach { estado ->
-                                FiltroBoton2(
+                                FiltroBoton3(
                                     texto = estado,
                                     seleccionado = estadoTemporal == estado,
                                     onClick = {
@@ -593,7 +593,7 @@ fun FiltroApoyosDialog(
 }
 
 @Composable
-fun FiltroBoton2(
+fun FiltroBoton3(
     texto: String,
     seleccionado: Boolean,
     onClick: () -> Unit,
@@ -621,7 +621,7 @@ fun FiltroBoton2(
 }
 
 @Composable
-fun EliminarApoyoDialog(
+fun EliminarDenunciaDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -645,7 +645,7 @@ fun EliminarApoyoDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = stringResource(R.string.remove_support_title),
+                        text = stringResource(R.string.remove_denuncia_title),
                         color = Color.Black,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
@@ -654,7 +654,7 @@ fun EliminarApoyoDialog(
                     )
                 }
                 Text(
-                    text = stringResource(R.string.remove_support_message),
+                    text = stringResource(R.string.remove_denuncia_message),
                     fontSize = 15.sp,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.Black,
@@ -704,7 +704,7 @@ fun EliminarApoyoDialog(
 }
 
 @Composable
-fun CodigoCopiadoDialog(onDismiss: () -> Unit) {
+fun CodigoCopiadoDialog2(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -768,7 +768,7 @@ fun CodigoCopiadoDialog(onDismiss: () -> Unit) {
     }
 }
 @Composable
-fun ImageGalleryDialog2(
+fun ImageGalleryDialog3(
     images: List<Int>,
     initialIndex: Int = 0,
     onDismiss: () -> Unit
@@ -901,7 +901,7 @@ fun ImageGalleryDialog2(
     }
 }
 
-fun copiarAlPortapapeles2(context: Context, texto: String) {
+fun copiarAlPortapapeles3(context: Context, texto: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clip = ClipData.newPlainText("Código Reporte", texto)
     clipboard.setPrimaryClip(clip)
@@ -909,14 +909,14 @@ fun copiarAlPortapapeles2(context: Context, texto: String) {
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun MisApoyosScreenPreview() {
+fun MisDenunciasScreenPreview() {
     UrbanFixTheme {
-        MisApoyosScreen(navController = rememberNavController())
+        MisDenunciasScreen(navController = rememberNavController())
     }
 }
 
 @Composable
-fun BottomNavBarThree2(navController: NavHostController) {
+fun BottomNavBarThree3(navController: NavHostController) {
     val context = LocalContext.current
     val userPreferencesManager = remember { UserPreferencesManager(context) }
     val userRole = remember { userPreferencesManager.getUserRole() }
@@ -1011,7 +1011,7 @@ fun BottomNavBarThree2(navController: NavHostController) {
     }
 }
 @Composable
-fun mostrarImagenCompleta2(
+fun mostrarImagenCompleta3(
     images: List<Int>,
     initialIndex: Int = 0,
     onDismiss: () -> Unit

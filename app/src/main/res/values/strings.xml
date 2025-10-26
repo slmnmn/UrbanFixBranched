@@ -451,5 +451,52 @@
     <string name="volver_button">Volver</string>
     <string name="no_reportes">Sin reportes</string>
     <string name="no_reportes_mensaje">Todavía no has generado ningún reporte,\ncuando lo generes te va a aparecer aquí.</string>
+    <!-- MisApoyosScreen Strings -->
+    <string name="mis_apoyos_title">Mis apoyos</string>
+    <string name="filter_icon_description">Filtrar</string>
+    <string name="no_apoyos_message">Aún no has dado like a ningún reporte. Explora reportes y apóyalos para verlos aquí.</string>
+    <string name="no_apoyos_image_description">No hay apoyos</string>
+
+    <!-- ApoyoCard Strings -->
+    <string name="copy_icon_description">Copiar</string>
+    <string name="remove_support_description">Eliminar apoyo</string>
+
+    <!-- Estados de reporte (ya tienes algunos similares, pero estos son específicos) -->
+    <string name="status_new">Nuevo</string>
+    <!-- Ya tienes: status_in_progress y status_resolved -->
+
+    <!-- FiltroApoyosDialog Strings -->
+    <string name="filter_title">Filtrar Reportes</string>
+    <string name="report_type_label">Tipo de Reporte</string>
+    <string name="report_status_label">Estado del Reporte</string>
+    <string name="reset_button">Restablecer</string>
+    <string name="apply_button">Aplicar</string>
+    <string name="close_description">Cerrar</string>
+
+    <!-- Tipos de reporte para el filtro -->
+    <string name="report_type_pothole">Hueco</string>
+    <string name="report_type_street_lighting">Alumbrado Público</string>
+    <string name="report_type_garbage">Basura</string>
+
+
+    <!-- EliminarApoyoDialog Strings -->
+    <string name="remove_support_title">Seguro que quieres eliminar el reporte de Mis apoyos?</string>
+    <string name="remove_support_message">No se puede deshacer; tendrás que volver a buscar el reporte y darle like otra vez.</string>
+    <!-- Ya tienes: back_button, confirm_button -->
+
+    <!-- ImageGalleryDialog Strings -->
+    <string name="report_image_description">Imagen del reporte</string>
+
+    <!-- MisDenunciasScreen Strings -->
+    <string name="mis_denuncias_title">Mis denuncias</string>
+    <string name="no_denuncias_image_description">No hay denuncias</string>
+    <string name="no_denuncias_message">Todavía no le has dado dislike a ningún reporte, cuándo lo hagas, los podrás ver en esta pantalla.</string>
+
+    <!-- DenunciaCard Strings -->
+    <string name="remove_denuncia_description">Eliminar denuncia</string>
+
+    <!-- EliminarDenunciaDialog Strings -->
+    <string name="remove_denuncia_title">Seguro que quieres eliminar el reporte de Mis Denuncias?</string>
+    <string name="remove_denuncia_message">No se puede deshacer; tendrás que volver a buscar el reporte y darle dislike otra vez.</string>
 </resources>
 
