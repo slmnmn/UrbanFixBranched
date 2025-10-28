@@ -128,6 +128,7 @@ fun HomeScreen(navController: NavHostController) {
                 modifier = Modifier
                     .height(40.dp)
                     .padding(start=10.dp)
+                    .clickable { navController.navigate(Pantallas.VerReportes.ruta) }
             )
 
             Spacer(modifier = Modifier.height(8.dp))

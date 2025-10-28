@@ -24,6 +24,7 @@ sealed class Pantallas(val ruta: String) {
     object EditProfile : Pantallas("edit_profile")
     object Verperfilempresa : Pantallas("verperfilempresa")
     object Verperfilusuario : Pantallas("verperfilusuario")
+    object VerReportes : Pantallas("verreportes")
 
     object MisApoyos : Pantallas("misapoyos")
     object MisDenuncias : Pantallas("misdenuncias")
@@ -64,6 +65,7 @@ fun AppNavigator(navController: NavHostController) {
         composable(Pantallas.Fotoperfil.ruta) { FotoperfilScreen(navController) }
         composable(Pantallas.Verperfilempresa.ruta) { VerperfilempresaScreen(navController) }
         composable(Pantallas.Verperfilusuario.ruta) { VerperfilusuarioScreen(navController) }
+        composable(Pantallas.VerReportes.ruta) {VerReportesScreen(navController)}
 
         composable(Pantallas.MisApoyos.ruta) {
             MisApoyosScreen(navController = navController)
