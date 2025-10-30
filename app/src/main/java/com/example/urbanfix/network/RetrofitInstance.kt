@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 object RetrofitInstance {
 
     // Usar la IP de tu computadora.
-    private const val BASE_URL = "http://192.168.1.77:5000" //
+    private const val BASE_URL = "http://192.168.2.7:5000" //
     // Usar la IP de tu computadora (Asegúrate que sea la correcta en tu red Wi-Fi)
 
 

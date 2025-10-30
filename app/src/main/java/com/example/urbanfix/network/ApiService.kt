@@ -9,6 +9,7 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.HTTP
+import retrofit2.http.Header
 
 interface ApiService {
     @POST("/login") // The path of your login endpoint
@@ -61,7 +62,8 @@ interface ApiService {
     @GET("/reportes/{id}")
     suspend fun getReporteById(
         @Path("id") reporteId: Int,
-        @Query("user_id") userId: Int?
+        @Query("user_id") userId: Int?,
+        @Header("User-Role") userRole: String
     ): Response<MiReporte> // Use Response<>
 
     //User-Specific Report Lists ---
@@ -97,4 +99,28 @@ interface ApiService {
         @Path("id") reporteId: Int,
         @Body request: ReactionRemoveRequest //
     ): Response<Unit>
+
+    @GET("/reportes/{id}/comentarios")
+    suspend fun getComentarios(
+        @Path("id") reporteId: Int
+    ): Response<List<ComentarioResponse>> // Devuelve una lista de comentarios
+
+    @POST("/reportes/{id}/comentarios")
+    suspend fun postComentario(
+        @Path("id") reporteId: Int,
+        @Body request: ComentarioRequest
+    ): Response<ComentarioResponse> // Devuelve el comentario recién creado
+
+    @PUT("/comentarios/{id}")
+    suspend fun updateComentario(
+        @Path("id") comentarioId: Int,
+        @Body request: ComentarioUpdateRequest
+    ): Response<ComentarioResponse> // Devuelve el comentario actualizado
+
+    @DELETE("/comentarios/{id}")
+    suspend fun deleteComentario(
+        @Path("id") comentarioId: Int
+    ): Response<Unit> // No devuelve nada, solo un 200 OK
 }
+
+

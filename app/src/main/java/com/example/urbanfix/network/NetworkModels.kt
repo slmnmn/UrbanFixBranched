@@ -70,7 +70,9 @@ data class MiReporte(
     val apoyos_count: Int,
     val desapoyos_count: Int,
     val current_user_reaction: String?,
-    val descripcion: String?
+    val descripcion: String?,
+    val creador_nombre: String?,
+    val creador_iniciales: String?
 )
 
 data class FotoPerfilRequest(
@@ -91,4 +93,25 @@ data class ReactionRemoveRequest(
 // Data you EXPECT TO RECEIVE on a failed login
 data class ErrorResponse(
     val message: String
+)
+
+data class ComentarioResponse(  //todict mejorado
+    val id: Int,
+    val reporte_id: Int,
+    val usuario_id: Int,
+    val texto: String,
+    val fecha_creacion: String,
+    val autor_nombre: String,
+    val autor_iniciales: String,
+    val es_verificado: Boolean
+)
+
+// Para crear un comentario
+data class ComentarioRequest(
+    val texto: String,
+    val usuario_id: Int
+)
+
+data class ComentarioUpdateRequest(
+    val texto: String
 )
