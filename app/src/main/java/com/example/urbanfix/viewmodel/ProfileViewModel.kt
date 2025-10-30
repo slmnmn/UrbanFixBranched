@@ -263,21 +263,40 @@ class ProfileViewModel(
         _photoUploadState.value = PhotoUploadState.Idle
     }
 
-    // --- FUNCIONES PARA CARGAR LISTAS DE REPORTES ---
+    // --- FUNCIONES PARA CARGAR LISTAS DE REPORTES (MODIFICADAS) ---
     fun fetchUserApoyos() {
         viewModelScope.launch {
             _reportListState.value = ReportListState.Loading
-            val userId = userPreferencesManager.getUserId()
-            if (userId == -1) {
+
+            // ▼▼▼ CAMBIO: Obtener ID y ROL ▼▼▼
+            val actorId = userPreferencesManager.getUserId()
+            val actorRole = userPreferencesManager.getUserRole()
+            // ▲▲▲ FIN DE CAMBIOS ▲▲▲
+
+            if (actorId == -1) {
                 _reportListState.value = ReportListState.Error("Usuario no identificado")
                 return@launch
             }
+
             try {
-                val response = RetrofitInstance.api.getUserApoyos(userId)
+                // ▼▼▼ CAMBIO: Decidir qué API llamar ▼▼▼
+                val response: Response<List<MiReporte>>
+
+                if (actorRole == "usuario") {
+                    response = RetrofitInstance.api.getUserApoyos(actorId)
+                } else if (actorRole == "funcionario") {
+                    response = RetrofitInstance.api.getFuncionarioApoyos(actorId)
+                } else {
+                    Log.e("API_FAIL", "Rol desconocido: $actorRole")
+                    _reportListState.value = ReportListState.Error("Rol desconocido")
+                    return@launch
+                }
+                // ▲▲▲ FIN DE CAMBIOS ▲▲▲
+
                 if (response.isSuccessful) {
                     val fetchedList = response.body() ?: emptyList()
                     Log.d("APOYOS_FETCH", "Datos recibidos del API: $fetchedList")
-                    _apoyosList.value = response.body() ?: emptyList()
+                    _apoyosList.value = fetchedList
                     _reportListState.value = ReportListState.Success
                 } else {
                     _reportListState.value = ReportListState.Error("Error al cargar apoyos: ${response.code()}")
@@ -291,13 +310,32 @@ class ProfileViewModel(
     fun fetchUserDenuncias() {
         viewModelScope.launch {
             _reportListState.value = ReportListState.Loading
-            val userId = userPreferencesManager.getUserId()
-            if (userId == -1) {
+
+            // ▼▼▼ CAMBIO: Obtener ID y ROL ▼▼▼
+            val actorId = userPreferencesManager.getUserId()
+            val actorRole = userPreferencesManager.getUserRole()
+            // ▲▲▲ FIN DE CAMBIOS ▲▲▲
+
+            if (actorId == -1) {
                 _reportListState.value = ReportListState.Error("Usuario no identificado")
                 return@launch
             }
+
             try {
-                val response = RetrofitInstance.api.getUserDenuncias(userId)
+                // ▼▼▼ CAMBIO: Decidir qué API llamar ▼▼▼
+                val response: Response<List<MiReporte>>
+
+                if (actorRole == "usuario") {
+                    response = RetrofitInstance.api.getUserDenuncias(actorId)
+                } else if (actorRole == "funcionario") {
+                    response = RetrofitInstance.api.getFuncionarioDenuncias(actorId)
+                } else {
+                    Log.e("API_FAIL", "Rol desconocido: $actorRole")
+                    _reportListState.value = ReportListState.Error("Rol desconocido")
+                    return@launch
+                }
+                // ▲▲▲ FIN DE CAMBIOS ▲▲▲
+
                 if (response.isSuccessful) {
                     _denunciasList.value = response.body() ?: emptyList()
                     _reportListState.value = ReportListState.Success
@@ -312,7 +350,7 @@ class ProfileViewModel(
 
     // --- FUNCIONES PARA LIKE/DISLIKE (REACCIONES) ---
     private fun updateLocalReaction(reporteId: Int, newReaction: String?) {
-
+        // Esta función se mantiene igual, ya que solo actualiza las listas locales
         _apoyosList.update { currentList ->
             if (newReaction != "like") {
                 currentList.filterNot { it.id == reporteId }
@@ -333,15 +371,21 @@ class ProfileViewModel(
 
     fun toggleLikeDislike(reporteId: Int, currentReaction: String?, action: String) {
         viewModelScope.launch {
-            val userId = userPreferencesManager.getUserId()
-            if (userId == -1) {
-                println("Error: User ID not found for reaction")
+
+            // ▼▼▼ CAMBIO: Obtener ID y ROL ▼▼▼
+            val actorId = userPreferencesManager.getUserId()
+            val actorRole = userPreferencesManager.getUserRole() // Asumo que esta función existe
+            // ▲▲▲ FIN DE CAMBIOS ▲▲▲
+
+            if (actorId == -1 || actorRole.isNullOrEmpty()) { // Verificación de rol
+                Log.e("API_FAIL", "ID de actor ($actorId) o Rol ($actorRole) no encontrados")
                 // TODO: Show Snackbar error to user
                 return@launch
             }
 
             val shouldRemove = currentReaction == action
 
+            // Actualización optimista de la UI
             if (shouldRemove) {
                 updateLocalReaction(reporteId, null)
             } else {
@@ -352,22 +396,27 @@ class ProfileViewModel(
                 val response: Response<Unit>
 
                 if (shouldRemove) {
-                    val removeRequestBody = ReactionRemoveRequest(usuario_id = userId)
+                    // ▼▼▼ CAMBIO: Usar el nuevo Request Body ▼▼▼
+                    val removeRequestBody = ReactionRemoveRequest(actor_id = actorId, role = actorRole)
                     response = RetrofitInstance.api.removeReaccion(reporteId, removeRequestBody)
                 } else {
-                    val setRequestBody = ReactionRequest(usuario_id = userId, tipo = action)
+                    // ▼▼▼ CAMBIO: Usar el nuevo Request Body ▼▼▼
+                    val setRequestBody = ReactionRequest(actor_id = actorId, role = actorRole, tipo = action)
                     response = RetrofitInstance.api.setReaccion(reporteId, setRequestBody)
                 }
+                // ▲▲▲ FIN DE CAMBIOS ▲AT
 
                 if (!response.isSuccessful) {
+                    // Si falla, revertir la UI
                     updateLocalReaction(reporteId, currentReaction)
-                    println("Error API reaction: ${response.code()} - ${response.errorBody()?.string()}")
+                    Log.e("API_FAIL", "Error API reaction: ${response.code()} - ${response.errorBody()?.string()}")
                     // TODO: Show Snackbar error to user
                 }
 
             } catch (e: Exception) {
+                // Si falla, revertir la UI
                 updateLocalReaction(reporteId, currentReaction)
-                println("Error Network reaction: ${e.message}")
+                Log.e("API_FAIL", "Error Network reaction: ${e.message}")
                 // TODO: Show Snackbar error to user
                 e.printStackTrace()
             }

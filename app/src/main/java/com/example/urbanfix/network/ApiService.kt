@@ -82,6 +82,16 @@ interface ApiService {
         @Body request: ReactionRequest
     ): Response<Unit>
 
+    @GET("/funcionarios/{id}/apoyos")
+    suspend fun getFuncionarioApoyos(
+        @Path("id") funcId: Int
+    ): Response<List<MiReporte>>
+
+    @GET("/funcionarios/{id}/denuncias")
+    suspend fun getFuncionarioDenuncias(
+        @Path("id") funcId: Int
+    ): Response<List<MiReporte>>
+
     @HTTP(method = "DELETE", path = "/reportes/{id}/reaccion", hasBody = true)
     suspend fun removeReaccion(
         @Path("id") reporteId: Int,

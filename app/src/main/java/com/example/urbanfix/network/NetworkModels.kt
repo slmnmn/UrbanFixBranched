@@ -78,12 +78,15 @@ data class FotoPerfilRequest(
 )
 
 data class ReactionRequest(
-    val usuario_id: Int,
-    val tipo: String // "like" or "dislike"
+    val actor_id: Int,
+    val role: String,
+    val tipo: String
+    // "like" or "dislike"
 )
 
 data class ReactionRemoveRequest(
-    val usuario_id: Int
+    val actor_id: Int,
+    val role: String
 )
 // Data you EXPECT TO RECEIVE on a failed login
 data class ErrorResponse(
