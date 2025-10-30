@@ -53,6 +53,18 @@ import com.example.urbanfix.viewmodel.ReportListState
 import com.example.urbanfix.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
 
+fun mapearCategoriaDenuncia(nombreBD: String?): String {
+    val processedName = nombreBD?.lowercase()?.trim() ?: ""
+    return when (processedName) {
+        "huecos" -> "Hueco"
+        "alumbrado publico" -> "Alumbrado"
+        "basura acumulada" -> "Basura"
+        "semaforo dañado" -> "Semáforo"
+        "hidrante roto" -> "Hidrante"
+        "alcantarilla sin tapa" -> "Alcantarilla"
+        else -> nombreBD ?: "Desconocido"
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,7 +94,8 @@ fun MisDenunciasScreen(
 
     val denunciasFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, denunciasList) {
         denunciasList.filter { reporte ->
-            val coincideTipo = tipoReporteFiltro == null || reporte.categoria_nombre == tipoReporteFiltro
+            val categoriaMapeada = mapearCategoriaDenuncia(reporte.categoria_nombre)
+            val coincideTipo = tipoReporteFiltro == null || categoriaMapeada == tipoReporteFiltro
             val coincideEstado = estadoReporteFiltro == null || reporte.estado == estadoReporteFiltro
             coincideTipo && coincideEstado
         }
@@ -224,7 +237,7 @@ fun MisDenunciasScreen(
     }
 
     if (mostrarCopiado) {
-        CodigoCopiadoDialog2(onDismiss = { mostrarCopiado = false }) //
+        CodigoCopiadoDialog2(onDismiss = { mostrarCopiado = false })
     }
 
     reporteParaReaccion?.let { (reporte, accion) ->
@@ -442,7 +455,6 @@ fun ConfirmarReaccionDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
-                        // ▼▼▼ CAMBIO DE COLOR AQUÍ ▼▼▼
                         .background(Color(0xFFFF4B3A)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -539,7 +551,7 @@ fun DenunciaCard(
             Row( verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onCopiarClick() } ) {
                 Text( text = "#${denuncia.id}", color = WhiteFull, fontSize = 11.sp, fontWeight = FontWeight.Medium )
                 Spacer(modifier = Modifier.width(2.dp))
-                Image( painter = painterResource(id = R.drawable.copiarbla), contentDescription = stringResource(R.string.copy_icon_description), modifier = Modifier.size(18.dp) ) // Original icon
+                Image( painter = painterResource(id = R.drawable.copiarbla), contentDescription = stringResource(R.string.copy_icon_description), modifier = Modifier.size(18.dp) )
             }
         }
 
@@ -547,18 +559,16 @@ fun DenunciaCard(
             modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, bottom = 20.dp)
         ) {
             AsyncImage(
-                model = denuncia.img_prueba_1, // Load URL
+                model = denuncia.img_prueba_1,
                 contentDescription = denuncia.categoria_nombre ?: "",
-                modifier = Modifier.width(90.dp).height(110.dp).clip(RoundedCornerShape(8.dp)).clickable { onClick() }, // Original size, shape, action
-                contentScale = ContentScale.Crop, // Original scale
+                modifier = Modifier.width(90.dp).height(110.dp).clip(RoundedCornerShape(8.dp)).clickable { onClick() },
+                contentScale = ContentScale.Crop,
                 placeholder = painterResource(id = R.drawable.huecoeje),
                 error = painterResource(id = R.drawable.huecoeje)
             )
-            // --- END ---
 
             Spacer(modifier = Modifier.width(10.dp))
 
-            // Content Column (Original structure and style)
             Column( modifier = Modifier.weight(1f).fillMaxHeight() ) {
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -594,7 +604,6 @@ fun DenunciaCard(
                                 else WhiteFull.copy(alpha = 0.7f)
                             )
                         }
-                        // Like Button
                         IconButton(
                             onClick = onLikeClick,
                             modifier = Modifier.size(32.dp)
@@ -603,7 +612,6 @@ fun DenunciaCard(
                                 imageVector = Icons.Default.ThumbUp,
                                 contentDescription = stringResource(R.string.like_button),
                                 modifier = Modifier.size(24.dp),
-                                // Change tint based on current reaction
                                 tint = if (denuncia.current_user_reaction == "like") AquaSoft
                                 else WhiteFull.copy(alpha = 0.7f)
                             )
@@ -627,7 +635,7 @@ fun FiltroDenunciasDialog(
     var estadoTemporal by remember { mutableStateOf(estadoSeleccionado) }
 
     val tiposReporte = listOf(
-        "Hueco", "Alumbrado Público", "Basura",
+        "Hueco", "Alumbrado", "Basura",
         "Semáforo", "Hidrante", "Alcantarilla"
     )
 
@@ -1237,7 +1245,6 @@ fun mostrarImagenCompleta3(
                     .fillMaxWidth()
                     .wrapContentHeight()
             ) {
-                // Contenedor de la imagen
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1255,7 +1262,6 @@ fun mostrarImagenCompleta3(
                     )
                 }
 
-                // Botón Volver
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(
@@ -1276,9 +1282,7 @@ fun mostrarImagenCompleta3(
                 }
             }
 
-            // Flechas de navegación
             if (images.size > 1) {
-                // Flecha izquierda
                 IconButton(
                     onClick = {
                         currentIndex = if (currentIndex > 0) currentIndex - 1 else images.size - 1
@@ -1314,7 +1318,6 @@ fun mostrarImagenCompleta3(
                     )
                 }
 
-                // Flecha derecha
                 IconButton(
                     onClick = {
                         currentIndex = if (currentIndex < images.size - 1) currentIndex + 1 else 0

@@ -50,6 +50,19 @@ import com.example.urbanfix.viewmodel.ReportListState
 import com.example.urbanfix.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
 
+fun mapearCategoriaApoyo(nombreBD: String?): String {
+    val processedName = nombreBD?.lowercase()?.trim() ?: ""
+    return when (processedName) {
+        "huecos" -> "Hueco"
+        "alumbrado publico" -> "Alumbrado"
+        "basura acumulada" -> "Basura"
+        "semaforo dañado" -> "Semáforo"
+        "hidrante roto" -> "Hidrante"
+        "alcantarilla sin tapa" -> "Alcantarilla"
+        else -> nombreBD ?: "Desconocido"
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MisApoyosScreen(
@@ -78,7 +91,8 @@ fun MisApoyosScreen(
     // Apply filtering
     val apoyosFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, apoyosList) {
         apoyosList.filter { reporte ->
-            val coincideTipo = tipoReporteFiltro == null || reporte.categoria_nombre == tipoReporteFiltro
+            val categoriaMapeada = mapearCategoriaApoyo(reporte.categoria_nombre)
+            val coincideTipo = tipoReporteFiltro == null || categoriaMapeada == tipoReporteFiltro
             val coincideEstado = estadoReporteFiltro == null || reporte.estado == estadoReporteFiltro
             coincideTipo && coincideEstado
         }
@@ -432,7 +446,7 @@ fun FiltroApoyosDialog(
     var estadoTemporal by remember { mutableStateOf(estadoSeleccionado) }
 
     val tiposReporte = listOf(
-        "Hueco", "Alumbrado Público", "Basura",
+        "Hueco", "Alumbrado", "Basura",
         "Semáforo", "Hidrante", "Alcantarilla"
     )
 
