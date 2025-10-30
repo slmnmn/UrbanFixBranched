@@ -36,21 +36,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.urbanfix.R
 import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.navigation.Pantallas
+import com.example.urbanfix.network.MiReporte
 import com.example.urbanfix.ui.theme.*
-
-data class Apoyo(
-    val id: String,
-    val tipo: String,
-    val imagenes: List<Int>,
-    val descripcion: String,
-    val estado: String,
-    val tieneCorazon: Boolean = false
-)
+import com.example.urbanfix.viewmodel.ProfileViewModel
+import com.example.urbanfix.viewmodel.ReportListState
+import com.example.urbanfix.viewmodel.ViewModelFactory
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,63 +56,30 @@ fun MisApoyosScreen(
     navController: NavHostController
 ) {
     val context = LocalContext.current
+
+    // ViewModel setup
+    val viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(context))
+    val apoyosList by viewModel.apoyosList.collectAsState()
+    val listState by viewModel.reportListState.collectAsState()
+
+    // UI states
     var mostrarFiltro by remember { mutableStateOf(false) }
     var tipoReporteFiltro by remember { mutableStateOf<String?>(null) }
     var estadoReporteFiltro by remember { mutableStateOf<String?>(null) }
-    var apoyoSeleccionado by remember { mutableStateOf<Apoyo?>(null) }
-    var mostrarDialogoEliminar by remember { mutableStateOf<Apoyo?>(null) }
     var mostrarCopiado by remember { mutableStateOf(false) }
-    var mostrarImagenCompleta2 by remember { mutableStateOf<Apoyo?>(null) }
-    val reportImages = listOf(
-        R.drawable.alumbrado_foto,
-        R.drawable.prueba_circulo
-    )
+    var mostrarImagenCompleta by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    var reporteAEliminar by remember { mutableStateOf<MiReporte?>(null) }
 
-    // Lista mutable de apoyos
-    var apoyos by remember {
-        mutableStateOf(
-            listOf(
-                Apoyo(
-                    "2025-0001",
-                    "Alumbrado Público",
-                    listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
-                    "Se reporta que en la xx el alumbrado está intermitente, específicamente al lado del xxx",
-                    "Nuevo",
-                    true
-                ),
-                Apoyo(
-                    "2025-XXXX",
-                    "Hueco",
-                    listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
-                    "Se reporta que en la xx hay un hueco grande, específicamente al lado del xxx",
-                    "Resuelto",
-                    true
-                ),
-                Apoyo(
-                    "2025-XXXX",
-                    "Alumbrado Público",
-                    listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
-                    "Se reporta que en la xx el alumbrado está intermitente, específicamente al lado del xxx",
-                    "En proceso",
-                    true
-                ),
-                Apoyo(
-                    "2025-XXXX",
-                    "Alumbrado Público",
-                    listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
-                    "Se reporta que en la xx el alumbrado está intermitente, específicamente al lado del xxx",
-                    "Nuevo",
-                    true
-                )
-            )
-        )
+    // Fetch data on screen start
+    LaunchedEffect(Unit) {
+        viewModel.fetchUserApoyos()
     }
 
-    // Filtrar apoyos
-    val apoyosFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, apoyos) {
-        apoyos.filter { apoyo ->
-            val coincideTipo = tipoReporteFiltro == null || apoyo.tipo == tipoReporteFiltro
-            val coincideEstado = estadoReporteFiltro == null || apoyo.estado == estadoReporteFiltro
+    // Apply filtering
+    val apoyosFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, apoyosList) {
+        apoyosList.filter { reporte ->
+            val coincideTipo = tipoReporteFiltro == null || reporte.categoria_nombre == tipoReporteFiltro
+            val coincideEstado = estadoReporteFiltro == null || reporte.estado == estadoReporteFiltro
             coincideTipo && coincideEstado
         }
     }
@@ -166,57 +131,95 @@ fun MisApoyosScreen(
         },
         containerColor = GrayBg
     ) { paddingValues ->
-        if (apoyosFiltrados.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(32.dp)
+        when (listState) {
+            is ReportListState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.alerta_no_nada),
-                        contentDescription = stringResource(R.string.no_apoyos_image_description),
-                        modifier = Modifier.size(120.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    CircularProgressIndicator()
+                }
+            }
+            is ReportListState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = stringResource(R.string.no_apoyos_message),
-                        fontSize = 14.sp,
-                        color = Color.Gray,
+                        text = "Error al cargar: ${(listState as ReportListState.Error).message}",
+                        color = Color.Red,
                         textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                items(apoyosFiltrados) { apoyo ->
-                    ApoyoCard(
-                        apoyo = apoyo,
-                        onClick = { mostrarImagenCompleta2 = apoyo },
-                        onCorazonClick = {
-                            mostrarDialogoEliminar = apoyo
-                        },
-                        onCopiarClick = {
-                            copiarAlPortapapeles2(context, apoyo.id)
-                            mostrarCopiado = true
+            is ReportListState.Success, is ReportListState.Idle -> {
+                if (apoyosFiltrados.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(32.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.alerta_no_nada),
+                                contentDescription = stringResource(R.string.no_apoyos_image_description),
+                                modifier = Modifier.size(120.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.no_apoyos_message),
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 20.sp
+                            )
                         }
-                    )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                    ) {
+                        items(apoyosFiltrados, key = { it.id }) { reporte ->
+                            ApoyoCard(
+                                reporte = reporte,
+                                onClick = {
+                                    val imageUrls = listOfNotNull(
+                                        reporte.img_prueba_1,
+                                        reporte.img_prueba_2
+                                    ).filter { it.isNotEmpty() }
+                                    if (imageUrls.isNotEmpty()) {
+                                        mostrarImagenCompleta = Pair(imageUrls, 0)
+                                    }
+                                },
+                                onCorazonClick = {
+                                    reporteAEliminar = reporte
+                                },
+                                onCopiarClick = {
+                                    copiarAlPortapapeles2(context, reporte.id.toString())
+                                    mostrarCopiado = true
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
     }
+
     // Diálogo de filtro
     if (mostrarFiltro) {
         FiltroApoyosDialog(
@@ -235,17 +238,6 @@ fun MisApoyosScreen(
         )
     }
 
-    // Diálogo de eliminación
-    mostrarDialogoEliminar?.let { apoyo ->
-        EliminarApoyoDialog(
-            onDismiss = { mostrarDialogoEliminar = null },
-            onConfirm = {
-                apoyos = apoyos.filter { it.id != apoyo.id }
-                mostrarDialogoEliminar = null
-            }
-        )
-    }
-
     // Diálogo de código copiado
     if (mostrarCopiado) {
         CodigoCopiadoDialog(
@@ -253,24 +245,39 @@ fun MisApoyosScreen(
         )
     }
 
+    // Diálogo de eliminar apoyo
+    reporteAEliminar?.let { reporte ->
+        EliminarApoyoDialog(
+            onDismiss = { reporteAEliminar = null },
+            onConfirm = {
+                viewModel.toggleLikeDislike(
+                    reporte.id,
+                    reporte.current_user_reaction,
+                    "like"
+                )
+                reporteAEliminar = null
+            }
+        )
+    }
+
     // Diálogo de imagen completa
-    mostrarImagenCompleta2?.let { apoyo ->
+    mostrarImagenCompleta?.let { (imageUrls, initialIndex) ->
         ImageGalleryDialog2(
-            images = apoyo.imagenes, // 🔹 ahora sí pasa todas las imágenes
-            initialIndex = 0,
-            onDismiss = { mostrarImagenCompleta2 = null }
+            imageUrls = imageUrls,
+            initialIndex = initialIndex,
+            onDismiss = { mostrarImagenCompleta = null }
         )
     }
 }
 
 @Composable
 fun ApoyoCard(
-    apoyo: Apoyo,
+    reporte: MiReporte,
     onClick: () -> Unit,
     onCorazonClick: () -> Unit,
     onCopiarClick: () -> Unit
 ) {
-    val colorEstado = when (apoyo.estado) {
+    val colorEstado = when (reporte.estado) {
         "Nuevo" -> Color(0xFFD6CF00)
         "En proceso" -> Color(0xFFFF8F0C)
         "Resuelto" -> Color(0xFF11F300)
@@ -302,7 +309,7 @@ fun ApoyoCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = apoyo.estado,
+                    text = reporte.estado ?: "N/A",
                     color = Color.Black,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
@@ -318,7 +325,7 @@ fun ApoyoCard(
                 modifier = Modifier.clickable { onCopiarClick() }
             ) {
                 Text(
-                    text = "#${apoyo.id}",
+                    text = "#${reporte.id}",
                     color = WhiteFull,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium
@@ -343,20 +350,22 @@ fun ApoyoCard(
                     .width(90.dp)
                     .height(110.dp)
             ) {
-                Image(
-                    painter = painterResource(id = apoyo.imagenes.firstOrNull() ?: R.drawable.huecoeje),
-                    contentDescription = apoyo.tipo,
+                AsyncImage(
+                    model = reporte.img_prueba_1,
+                    contentDescription = reporte.categoria_nombre ?: "",
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(8.dp))
                         .clickable { onClick() },
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(id = R.drawable.huecoeje),
+                    error = painterResource(id = R.drawable.huecoeje)
                 )
             }
 
             Spacer(modifier = Modifier.width(10.dp))
 
-// Contenido
+            // Contenido
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -366,7 +375,7 @@ fun ApoyoCard(
 
                 // Título del reporte
                 Text(
-                    text = apoyo.tipo,
+                    text = reporte.categoria_nombre ?: "Categoría Desconocida",
                     color = WhiteFull,
                     fontSize = 14.5.sp,
                     fontWeight = FontWeight.Bold,
@@ -383,7 +392,7 @@ fun ApoyoCard(
                 ) {
                     // Descripción
                     Text(
-                        text = apoyo.descripcion,
+                        text = reporte.descripcion ?: "Sin descripción",
                         color = WhiteFull.copy(alpha = 0.9f),
                         fontSize = 12.sp,
                         lineHeight = 16.sp,
@@ -393,25 +402,24 @@ fun ApoyoCard(
                     )
 
                     // Corazón al lado derecho
-                    if (apoyo.tieneCorazon) {
-                        IconButton(
-                            onClick = onCorazonClick,
-                            modifier = Modifier
-                                .size(32.dp)
-                                .offset(x = 4.dp, y = (-4).dp)
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.icono_corazon),
-                                contentDescription = stringResource(R.string.remove_support_description),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
+                    IconButton(
+                        onClick = onCorazonClick,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .offset(x = 4.dp, y = (-4).dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.icono_corazon),
+                            contentDescription = stringResource(R.string.remove_support_description),
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
             }
         }
     }
 }
+
 @Composable
 fun FiltroApoyosDialog(
     tipoSeleccionado: String?,
@@ -767,9 +775,10 @@ fun CodigoCopiadoDialog(onDismiss: () -> Unit) {
         }
     }
 }
+
 @Composable
 fun ImageGalleryDialog2(
-    images: List<Int>,
+    imageUrls: List<String>,
     initialIndex: Int = 0,
     onDismiss: () -> Unit
 ) {
@@ -796,13 +805,15 @@ fun ImageGalleryDialog2(
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = images[currentIndex]),
+                    AsyncImage(
+                        model = imageUrls.getOrNull(currentIndex) ?: "",
                         contentDescription = stringResource(R.string.report_image_description),
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(16.dp)),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(id = R.drawable.huecoeje),
+                        error = painterResource(id = R.drawable.huecoeje)
                     )
                 }
 
@@ -826,10 +837,10 @@ fun ImageGalleryDialog2(
                 }
             }
 
-            if (images.size > 1) {
+            if (imageUrls.size > 1) {
                 IconButton(
                     onClick = {
-                        currentIndex = if (currentIndex > 0) currentIndex - 1 else images.size - 1
+                        currentIndex = if (currentIndex > 0) currentIndex - 1 else imageUrls.size - 1
                     },
                     modifier = Modifier
                         .align(Alignment.CenterStart)
@@ -864,7 +875,7 @@ fun ImageGalleryDialog2(
 
                 IconButton(
                     onClick = {
-                        currentIndex = if (currentIndex < images.size - 1) currentIndex + 1 else 0
+                        currentIndex = if (currentIndex < imageUrls.size - 1) currentIndex + 1 else 0
                     },
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
@@ -905,14 +916,6 @@ fun copiarAlPortapapeles2(context: Context, texto: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clip = ClipData.newPlainText("Código Reporte", texto)
     clipboard.setPrimaryClip(clip)
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun MisApoyosScreenPreview() {
-    UrbanFixTheme {
-        MisApoyosScreen(navController = rememberNavController())
-    }
 }
 
 @Composable
@@ -1010,141 +1013,11 @@ fun BottomNavBarThree2(navController: NavHostController) {
         )
     }
 }
+
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun mostrarImagenCompleta2(
-    images: List<Int>,
-    initialIndex: Int = 0,
-    onDismiss: () -> Unit
-) {
-    var currentIndex by remember { mutableStateOf(initialIndex) }
-    var isLeftPressed by remember { mutableStateOf(false) }
-    var isRightPressed by remember { mutableStateOf(false) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .background(Color.White, RoundedCornerShape(24.dp))
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-            ) {
-                // Contenedor de la imagen
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1.3f)
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = images[currentIndex]),
-                        contentDescription = stringResource(R.string.image_description),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(16.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-
-                // Botón Volver
-                Button(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1D3557)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                        .height(48.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.back_button),
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            // Flechas de navegación
-            if (images.size > 1) {
-                // Flecha izquierda
-                IconButton(
-                    onClick = {
-                        currentIndex = if (currentIndex > 0) currentIndex - 1 else images.size - 1
-                    },
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(start = 8.dp)
-                        .size(56.dp)
-                        .offset(y = (-40).dp)
-                        .background(
-                            color = if (isLeftPressed) {
-                                Color.Black.copy(alpha = 0.7f)
-                            } else {
-                                Color.Black.copy(alpha = 0.3f)
-                            },
-                            shape = CircleShape
-                        )
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onPress = {
-                                    isLeftPressed = true
-                                    tryAwaitRelease()
-                                    isLeftPressed = false
-                                }
-                            )
-                        }
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.previous_description),
-                        modifier = Modifier.size(32.dp),
-                        tint = Color.White
-                    )
-                }
-
-                // Flecha derecha
-                IconButton(
-                    onClick = {
-                        currentIndex = if (currentIndex < images.size - 1) currentIndex + 1 else 0
-                    },
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 8.dp)
-                        .offset(y = (-38).dp)
-                        .size(56.dp)
-                        .background(
-                            color = if (isRightPressed) {
-                                Color.Black.copy(alpha = 0.7f)
-                            } else {
-                                Color.Black.copy(alpha = 0.3f)
-                            },
-                            shape = CircleShape
-                        )
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onPress = {
-                                    isRightPressed = true
-                                    tryAwaitRelease()
-                                    isRightPressed = false
-                                }
-                            )
-                        }
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = stringResource(R.string.next_description),
-                        modifier = Modifier.size(32.dp),
-                        tint = Color.White
-                    )
-                }
-            }
-        }
+fun MisApoyosScreenPreview() {
+    UrbanFixTheme {
+        MisApoyosScreen(navController = rememberNavController())
     }
 }

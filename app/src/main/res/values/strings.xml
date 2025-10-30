@@ -292,6 +292,11 @@
     <string name="photo_number">Foto %1$d</string>
     <string name="add_photo">+</string>
     <string name="back_button">Volver</string>
+    <string name="confirm_like_title">Confirmar Apoyo</string>
+    <string name="confirm_dislike_title">Confirmar Desacuerdo</string>
+    <string name="confirm_remove_reaction_message">¿Seguro que quieres quitar tu reacción de este reporte?</string>
+    <string name="confirm_change_to_like_message">¿Seguro que quieres cambiar tu reacción a \'Like\'?</string>
+    <string name="confirm_change_to_dislike_message">¿Seguro que quieres reaccionar con \'Dislike\'?</string>
 
     <!-- NoImageDialog -->
     <string name="image_required_title">Imagen requerida</string>

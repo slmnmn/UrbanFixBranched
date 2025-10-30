@@ -54,16 +54,36 @@ data class CreateReporteRequest(
 
 data class MiReporte(
     val id: Int,
-    val nombre: String, // Este es tipo de evento perros
-    val imagen_prueba_1: String,
+    val nombre: String?,
+    val img_prueba_1: String,
+    val img_prueba_2: String?,
     val fecha_creacion: String,
     val direccion: String,
-    val estado: String?,// El estado puede ser nulo si no se ha definido
-    val categoria_nombre: String // este es categoria
+    val referencia: String,
+    val latitud: String,
+    val longitud: String,
+    val estado: String?,
+    val categoria_nombre: String?,
+    val categoria_id: Int,
+    val usuario_creador_id: Int,
+    val funcionario_asignado_id: Int?,
+    val apoyos_count: Int,
+    val desapoyos_count: Int,
+    val current_user_reaction: String?,
+    val descripcion: String?
 )
 
 data class FotoPerfilRequest(
     val foto_base64: String
+)
+
+data class ReactionRequest(
+    val usuario_id: Int,
+    val tipo: String // "like" or "dislike"
+)
+
+data class ReactionRemoveRequest(
+    val usuario_id: Int
 )
 // Data you EXPECT TO RECEIVE on a failed login
 data class ErrorResponse(

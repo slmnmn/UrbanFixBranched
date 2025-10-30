@@ -82,6 +82,9 @@ class UserPreferencesManager(private val context: Context) {
         sharedPreferences.edit().clear().apply()
     }
 
+    fun saveUserName(newName: String) {
+        sharedPreferences.edit().putString(USER_NAME_KEY, newName).apply()
+    }
     // FUNCIONES SIMPLIFICADAS PARA IMAGEN DE PERFIL
 
     fun saveProfilePicFromUri(uri: Uri): Boolean {

@@ -8,6 +8,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.HTTP
 
 interface ApiService {
     @POST("/login") // The path of your login endpoint
@@ -55,5 +56,35 @@ interface ApiService {
     suspend fun subirFotoFuncionario(
         @Path("id") funcionarioId: Int,
         @Body request: FotoPerfilRequest
+    ): Response<Unit>
+
+    @GET("/reportes/{id}")
+    suspend fun getReporteById(
+        @Path("id") reporteId: Int,
+        @Query("user_id") userId: Int?
+    ): Response<MiReporte> // Use Response<>
+
+    //User-Specific Report Lists ---
+    @GET("/usuarios/{id}/denuncias")
+    suspend fun getUserDenuncias(
+        @Path("id") userId: Int
+    ): Response<List<MiReporte>> // Use Response<>
+
+    @GET("/usuarios/{id}/apoyos")
+    suspend fun getUserApoyos(
+        @Path("id") userId: Int
+    ): Response<List<MiReporte>> // Use Response<>
+
+    //Like/Dislike (Reaction) Endpoints
+    @POST("/reportes/{id}/reaccion")
+    suspend fun setReaccion(
+        @Path("id") reporteId: Int,
+        @Body request: ReactionRequest
+    ): Response<Unit>
+
+    @HTTP(method = "DELETE", path = "/reportes/{id}/reaccion", hasBody = true)
+    suspend fun removeReaccion(
+        @Path("id") reporteId: Int,
+        @Body request: ReactionRemoveRequest //
     ): Response<Unit>
 }

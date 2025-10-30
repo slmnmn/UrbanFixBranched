@@ -60,15 +60,16 @@ fun formatearFecha(fechaISO: String): String {
     }
 }
 
-fun mapearCategoria(nombreBD: String): String {
-    return when (nombreBD.lowercase().trim()) {
+fun mapearCategoria(nombreBD: String?): String {
+    val processedName = nombreBD?.lowercase()?.trim() ?: ""
+    return when (processedName) {
         "huecos" -> "Hueco"
         "alumbrado publico" -> "Alumbrado"
         "basura acumulada" -> "Basura"
         "semaforo dañado" -> "Semáforo"
         "hidrante roto" -> "Hidrante"
         "alcantarilla sin tapa" -> "Alcantarilla"
-        else -> nombreBD
+        else -> nombreBD ?: "Desconocido"
     }
 }
 
@@ -588,7 +589,7 @@ fun ReporteCard(
                     .height(100.dp)
             ) {
                 AsyncImage(
-                    model = reporte.imagen_prueba_1,
+                    model = reporte.img_prueba_1,
                     contentDescription = categoriaMapeada,
                     modifier = Modifier
                         .fillMaxSize()
@@ -742,7 +743,7 @@ fun ReporteDialog(
                                 .height(180.dp)
                         ) {
                             AsyncImage(
-                                model = reporte.imagen_prueba_1,
+                                model = reporte.img_prueba_1,
                                 contentDescription = categoriaMapeada,
                                 modifier = Modifier
                                     .fillMaxSize()

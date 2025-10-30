@@ -1,5 +1,6 @@
 package com.example.urbanfix.screens
 
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -16,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,21 +39,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.urbanfix.R
 import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.navigation.Pantallas
+import com.example.urbanfix.network.MiReporte
 import com.example.urbanfix.ui.theme.*
+import com.example.urbanfix.viewmodel.ProfileViewModel
+import com.example.urbanfix.viewmodel.ReportListState
+import com.example.urbanfix.viewmodel.ViewModelFactory
+import kotlinx.coroutines.launch
 
-data class Denuncia(
-    val id: String,
-    val tipo: String,
-    val imagenes: List<Int>,
-    val descripcion: String,
-    val estado: String,
-    val tieneCorazon: Boolean = false
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,68 +60,36 @@ fun MisDenunciasScreen(
     navController: NavHostController
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    val viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(context))
+
+    val denunciasList by viewModel.denunciasList.collectAsState()
+    val listState by viewModel.reportListState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchUserDenuncias()
+    }
+
     var mostrarFiltro by remember { mutableStateOf(false) }
     var tipoReporteFiltro by remember { mutableStateOf<String?>(null) }
     var estadoReporteFiltro by remember { mutableStateOf<String?>(null) }
-    var denunciaSeleccionado by remember { mutableStateOf<Denuncia?>(null) }
-    var mostrarDialogoEliminar by remember { mutableStateOf<Denuncia?>(null) }
+    var mostrarDialogoEliminar by remember { mutableStateOf<MiReporte?>(null) }
+    var mostrarImagenCompleta by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
     var mostrarCopiado by remember { mutableStateOf(false) }
-    var mostrarImagenCompleta3 by remember { mutableStateOf<Denuncia?>(null) }
-    val reportImages = listOf(
-        R.drawable.alumbrado_foto,
-        R.drawable.prueba_circulo
-    )
+    var reporteParaReaccion by remember { mutableStateOf<Pair<MiReporte, String>?>(null) }
 
-    // Lista mutable de Denuncias
-    var denuncias by remember {
-        mutableStateOf(
-            listOf(
-                Denuncia(
-                    "2025-0001",
-                    "Alumbrado Público",
-                    listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
-                    "Se reporta que en la xx el alumbrado está intermitente, específicamente al lado del xxx",
-                    "Nuevo",
-                    true
-                ),
-                Denuncia(
-                    "2025-XXXX",
-                    "Hueco",
-                    listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
-                    "Se reporta que en la xx hay un hueco grande, específicamente al lado del xxx",
-                    "Resuelto",
-                    true
-                ),
-                Denuncia(
-                    "2025-XXXX",
-                    "Alumbrado Público",
-                    listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
-                    "Se reporta que en la xx el alumbrado está intermitente, específicamente al lado del xxx",
-                    "En proceso",
-                    true
-                ),
-                Denuncia(
-                    "2025-XXXX",
-                    "Alumbrado Público",
-                    listOf(R.drawable.huecoeje, R.drawable.alumbrado_foto),
-                    "Se reporta que en la xx el alumbrado está intermitente, específicamente al lado del xxx",
-                    "Nuevo",
-                    true
-                )
-            )
-        )
-    }
-
-    // Filtrar Denuncias
-    val denunciasFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, denuncias) {
-        denuncias.filter { denuncia ->
-            val coincideTipo = tipoReporteFiltro == null || denuncia.tipo == tipoReporteFiltro
-            val coincideEstado = estadoReporteFiltro == null || denuncia.estado == estadoReporteFiltro
+    val denunciasFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, denunciasList) {
+        denunciasList.filter { reporte ->
+            val coincideTipo = tipoReporteFiltro == null || reporte.categoria_nombre == tipoReporteFiltro
+            val coincideEstado = estadoReporteFiltro == null || reporte.estado == estadoReporteFiltro
             coincideTipo && coincideEstado
         }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -128,9 +98,7 @@ fun MisDenunciasScreen(
                         color = WhiteFull,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 35.dp)
+                        modifier = Modifier.fillMaxWidth().padding(top = 35.dp)
                     )
                 },
                 navigationIcon = {
@@ -155,9 +123,7 @@ fun MisDenunciasScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BlueMain
-                ),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BlueMain),
                 modifier = Modifier.height(72.dp)
             )
         },
@@ -166,58 +132,80 @@ fun MisDenunciasScreen(
         },
         containerColor = GrayBg
     ) { paddingValues ->
-        if (denunciasFiltrados.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(32.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.alerta_no_nada),
-                        contentDescription = stringResource(R.string.no_denuncias_image_description),
-                        modifier = Modifier.size(120.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+
+        when (listState) {
+            is ReportListState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is ReportListState.Error -> {
+                Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
                     Text(
-                        text = stringResource(R.string.no_denuncias_message),
-                        fontSize = 14.sp,
-                        color = Color.Gray,
+                        text = "Error al cargar: ${(listState as ReportListState.Error).message}",
+                        color = Color.Red,
                         textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                items(denunciasFiltrados) { denuncia ->
-                    DenunciaCard(
-                        denuncia = denuncia,
-                        onClick = { mostrarImagenCompleta3 = denuncia },
-                        onCorazonClick = {
-                            mostrarDialogoEliminar = denuncia
-                        },
-                        onCopiarClick = {
-                            copiarAlPortapapeles3(context, denuncia.id)
-                            mostrarCopiado = true
+            is ReportListState.Success, is ReportListState.Idle -> {
+                if (denunciasFiltrados.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(32.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.alerta_no_nada),
+                                contentDescription = stringResource(R.string.no_denuncias_image_description),
+                                modifier = Modifier.size(120.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.no_denuncias_message),
+                                fontSize = 14.sp, color = Color.Gray, textAlign = TextAlign.Center, lineHeight = 20.sp
+                            )
                         }
-                    )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                    ) {
+                        items(denunciasFiltrados, key = { it.id }) { reporte ->
+                            DenunciaCard(
+                                denuncia = reporte,
+                                onClick = {
+                                    val imageUrls = listOfNotNull(reporte.img_prueba_1, reporte.img_prueba_2).filter { it.isNotEmpty() }
+                                    if (imageUrls.isNotEmpty()) { mostrarImagenCompleta = Pair(imageUrls, 0) }
+                                },
+                                onLikeClick = {
+                                    reporteParaReaccion = Pair(reporte, "like")
+                                },
+                                onDislikeClick = {
+                                    reporteParaReaccion = Pair(reporte, "dislike")
+                                },
+                                onCopiarClick = {
+                                    copiarAlPortapapeles3(context, reporte.id.toString())
+                                    mostrarCopiado = true
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
     }
-    // Diálogo de filtro
+
+
     if (mostrarFiltro) {
         FiltroDenunciasDialog(
             tipoSeleccionado = tipoReporteFiltro,
@@ -235,39 +223,296 @@ fun MisDenunciasScreen(
         )
     }
 
-    // Diálogo de eliminación
-    mostrarDialogoEliminar?.let { denuncia ->
+    if (mostrarCopiado) {
+        CodigoCopiadoDialog2(onDismiss = { mostrarCopiado = false }) //
+    }
+
+    reporteParaReaccion?.let { (reporte, accion) ->
+
+        val esLike = accion == "like"
+        val esQuitarReaccion = (esLike && reporte.current_user_reaction == "like") ||
+                (!esLike && reporte.current_user_reaction == "dislike")
+
+        val titulo = if (esLike) {
+            stringResource(R.string.confirm_like_title)
+        } else {
+            stringResource(R.string.confirm_dislike_title)
+        }
+
+        val mensaje = if (esQuitarReaccion) {
+            stringResource(R.string.confirm_remove_reaction_message)
+        } else if (esLike) {
+            stringResource(R.string.confirm_change_to_like_message)
+        } else {
+            stringResource(R.string.confirm_change_to_dislike_message)
+        }
+
+        ConfirmarReaccionDialog(
+            titulo = titulo,
+            mensaje = mensaje,
+            onDismiss = { reporteParaReaccion = null },
+            onConfirm = {
+                viewModel.toggleLikeDislike(
+                    reporte.id,
+                    reporte.current_user_reaction,
+                    accion
+                )
+                reporteParaReaccion = null
+            }
+        )
+    }
+
+    mostrarDialogoEliminar?.let { reporteParaEliminar ->
         EliminarDenunciaDialog(
             onDismiss = { mostrarDialogoEliminar = null },
             onConfirm = {
-                denuncias = denuncias.filter { it.id != denuncia.id }
+                println("Delete action ignored for report ID: ${reporteParaEliminar.id}")
                 mostrarDialogoEliminar = null
             }
         )
     }
 
-    // Diálogo de código copiado
-    if (mostrarCopiado) {
-        CodigoCopiadoDialog2(
-            onDismiss = { mostrarCopiado = false }
-        )
-    }
-
-    // Diálogo de imagen completa
-    mostrarImagenCompleta3?.let { denuncia ->
-        ImageGalleryDialog3(
-            images = denuncia.imagenes, // 🔹 ahora sí pasa todas las imágenes
-            initialIndex = 0,
-            onDismiss = { mostrarImagenCompleta3 = null }
+    mostrarImagenCompleta?.let { (imageUrls, initialIndex) ->
+        ImageGalleryDialogUrls(
+            imageUrls = imageUrls,
+            initialIndex = initialIndex,
+            onDismiss = { mostrarImagenCompleta = null }
         )
     }
 }
 
 @Composable
+fun ImageGalleryDialogUrls(
+    imageUrls: List<String>,
+    initialIndex: Int = 0,
+    onDismiss: () -> Unit
+) {
+    var currentIndex by remember { mutableStateOf(initialIndex) }
+    var isLeftPressed by remember { mutableStateOf(false) }
+    var isRightPressed by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .background(Color.White, RoundedCornerShape(24.dp))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1.3f)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = imageUrls.getOrNull(currentIndex) ?: "",
+                        contentDescription = stringResource(R.string.report_image_description),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(16.dp)),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(id = R.drawable.huecoeje),
+                        error = painterResource(id = R.drawable.huecoeje)
+                    )
+                }
+
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1D3557)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = "Volver",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            if (imageUrls.size > 1) {
+                IconButton(
+                    onClick = {
+                        currentIndex = if (currentIndex > 0) currentIndex - 1 else imageUrls.size - 1
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 8.dp)
+                        .size(56.dp)
+                        .offset(y = (-40).dp)
+                        .background(
+                            color = if (isLeftPressed) {
+                                Color.Black.copy(alpha = 0.7f)
+                            } else {
+                                Color.Black.copy(alpha = 0.3f)
+                            },
+                            shape = CircleShape
+                        )
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    isLeftPressed = true
+                                    tryAwaitRelease()
+                                    isLeftPressed = false
+                                }
+                            )
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Anterior",
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.White
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        currentIndex = if (currentIndex < imageUrls.size - 1) currentIndex + 1 else 0
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp)
+                        .offset(y = (-38).dp)
+                        .size(56.dp)
+                        .background(
+                            color = if (isRightPressed) {
+                                Color.Black.copy(alpha = 0.7f)
+                            } else {
+                                Color.Black.copy(alpha = 0.3f)
+                            },
+                            shape = CircleShape
+                        )
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    isRightPressed = true
+                                    tryAwaitRelease()
+                                    isRightPressed = false
+                                }
+                            )
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Siguiente",
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun ConfirmarReaccionDialog(
+    titulo: String,
+    mensaje: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Encabezado
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        // ▼▼▼ CAMBIO DE COLOR AQUÍ ▼▼▼
+                        .background(Color(0xFFFF4B3A)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = titulo,
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+                // Mensaje
+                Text(
+                    text = mensaje,
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    fontStyle = FontStyle.Italic,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 24.dp)
+                )
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .height(48.dp)
+                ) {
+                    Text(
+                        "Volver",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                // Botón Confirmar
+                Button(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4B3A)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .padding(bottom = 24.dp)
+                        .height(48.dp)
+                ) {
+                    Text(
+                        "Confirmar",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun DenunciaCard(
-    denuncia: Denuncia,
+    denuncia: MiReporte,
     onClick: () -> Unit,
-    onCorazonClick: () -> Unit,
+    onLikeClick: () -> Unit,
+    onDislikeClick: () -> Unit,
     onCopiarClick: () -> Unit
 ) {
     val colorEstado = when (denuncia.estado) {
@@ -278,132 +523,89 @@ fun DenunciaCard(
     }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
+        modifier = Modifier.fillMaxWidth().wrapContentHeight(),
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF663251)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(end = 16.dp, top = 8.dp),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth().padding(end = 16.dp, top = 8.dp),
+            horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically
         ) {
-            // Badge de estado
-            Box(
-                modifier = Modifier
-                    .height(22.dp)
-                    .width(70.dp)
-                    .background(colorEstado, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 2.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = denuncia.estado,
-                    color = Color.Black,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
+            Box( modifier = Modifier.height(22.dp).width(70.dp).background(colorEstado, RoundedCornerShape(8.dp)).padding(horizontal = 2.dp), contentAlignment = Alignment.Center ) {
+                Text( text = denuncia.estado ?: "N/A", color = Color.Black, fontSize = 10.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center )
             }
-
             Spacer(modifier = Modifier.width(6.dp))
-
-            // Código y botón copiar
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { onCopiarClick() }
-            ) {
-                Text(
-                    text = "#${denuncia.id}",
-                    color = WhiteFull,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
-                )
+            Row( verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onCopiarClick() } ) {
+                Text( text = "#${denuncia.id}", color = WhiteFull, fontSize = 11.sp, fontWeight = FontWeight.Medium )
                 Spacer(modifier = Modifier.width(2.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.copiarbla),
-                    contentDescription = stringResource(R.string.copy_icon_description),
-                    modifier = Modifier.size(18.dp)
-                )
+                Image( painter = painterResource(id = R.drawable.copiarbla), contentDescription = stringResource(R.string.copy_icon_description), modifier = Modifier.size(18.dp) ) // Original icon
             }
         }
 
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = 16.dp, end = 16.dp, bottom = 20.dp)
+            modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, bottom = 20.dp)
         ) {
-            // Imagen
-            Box(
-                modifier = Modifier
-                    .width(90.dp)
-                    .height(110.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = denuncia.imagenes.firstOrNull() ?: R.drawable.huecoeje),
-                    contentDescription = denuncia.tipo,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onClick() },
-                    contentScale = ContentScale.Crop
-                )
-            }
+            AsyncImage(
+                model = denuncia.img_prueba_1, // Load URL
+                contentDescription = denuncia.categoria_nombre ?: "",
+                modifier = Modifier.width(90.dp).height(110.dp).clip(RoundedCornerShape(8.dp)).clickable { onClick() }, // Original size, shape, action
+                contentScale = ContentScale.Crop, // Original scale
+                placeholder = painterResource(id = R.drawable.huecoeje),
+                error = painterResource(id = R.drawable.huecoeje)
+            )
+            // --- END ---
 
             Spacer(modifier = Modifier.width(10.dp))
 
-// Contenido
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-            ) {
+            // Content Column (Original structure and style)
+            Column( modifier = Modifier.weight(1f).fillMaxHeight() ) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Título del reporte
                 Text(
-                    text = denuncia.tipo,
-                    color = WhiteFull,
-                    fontSize = 14.5.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = denuncia.categoria_nombre ?: "Categoría Desconocida",
+                    color = WhiteFull, fontSize = 14.5.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Descripción y corazón en la misma fila
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    // Descripción
+                Row( modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top ) {
                     Text(
-                        text = denuncia.descripcion,
-                        color = WhiteFull.copy(alpha = 0.9f),
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                        maxLines = 4,
-                        textAlign = TextAlign.Justify,
+                        text = denuncia.descripcion ?: "Sin descripción",
+                        color = WhiteFull.copy(alpha = 0.9f), fontSize = 12.sp,
+                        lineHeight = 16.sp, maxLines = 4, textAlign = TextAlign.Justify,
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Corazón al lado derecho
-                    if (denuncia.tieneCorazon) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.offset(x = 4.dp, y = (-4).dp)
+                    ) {
                         IconButton(
-                            onClick = onCorazonClick,
-                            modifier = Modifier
-                                .size(32.dp)
-                                .offset(x = 4.dp, y = (-4).dp)
+                            onClick = onDislikeClick,
+                            modifier = Modifier.size(32.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.eliminar_favoritos),
-                                contentDescription = stringResource(R.string.remove_denuncia_description),
-                                modifier = Modifier.size(24.dp)
+                            Icon(
+                                imageVector = Icons.Default.ThumbDown,
+                                contentDescription = stringResource(R.string.dislike_button),
+                                modifier = Modifier.size(24.dp),
+                                tint = if (denuncia.current_user_reaction == "dislike") RedSignOut
+                                else WhiteFull.copy(alpha = 0.7f)
+                            )
+                        }
+                        // Like Button
+                        IconButton(
+                            onClick = onLikeClick,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ThumbUp,
+                                contentDescription = stringResource(R.string.like_button),
+                                modifier = Modifier.size(24.dp),
+                                // Change tint based on current reaction
+                                tint = if (denuncia.current_user_reaction == "like") AquaSoft
+                                else WhiteFull.copy(alpha = 0.7f)
                             )
                         }
                     }
@@ -412,6 +614,7 @@ fun DenunciaCard(
         }
     }
 }
+
 @Composable
 fun FiltroDenunciasDialog(
     tipoSeleccionado: String?,
@@ -767,6 +970,7 @@ fun CodigoCopiadoDialog2(onDismiss: () -> Unit) {
         }
     }
 }
+
 @Composable
 fun ImageGalleryDialog3(
     images: List<Int>,
@@ -1010,6 +1214,7 @@ fun BottomNavBarThree3(navController: NavHostController) {
         )
     }
 }
+
 @Composable
 fun mostrarImagenCompleta3(
     images: List<Int>,
