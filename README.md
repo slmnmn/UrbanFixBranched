@@ -29,9 +29,9 @@ El backend se conecta a través de servicios REST y el almacenamiento de datos s
 ---
 
 ## Estructura del Proyecto
-<img width="500" height="561" alt="image" src="https://github.com/user-attachments/assets/31d83366-6d1d-4a39-9188-15af4934569f" />
-<img width="500" height="792" alt="image" src="https://github.com/user-attachments/assets/1b0d612f-0375-4348-b0df-73c110b7c764" />
-<img width="497" height="818" alt="image" src="https://github.com/user-attachments/assets/534d572c-1ed3-4546-b0d1-ef5fda070d91" />
+<img width="600" height="561" alt="image" src="https://github.com/user-attachments/assets/31d83366-6d1d-4a39-9188-15af4934569f" />
+<img width="600" height="792" alt="image" src="https://github.com/user-attachments/assets/1b0d612f-0375-4348-b0df-73c110b7c764" />
+<img width="597" height="818" alt="image" src="https://github.com/user-attachments/assets/534d572c-1ed3-4546-b0d1-ef5fda070d91" />
 
 
 - **screens/**
