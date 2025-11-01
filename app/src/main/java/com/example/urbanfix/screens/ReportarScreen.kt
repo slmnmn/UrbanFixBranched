@@ -348,20 +348,7 @@ fun ReportarScreen(
             }
             OutlinedTextField(
                 value = eventAddress,
-                onValueChange = { newAddress ->
-                    viewModel.onEventAddressChange(newAddress)
-                    if (newAddress.length > 5) {
-                        coroutineScope.launch {
-                            val location = geocodeAddress(newAddress, context)
-                            location?.let { point ->
-                                viewModel.updateLocation(point)
-                                mapView?.let { mv ->
-                                    updateMapLocation(mv, point)
-                                }
-                            }
-                        }
-                    }
-                },
+                onValueChange = {},
                 placeholder = {
                     Text(
                         stringResource(R.string.event_address_placeholder),
@@ -380,7 +367,8 @@ fun ReportarScreen(
                     unfocusedBorderColor = Color.LightGray,
                     focusedBorderColor = BlueMain
                 ),
-                singleLine = true
+                singleLine = true,
+                readOnly = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))

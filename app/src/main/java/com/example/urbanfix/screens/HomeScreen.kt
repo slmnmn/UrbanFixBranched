@@ -128,7 +128,6 @@ fun HomeScreen(navController: NavHostController) {
                 modifier = Modifier
                     .height(40.dp)
                     .padding(start=10.dp)
-                    .clickable { navController.navigate(Pantallas.VerReportes.ruta) }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -213,21 +212,31 @@ fun HomeScreen(navController: NavHostController) {
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Card(
-                        shape = RoundedCornerShape(20.dp),
+                    Box(
                         modifier = Modifier
                             .width(318.dp)
                             .height(168.dp)
                             .align(Alignment.CenterHorizontally)
-                            .clickable {
-                                navController.navigate("mapa_detalle")
-                            },
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        colors = CardDefaults.cardColors(containerColor = WhiteFull)
                     ) {
-                        MapboxMapComponent(
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
                             modifier = Modifier.fillMaxSize(),
-                            hasPermission = hasLocationPermission
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            colors = CardDefaults.cardColors(containerColor = WhiteFull)
+                        ) {
+                            MapboxMapComponent(
+                                modifier = Modifier.fillMaxSize(),
+                                hasPermission = hasLocationPermission
+                            )
+                        }
+
+                        // Capa transparente clickable encima del mapa
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clickable {
+                                    navController.navigate(Pantallas.Mapa.ruta)
+                                }
                         )
                     }
 
