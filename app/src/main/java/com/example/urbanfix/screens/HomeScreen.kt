@@ -78,6 +78,8 @@ fun HomeScreen(navController: NavHostController) {
     val userName = remember { userPreferencesManager.getUserName() }
     var searchText by remember { mutableStateOf("") }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showSearchErrorDialog by remember { mutableStateOf(false) }
+    var searchErrorMessage by remember { mutableStateOf("") }
 
     var hasLocationPermission by remember {
         mutableStateOf(
@@ -171,9 +173,34 @@ fun HomeScreen(navController: NavHostController) {
                         focusedBorderColor = Color.Transparent
                     ),
                     trailingIcon = {
-                        IconButton(onClick = {
-                            navController.navigate(Pantallas.Verperfilempresa.ruta)
-                        }) {
+                        IconButton(
+                            onClick = {
+                                // Procesar búsqueda
+                                val trimmedSearch = searchText.trim()
+
+                                if (trimmedSearch.isEmpty()) {
+                                    searchErrorMessage = "Por favor ingresa un código de reporte"
+                                    showSearchErrorDialog = true
+                                    return@IconButton
+                                }
+
+                                // Extraer el número del código (ej: "#123" -> "123")
+                                val reportId = trimmedSearch.removePrefix("#")
+
+                                // Validar que sea un número
+                                if (reportId.toIntOrNull() == null) {
+                                    searchErrorMessage = "Código inválido. Ingresa solo números o el formato #123"
+                                    showSearchErrorDialog = true
+                                    return@IconButton
+                                }
+
+                                // Navegar a ConsultarReporteScreen
+                                navController.navigate(Pantallas.ConsultarReporte.crearRuta(reportId))
+
+                                // Limpiar el campo de búsqueda
+                                searchText = ""
+                            }
+                        ) {
                             Icon(
                                 Icons.Default.Search,
                                 contentDescription = stringResource(R.string.search_button_description),
@@ -329,7 +356,7 @@ fun HomeScreen(navController: NavHostController) {
                         .padding(top = 1.dp)
                 ) {
                     IconButton(
-                        onClick = { navController.navigate(Pantallas.Verperfilusuario.ruta) },
+                        onClick = { navController.navigate(Pantallas.PreguntasFrec.ruta) },
                         modifier = Modifier
                             .size(55.dp)
                             .clip(CircleShape)
@@ -380,6 +407,15 @@ fun HomeScreen(navController: NavHostController) {
             },
             onDismiss = {
                 showLogoutDialog = false
+            }
+        )
+    }
+    if (showSearchErrorDialog) {
+        SearchErrorDialog(
+            message = searchErrorMessage,
+            onDismiss = {
+                showSearchErrorDialog = false
+                searchErrorMessage = ""
             }
         )
     }
@@ -652,9 +688,9 @@ fun BottomNavBar(navController: NavHostController) {
             .fillMaxWidth()
             .height(70.dp)
     ) {
-        Spacer(modifier = Modifier.width(3.dp))
+        // --- Ítem 1: Menú ---
         NavigationBarItem(
-            selected = false, // Ajusta esta lógica si es necesario
+            selected = true,
             onClick = { navController.navigate(Pantallas.Home.ruta) },
             icon = {
                 Image(
@@ -680,19 +716,15 @@ fun BottomNavBar(navController: NavHostController) {
                 indicatorColor = Color.Transparent
             )
         )
-        NavigationBarItem(
-            selected = false, // Ajusta esta lógica si es necesario
-            // CAMBIO: La lógica ahora está dentro del onClick.
-            onClick = {
-                // 1. Obtenemos el ID del usuario guardado en SharedPreferences.
-                val userId = userPreferencesManager.getUserId()
 
-                // 2. Comprobamos que el ID sea válido (no -1).
+        // --- Ítem 2: Mis Reportes ---
+        NavigationBarItem(
+            selected = false,
+            onClick = {
+                val userId = userPreferencesManager.getUserId()
                 if (userId != -1) {
-                    // 3. Usamos la función `crearRuta` para navegar con el ID real.
                     navController.navigate(Pantallas.MisReportes.crearRuta(userId))
                 } else {
-                    // Si no hay usuario, mostramos un mensaje para evitar el crash.
                     Toast.makeText(context, "Debes iniciar sesión para ver tus reportes", Toast.LENGTH_SHORT).show()
                 }
             },
@@ -707,7 +739,7 @@ fun BottomNavBar(navController: NavHostController) {
                 Text(
                     stringResource(R.string.nav_my_reports),
                     color = WhiteFull,
-                    fontSize = 11.sp
+                    fontSize = 10.5.sp // igual que en BottomNavBarThree2
                 )
             },
             colors = NavigationBarItemDefaults.colors(
@@ -718,37 +750,11 @@ fun BottomNavBar(navController: NavHostController) {
                 indicatorColor = Color.Transparent
             )
         )
-        Spacer(modifier = Modifier.width(3.dp))
+
+        // --- Ítem 3: Perfil ---
         NavigationBarItem(
             selected = false,
-            onClick = { /* Lógica para notificaciones */ },
-            icon = {
-                Image(
-                    painter = painterResource(id = R.drawable.notificaciones),
-                    contentDescription = stringResource(R.string.nav_notifications),
-                    modifier = Modifier.size(26.dp),
-                )
-            },
-            label = {
-                Text(
-                    stringResource(R.string.nav_notifications),
-                    color = WhiteFull,
-                    fontSize = 10.5.sp
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = WhiteFull,
-                selectedTextColor = WhiteFull,
-                unselectedIconColor = WhiteFull.copy(alpha = 0.6f),
-                unselectedTextColor = WhiteFull.copy(alpha = 0.6f),
-                indicatorColor = Color.Transparent
-            )
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {
-                navController.navigate(Pantallas.Perfil.ruta)
-            },
+            onClick = { navController.navigate(Pantallas.Perfil.ruta) },
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.miperfil),
@@ -771,6 +777,71 @@ fun BottomNavBar(navController: NavHostController) {
                 indicatorColor = Color.Transparent
             )
         )
-        Spacer(modifier = Modifier.width(3.dp))
+    }
+}
+
+@Composable
+fun SearchErrorDialog(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .background(Color(0xFFE63946)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Error de Búsqueda",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    text = message,
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 28.dp, horizontal = 24.dp)
+                )
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1D3557)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .padding(bottom = 24.dp)
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = "Entendido",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     }
 }

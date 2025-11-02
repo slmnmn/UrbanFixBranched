@@ -34,21 +34,35 @@ import androidx.navigation.NavHostController
 import com.example.urbanfix.R
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.ProfileViewModel
-import com.example.urbanfix.viewmodel.ProfileState
 import com.example.urbanfix.viewmodel.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerperfilusuarioScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    userId: String? = null,
+    userRole: String = "usuario" // NUEVO: Parámetro para el rol
 ) {
     val context = LocalContext.current
+    val userIdInt = userId?.toIntOrNull()
 
+    // IMPORTANTE: Pasar el userRole al ViewModelFactory
     val viewModel: ProfileViewModel = viewModel(
-        factory = ViewModelFactory(context)
+        factory = ViewModelFactory(context, userIdInt, userRole)
     )
 
-    val profileState by viewModel.profileState.collectAsState()
+    val otherUserProfileState by viewModel.otherUserProfileState.collectAsState()
+
+    // NUEVO: Si es funcionario, redirigir a VerperfilempresaScreen
+    LaunchedEffect(otherUserProfileState) {
+        if (!otherUserProfileState.isLoading &&
+            otherUserProfileState.accountType == "Funcionario" &&
+            otherUserProfileState.error == null) {
+            navController.navigate("verperfilempresa/${userIdInt}") {
+                popUpTo("ver_perfil_usuario/$userId/$userRole") { inclusive = true }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -90,8 +104,8 @@ fun VerperfilusuarioScreen(
         },
         containerColor = GrayBg
     ) { paddingValues ->
-        when (val state = profileState) {
-            is ProfileState.Loading -> {
+        when {
+            otherUserProfileState.isLoading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -102,15 +116,7 @@ fun VerperfilusuarioScreen(
                 }
             }
 
-            is ProfileState.Success -> {
-                UsuarioProfileContent(
-                    paddingValues = paddingValues,
-                    userName = state.userName ?: "N/A",
-                    userEmail = state.userEmail
-                )
-            }
-
-            is ProfileState.Error -> {
+            otherUserProfileState.error != null -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -118,15 +124,26 @@ fun VerperfilusuarioScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Error al cargar el perfil.",
+                        text = otherUserProfileState.error ?: "Error desconocido",
                         color = Color.Red,
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
             }
 
-            else -> {}
+            else -> {
+                UsuarioProfileContent(
+                    paddingValues = paddingValues,
+                    userName = otherUserProfileState.userName ?: "N/A",
+                    userEmail = otherUserProfileState.userEmail ?: "N/A",
+                    accountType = otherUserProfileState.accountType ?: "Usuario",
+                    registrationDate = otherUserProfileState.registrationDate ?: "N/A",
+                    companyName = otherUserProfileState.companyName
+                )
+            }
         }
     }
 }
@@ -135,7 +152,10 @@ fun VerperfilusuarioScreen(
 private fun UsuarioProfileContent(
     paddingValues: PaddingValues,
     userName: String,
-    userEmail: String
+    userEmail: String,
+    accountType: String,
+    registrationDate: String,
+    companyName: String? = null
 ) {
     val context = LocalContext.current
     var showEmailCopiedDialog by remember { mutableStateOf(false) }
@@ -149,7 +169,6 @@ private fun UsuarioProfileContent(
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
-        // --- FOTO DE PERFIL ---
         Box(contentAlignment = Alignment.BottomEnd) {
             Image(
                 painter = painterResource(id = R.drawable.circular_logo),
@@ -163,8 +182,6 @@ private fun UsuarioProfileContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        // --- CARD DE INFORMACIÓN ---
         Card(
             shape = RoundedCornerShape(40.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF663251)),
@@ -179,7 +196,6 @@ private fun UsuarioProfileContent(
 
                 Divider(color = WhiteFull.copy(alpha = 0.2f))
 
-                // --- EMAIL ---
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -211,27 +227,33 @@ private fun UsuarioProfileContent(
 
                 Divider(color = WhiteFull.copy(alpha = 0.2f))
 
-                // --- TIPO DE CUENTA ---
                 UserInfoRowUsuario(
                     icon = Icons.Default.AccountCircle,
                     label = stringResource(R.string.account_type_label),
-                    value = stringResource(R.string.user_account_type)
+                    value = accountType
                 )
+
+                if (companyName != null && companyName.isNotBlank()) {
+                    Divider(color = WhiteFull.copy(alpha = 0.2f))
+                    UserInfoRowUsuario(
+                        icon = Icons.Default.Domain,
+                        label = "Entidad",
+                        value = companyName
+                    )
+                }
 
                 Divider(color = WhiteFull.copy(alpha = 0.2f))
 
-                // --- FECHA DE REGISTRO ---
                 UserInfoRowUsuario(
                     icon = Icons.Default.DateRange,
                     label = stringResource(R.string.registration_date_label),
-                    value = stringResource(R.string.registration_date_value)
+                    value = formatDisplayDate(registrationDate)
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // --- BOTÓN COPIAR CORREO ---
         Button(
             onClick = {
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -268,6 +290,27 @@ private fun UsuarioProfileContent(
 
     if (showEmailCopiedDialog) {
         EmailCopiedDialogUsuario(onDismiss = { showEmailCopiedDialog = false })
+    }
+}
+
+private fun formatDisplayDate(isoDate: String): String {
+    return try {
+        val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.getDefault())
+        val outputFormat = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
+        val date = inputFormat.parse(isoDate)
+        date?.let { outputFormat.format(it) } ?: isoDate.split("T").firstOrNull() ?: "-"
+    } catch (e: Exception) {
+        try {
+            val parts = isoDate.split("T")
+            if (parts.isNotEmpty()) {
+                val dateParts = parts[0].split("-")
+                if (dateParts.size == 3) {
+                    "${dateParts[2]}/${dateParts[1]}/${dateParts[0]}"
+                } else "-"
+            } else "-"
+        } catch (ex: Exception) {
+            "-"
+        }
     }
 }
 

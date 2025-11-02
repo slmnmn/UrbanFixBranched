@@ -5,13 +5,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.urbanfix.data.UserPreferencesManager
 
-class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+class ViewModelFactory(
+    private val context: Context,
+    private val otherUserId: Int? = null,
+    private val otherUserRole: String? = null // NUEVO: Parámetro para el rol
+) : ViewModelProvider.Factory {
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val userPreferencesManager = UserPreferencesManager(context.applicationContext)
 
         return when {
             modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
-                ProfileViewModel(userPreferencesManager) as T
+                // Pasar tanto el otherUserId como el otherUserRole
+                ProfileViewModel(userPreferencesManager, otherUserId, otherUserRole) as T
             }
             modelClass.isAssignableFrom(ReportViewModel::class.java) -> {
                 ReportViewModel(userPreferencesManager) as T

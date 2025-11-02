@@ -22,22 +22,34 @@ sealed class Pantallas(val ruta: String) {
     object Perfil : Pantallas("perfil")
     object Fotoperfil : Pantallas("fotoperfil")
     object EditProfile : Pantallas("edit_profile")
-    object Verperfilempresa : Pantallas("verperfilempresa")
-    object Verperfilusuario : Pantallas("verperfilusuario")
+    object PreguntasFrec : Pantallas("preguntas_frec")
+
+    // NUEVO: Ruta para ver perfil de otro usuario
+    object Verperfilempresa : Pantallas("verperfilempresa/{userId}") {
+        fun crearRuta(userId: Int) = "verperfilempresa/$userId"
+        val rutaSinParametro = "verperfilempresa" // Para compatibilidad con llamadas sin ID
+    }
+
+    object Verperfilusuario : Pantallas("ver_perfil_usuario/{userId}/{userRole}") {
+        fun crearRuta(userId: Int, userRole: String = "usuario") =
+            "ver_perfil_usuario/$userId/$userRole"
+    }
     object VerReportes : Pantallas("verreportes")
     object Mapa : Pantallas("mapa")
 
     object MisApoyos : Pantallas("misapoyos")
     object MisDenuncias : Pantallas("misdenuncias")
 
-    // CAMBIO: La ruta ahora debe definir que espera un argumento "userId"
     object MisReportes : Pantallas("misreportes/{userId}") {
-        // CAMBIO: Añadimos una función helper para construir la ruta fácilmente
         fun crearRuta(userId: Int) = "misreportes/$userId"
     }
 
     object Reportar : Pantallas("reportar/{reportType}") {
         fun crearRuta(reportType: String) = "reportar/$reportType"
+    }
+
+    object ConsultarReporte : Pantallas("consultar_reporte_screen/{reportId}") {
+        fun crearRuta(reportId: String) = "consultar_reporte_screen/$reportId"
     }
 
     object ReportarDos : Pantallas("reportar_dos/{reportType}") {
@@ -65,9 +77,9 @@ fun AppNavigator(navController: NavHostController) {
         composable(Pantallas.RegEmpresa.ruta) { RegEmpresaScreen(navController) }
         composable(Pantallas.Fotoperfil.ruta) { FotoperfilScreen(navController) }
         composable(Pantallas.Verperfilempresa.ruta) { VerperfilempresaScreen(navController) }
-        composable(Pantallas.Verperfilusuario.ruta) { VerperfilusuarioScreen(navController) }
-        composable(Pantallas.VerReportes.ruta) {VerReportesScreen(navController)}
-        composable(Pantallas.Mapa.ruta){MapaScreen(navController)}
+        composable(Pantallas.VerReportes.ruta) { VerReportesScreen(navController) }
+        composable(Pantallas.Mapa.ruta) { MapaScreen(navController) }
+        composable(Pantallas.PreguntasFrec.ruta) {  PreguntasFrecuentesScreen(navController) }
 
         composable(Pantallas.MisApoyos.ruta) {
             MisApoyosScreen(navController = navController)
@@ -76,20 +88,16 @@ fun AppNavigator(navController: NavHostController) {
             MisDenunciasScreen(navController = navController)
         }
 
-        // CAMBIO: La llamada al composable de MisReportes ahora debe extraer el argumento
         composable(
             route = Pantallas.MisReportes.ruta,
             arguments = listOf(
                 navArgument("userId") {
                     type = NavType.IntType
-                    defaultValue = 0 // Define un valor por defecto en caso de error
+                    defaultValue = 0
                 }
             )
         ) { backStackEntry ->
-            // Extraemos el userId de la ruta
             val userId = backStackEntry.arguments?.getInt("userId") ?: 0
-
-            // Se lo pasamos a la pantalla
             MisReportesScreen(navController = navController, userId = userId)
         }
 
@@ -99,6 +107,48 @@ fun AppNavigator(navController: NavHostController) {
 
         composable(route = Pantallas.EditProfile.ruta) {
             EditProfileScreen(navController = navController)
+        }
+
+        /* ---------------------------
+           RUTA: Ver perfil de otro usuario
+        ----------------------------*/
+        composable(
+            route = Pantallas.Verperfilempresa.ruta,
+            arguments = listOf(
+                navArgument("userId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId")
+            VerperfilempresaScreen(
+                navController = navController,
+                userId = userId
+            )
+        }
+
+        composable(
+            route = Pantallas.Verperfilusuario.ruta,
+            arguments = listOf(
+                navArgument("userId") {
+                    type = NavType.StringType
+                },
+                navArgument("userRole") {
+                    type = NavType.StringType
+                    defaultValue = "usuario"
+                }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId")
+            val userRole = backStackEntry.arguments?.getString("userRole") ?: "usuario"
+
+            VerperfilusuarioScreen(
+                navController = navController,
+                userId = userId,
+                userRole = userRole
+            )
         }
 
         /* ---------------------------
@@ -154,6 +204,18 @@ fun AppNavigator(navController: NavHostController) {
         ----------------------------*/
         composable("mapa_detalle") {
             MapDetailScreen(navController = navController)
+        }
+        composable(
+            route = Pantallas.ConsultarReporte.ruta,
+            arguments = listOf(
+                navArgument("reportId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) { backStackEntry ->
+            val reportId = backStackEntry.arguments?.getString("reportId") ?: ""
+            ConsultarReporteScreen(navController = navController, reportId = reportId)
         }
     }
 }

@@ -1,17 +1,12 @@
 package com.example.urbanfix.viewmodel
 
 import android.graphics.Bitmap
-import android.util.Base64 //
+import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.urbanfix.R
 import com.example.urbanfix.data.UserPreferencesManager
-import com.example.urbanfix.network.FotoPerfilRequest
-import com.example.urbanfix.network.MiReporte
-import com.example.urbanfix.network.ReactionRemoveRequest
-import com.example.urbanfix.network.ReactionRequest
-import com.example.urbanfix.network.RetrofitInstance
-import com.example.urbanfix.network.UpdateUserRequest
+import com.example.urbanfix.network.*
 import retrofit2.Response
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +31,17 @@ sealed interface ProfileState {
     data class Error(val messageId: Int) : ProfileState
 }
 
+// --- Estado para ver perfil de otro usuario ---
+data class OtherUserProfileState(
+    val isLoading: Boolean = true,
+    val userName: String? = null,
+    val userEmail: String? = null,
+    val accountType: String? = null,
+    val registrationDate: String? = null,
+    val companyName: String? = null,
+    val error: String? = null
+)
+
 // --- Estado específico para la subida de foto ---
 sealed interface PhotoUploadState {
     object Idle : PhotoUploadState
@@ -53,7 +59,9 @@ sealed interface ReportListState {
 }
 
 class ProfileViewModel(
-    private val userPreferencesManager: UserPreferencesManager
+    private val userPreferencesManager: UserPreferencesManager,
+    private val otherUserId: Int? = null,
+    private val otherUserRole: String? = null
 ) : ViewModel() {
 
     // --- ESTADOS PRINCIPALES ---
@@ -62,6 +70,10 @@ class ProfileViewModel(
 
     private val _navigateToLogin = MutableStateFlow(false)
     val navigateToLogin: StateFlow<Boolean> = _navigateToLogin.asStateFlow()
+
+    // --- Estado para ver perfil de otro usuario ---
+    private val _otherUserProfileState = MutableStateFlow(OtherUserProfileState())
+    val otherUserProfileState: StateFlow<OtherUserProfileState> = _otherUserProfileState.asStateFlow()
 
     // --- ESTADOS PARA EDICIÓN (Nombre, Contraseña) ---
     private val _role = MutableStateFlow("")
@@ -99,10 +111,14 @@ class ProfileViewModel(
 
     // --- INICIALIZACIÓN ---
     init {
-        loadProfile()
+        if (otherUserId != null) {
+            loadOtherUserProfile(otherUserId, otherUserRole ?: "usuario")
+        } else {
+            loadProfile()
+        }
     }
 
-    // --- CARGAR DATOS DEL PERFIL ---
+    // --- CARGAR DATOS DEL PERFIL PROPIO ---
     fun loadProfile() {
         viewModelScope.launch {
             _profileState.value = ProfileState.Loading
@@ -125,8 +141,11 @@ class ProfileViewModel(
                         val userName = userPreferencesManager.getUserName()
                         _name.value = userName
                         _profileState.value = ProfileState.Success(
-                            role = "usuario", userEmail = email, userName = userName,
-                            registrationDate = registrationDate, profilePicBitmap = picBitmap
+                            role = "usuario",
+                            userEmail = email,
+                            userName = userName,
+                            registrationDate = registrationDate,
+                            profilePicBitmap = picBitmap
                         )
                     }
                     "funcionario" -> {
@@ -134,8 +153,11 @@ class ProfileViewModel(
                         val personalName = userPreferencesManager.getUserName()
                         _name.value = personalName
                         _profileState.value = ProfileState.Success(
-                            role = "funcionario", userEmail = email, companyName = companyName,
-                            personalName = personalName, registrationDate = registrationDate,
+                            role = "funcionario",
+                            userEmail = email,
+                            companyName = companyName,
+                            personalName = personalName,
+                            registrationDate = registrationDate,
                             profilePicBitmap = picBitmap
                         )
                     }
@@ -147,20 +169,106 @@ class ProfileViewModel(
         }
     }
 
+    // --- CARGAR PERFIL DE OTRO USUARIO ---
+    fun loadOtherUserProfile(userId: Int, userRole: String = "usuario") {
+        viewModelScope.launch {
+            _otherUserProfileState.value = _otherUserProfileState.value.copy(
+                isLoading = true,
+                error = null
+            )
+
+            try {
+                Log.d("PROFILE_VM", "Intentando cargar perfil - ID: $userId, Rol: $userRole")
+
+                // Llamar al endpoint correcto según el rol
+                val response = if (userRole == "funcionario") {
+                    RetrofitInstance.api.getOtherFuncionarioProfile(userId)
+                } else {
+                    RetrofitInstance.api.getOtherUserProfile(userId)
+                }
+
+                Log.d("PROFILE_VM", "Respuesta recibida - Código: ${response.code()}")
+
+                if (response.isSuccessful && response.body() != null) {
+                    val profile = response.body()!!
+
+                    Log.d("PROFILE_VM", "Perfil cargado exitosamente: ${profile.nombre}")
+
+                    val accountType = when (profile.role) {
+                        "funcionario" -> "Funcionario"
+                        "usuario" -> "Usuario"
+                        else -> "Desconocido"
+                    }
+
+                    _otherUserProfileState.value = OtherUserProfileState(
+                        isLoading = false,
+                        userName = profile.nombre,
+                        userEmail = profile.email,
+                        accountType = accountType,
+                        registrationDate = profile.fecha_registro,
+                        companyName = profile.entidad_nombre,
+                        error = null
+                    )
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    val errorMsg = "Error al cargar el perfil: ${response.code()}"
+
+                    _otherUserProfileState.value = _otherUserProfileState.value.copy(
+                        isLoading = false,
+                        error = errorMsg
+                    )
+
+                    Log.e("PROFILE_VM", "Error API: ${response.code()}")
+                    Log.e("PROFILE_VM", "Error body: $errorBody")
+                    Log.e("PROFILE_VM", "URL solicitada: ${response.raw().request.url}")
+                }
+            } catch (e: Exception) {
+                _otherUserProfileState.value = _otherUserProfileState.value.copy(
+                    isLoading = false,
+                    error = "Error de conexión: ${e.message}"
+                )
+                Log.e("PROFILE_VM", "Error de red al cargar perfil", e)
+            }
+        }
+    }
+
     // --- FUNCIONES PARA EDICIÓN (Nombre, Contraseña) ---
-    fun onNameChange(newName: String) { _name.value = newName; _editError.value = null }
-    fun onPasswordChange(newPass: String) { _password.value = newPass; _editError.value = null }
-    fun onConfirmPasswordChange(newPass: String) { _confirmPassword.value = newPass; _editError.value = null }
-    fun clearEditError() { _editError.value = null }
+    fun onNameChange(newName: String) {
+        _name.value = newName
+        _editError.value = null
+    }
+
+    fun onPasswordChange(newPass: String) {
+        _password.value = newPass
+        _editError.value = null
+    }
+
+    fun onConfirmPasswordChange(newPass: String) {
+        _confirmPassword.value = newPass
+        _editError.value = null
+    }
+
+    fun clearEditError() {
+        _editError.value = null
+    }
 
     fun validateForSave(): Boolean {
         if (_name.value.isBlank()) {
-            _editError.value = if (_role.value == "funcionario") R.string.error_official_name_empty else R.string.error_user_name_empty
+            _editError.value = if (_role.value == "funcionario")
+                R.string.error_official_name_empty
+            else
+                R.string.error_user_name_empty
             return false
         }
         if (_password.value.isNotEmpty() || _confirmPassword.value.isNotEmpty()) {
-            if (_password.value.length < 6) { _editError.value = R.string.error_password_length; return false }
-            if (_password.value != _confirmPassword.value) { _editError.value = R.string.error_password_mismatch; return false }
+            if (_password.value.length < 6) {
+                _editError.value = R.string.error_password_length
+                return false
+            }
+            if (_password.value != _confirmPassword.value) {
+                _editError.value = R.string.error_password_mismatch
+                return false
+            }
         }
         _editError.value = null
         return true
@@ -173,7 +281,10 @@ class ProfileViewModel(
 
             try {
                 val userId = userPreferencesManager.getUserId()
-                if (userId == -1) { _editError.value = R.string.error_no_user_id; return@launch }
+                if (userId == -1) {
+                    _editError.value = R.string.error_no_user_id
+                    return@launch
+                }
 
                 val requestBody = UpdateUserRequest(
                     nombre = _name.value,
@@ -183,21 +294,28 @@ class ProfileViewModel(
                 val response = RetrofitInstance.api.updateUser(pathRole, userId, requestBody)
 
                 if (response.isSuccessful) {
-                    userPreferencesManager.saveUserName(_name.value) // Asume que existe
+                    userPreferencesManager.saveUserName(_name.value)
 
                     _profileState.update {
                         when (it) {
                             is ProfileState.Success -> {
-                                if (_role.value == "funcionario") it.copy(personalName = _name.value)
-                                else it.copy(userName = _name.value)
+                                if (_role.value == "funcionario")
+                                    it.copy(personalName = _name.value)
+                                else
+                                    it.copy(userName = _name.value)
                             }
                             else -> it
                         }
                     }
-                    _password.value = ""; _confirmPassword.value = ""
+                    _password.value = ""
+                    _confirmPassword.value = ""
                     onSuccess()
-                } else { _editError.value = R.string.error_save_changes }
-            } catch (e: Exception) { _editError.value = R.string.error_network_connection }
+                } else {
+                    _editError.value = R.string.error_save_changes
+                }
+            } catch (e: Exception) {
+                _editError.value = R.string.error_network_connection
+            }
         }
     }
 
@@ -206,28 +324,28 @@ class ProfileViewModel(
         viewModelScope.launch {
             _photoUploadState.value = PhotoUploadState.Loading
             try {
-                // Convertir a Base64
                 val outputStream = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
                 val byteArray = outputStream.toByteArray()
                 val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
                 val requestBody = FotoPerfilRequest(foto_base64 = base64String)
 
-                // Obtener ID y Rol
                 val userId = userPreferencesManager.getUserId()
                 val userRole = _role.value
-                if (userId == -1) { _photoUploadState.value = PhotoUploadState.Error("ID Usuario no encontrado"); return@launch }
+                if (userId == -1) {
+                    _photoUploadState.value = PhotoUploadState.Error("ID Usuario no encontrado")
+                    return@launch
+                }
 
-                // Llamar API correcta
                 val response = if (userRole == "usuario") {
                     RetrofitInstance.api.subirFotoUsuario(userId, requestBody)
                 } else if (userRole == "funcionario") {
                     RetrofitInstance.api.subirFotoFuncionario(userId, requestBody)
                 } else {
-                    _photoUploadState.value = PhotoUploadState.Error("Rol inválido"); return@launch
+                    _photoUploadState.value = PhotoUploadState.Error("Rol inválido")
+                    return@launch
                 }
 
-                // Procesar respuesta
                 if (response.isSuccessful) {
                     userPreferencesManager.saveProfilePicBitmap(bitmap)
                     _profilePicBitmap.value = bitmap
@@ -263,15 +381,13 @@ class ProfileViewModel(
         _photoUploadState.value = PhotoUploadState.Idle
     }
 
-    // --- FUNCIONES PARA CARGAR LISTAS DE REPORTES (MODIFICADAS) ---
+    // --- FUNCIONES PARA CARGAR LISTAS DE REPORTES ---
     fun fetchUserApoyos() {
         viewModelScope.launch {
             _reportListState.value = ReportListState.Loading
 
-            // ▼▼▼ CAMBIO: Obtener ID y ROL ▼▼▼
             val actorId = userPreferencesManager.getUserId()
             val actorRole = userPreferencesManager.getUserRole()
-            // ▲▲▲ FIN DE CAMBIOS ▲▲▲
 
             if (actorId == -1) {
                 _reportListState.value = ReportListState.Error("Usuario no identificado")
@@ -279,7 +395,6 @@ class ProfileViewModel(
             }
 
             try {
-                // ▼▼▼ CAMBIO: Decidir qué API llamar ▼▼▼
                 val response: Response<List<MiReporte>>
 
                 if (actorRole == "usuario") {
@@ -291,7 +406,6 @@ class ProfileViewModel(
                     _reportListState.value = ReportListState.Error("Rol desconocido")
                     return@launch
                 }
-                // ▲▲▲ FIN DE CAMBIOS ▲▲▲
 
                 if (response.isSuccessful) {
                     val fetchedList = response.body() ?: emptyList()
@@ -311,10 +425,8 @@ class ProfileViewModel(
         viewModelScope.launch {
             _reportListState.value = ReportListState.Loading
 
-            // ▼▼▼ CAMBIO: Obtener ID y ROL ▼▼▼
             val actorId = userPreferencesManager.getUserId()
             val actorRole = userPreferencesManager.getUserRole()
-            // ▲▲▲ FIN DE CAMBIOS ▲▲▲
 
             if (actorId == -1) {
                 _reportListState.value = ReportListState.Error("Usuario no identificado")
@@ -322,7 +434,6 @@ class ProfileViewModel(
             }
 
             try {
-                // ▼▼▼ CAMBIO: Decidir qué API llamar ▼▼▼
                 val response: Response<List<MiReporte>>
 
                 if (actorRole == "usuario") {
@@ -334,7 +445,6 @@ class ProfileViewModel(
                     _reportListState.value = ReportListState.Error("Rol desconocido")
                     return@launch
                 }
-                // ▲▲▲ FIN DE CAMBIOS ▲▲▲
 
                 if (response.isSuccessful) {
                     _denunciasList.value = response.body() ?: emptyList()
@@ -350,12 +460,16 @@ class ProfileViewModel(
 
     // --- FUNCIONES PARA LIKE/DISLIKE (REACCIONES) ---
     private fun updateLocalReaction(reporteId: Int, newReaction: String?) {
-        // Esta función se mantiene igual, ya que solo actualiza las listas locales
         _apoyosList.update { currentList ->
             if (newReaction != "like") {
                 currentList.filterNot { it.id == reporteId }
             } else {
-                currentList.map { if (it.id == reporteId) it.copy(current_user_reaction = newReaction) else it }
+                currentList.map {
+                    if (it.id == reporteId)
+                        it.copy(current_user_reaction = newReaction)
+                    else
+                        it
+                }
             }
         }
 
@@ -363,29 +477,28 @@ class ProfileViewModel(
             if (newReaction != "dislike") {
                 currentList.filterNot { it.id == reporteId }
             } else {
-                currentList.map { if (it.id == reporteId) it.copy(current_user_reaction = newReaction) else it }
+                currentList.map {
+                    if (it.id == reporteId)
+                        it.copy(current_user_reaction = newReaction)
+                    else
+                        it
+                }
             }
         }
-        // TODO: Consider updating counts locally for immediate feedback if needed
     }
 
     fun toggleLikeDislike(reporteId: Int, currentReaction: String?, action: String) {
         viewModelScope.launch {
-
-            // ▼▼▼ CAMBIO: Obtener ID y ROL ▼▼▼
             val actorId = userPreferencesManager.getUserId()
-            val actorRole = userPreferencesManager.getUserRole() // Asumo que esta función existe
-            // ▲▲▲ FIN DE CAMBIOS ▲▲▲
+            val actorRole = userPreferencesManager.getUserRole()
 
-            if (actorId == -1 || actorRole.isNullOrEmpty()) { // Verificación de rol
+            if (actorId == -1 || actorRole.isNullOrEmpty()) {
                 Log.e("API_FAIL", "ID de actor ($actorId) o Rol ($actorRole) no encontrados")
-                // TODO: Show Snackbar error to user
                 return@launch
             }
 
             val shouldRemove = currentReaction == action
 
-            // Actualización optimista de la UI
             if (shouldRemove) {
                 updateLocalReaction(reporteId, null)
             } else {
@@ -396,28 +509,21 @@ class ProfileViewModel(
                 val response: Response<Unit>
 
                 if (shouldRemove) {
-                    // ▼▼▼ CAMBIO: Usar el nuevo Request Body ▼▼▼
                     val removeRequestBody = ReactionRemoveRequest(actor_id = actorId, role = actorRole)
                     response = RetrofitInstance.api.removeReaccion(reporteId, removeRequestBody)
                 } else {
-                    // ▼▼▼ CAMBIO: Usar el nuevo Request Body ▼▼▼
                     val setRequestBody = ReactionRequest(actor_id = actorId, role = actorRole, tipo = action)
                     response = RetrofitInstance.api.setReaccion(reporteId, setRequestBody)
                 }
-                // ▲▲▲ FIN DE CAMBIOS ▲AT
 
                 if (!response.isSuccessful) {
-                    // Si falla, revertir la UI
                     updateLocalReaction(reporteId, currentReaction)
                     Log.e("API_FAIL", "Error API reaction: ${response.code()} - ${response.errorBody()?.string()}")
-                    // TODO: Show Snackbar error to user
                 }
 
             } catch (e: Exception) {
-                // Si falla, revertir la UI
                 updateLocalReaction(reporteId, currentReaction)
                 Log.e("API_FAIL", "Error Network reaction: ${e.message}")
-                // TODO: Show Snackbar error to user
                 e.printStackTrace()
             }
         }
@@ -448,7 +554,7 @@ class ProfileViewModel(
                 val response = RetrofitInstance.api.deleteUser(pathRole, userId)
 
                 if (response.isSuccessful) {
-                    userPreferencesManager.deleteAllData() // Clears everything
+                    userPreferencesManager.deleteAllData()
                     _accountDeleted.value = true
                 } else {
                     _profileState.value = ProfileState.Error(R.string.error_deleting_account)
@@ -461,5 +567,22 @@ class ProfileViewModel(
 
     fun onAccountDeletedHandled() {
         _accountDeleted.value = false
+    }
+
+    // --- FUNCIÓN ADICIONAL del código simple ---
+    fun updateUserName(newName: String) {
+        userPreferencesManager.saveUserName(newName)
+        _name.value = newName
+        _profileState.update {
+            when (it) {
+                is ProfileState.Success -> {
+                    if (_role.value == "funcionario")
+                        it.copy(personalName = newName)
+                    else
+                        it.copy(userName = newName)
+                }
+                else -> it
+            }
+        }
     }
 }

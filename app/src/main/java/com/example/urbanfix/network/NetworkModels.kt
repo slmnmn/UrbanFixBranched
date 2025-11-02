@@ -72,7 +72,8 @@ data class MiReporte(
     val current_user_reaction: String?,
     val descripcion: String?,
     val creador_nombre: String?,
-    val creador_iniciales: String?
+    val creador_iniciales: String?,
+    val creador_es_verificado: Boolean? = false
 )
 
 data class FotoPerfilRequest(
@@ -114,4 +115,13 @@ data class ComentarioRequest(
 
 data class ComentarioUpdateRequest(
     val texto: String
+)
+
+data class OtherUserProfileResponse(
+    val id: Int,
+    val nombre: String,
+    val email: String,
+    val role: String,
+    val fecha_registro: String,
+    val entidad_nombre: String? = null // Para funcionarios
 )

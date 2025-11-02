@@ -32,26 +32,51 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanfix.R
-import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
+import com.example.urbanfix.viewmodel.ProfileViewModel
+import com.example.urbanfix.viewmodel.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerperfilempresaScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    userId: String? = null
 ) {
+    val context = LocalContext.current
+    val userIdInt = userId?.toIntOrNull()
+
+    // NUEVO: Crear el ViewModel con el userId y rol "funcionario"
+    val viewModel: ProfileViewModel = viewModel(
+        factory = ViewModelFactory(context, userIdInt, "funcionario")
+    )
+
+    val otherUserProfileState by viewModel.otherUserProfileState.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Box(modifier = Modifier.fillMaxWidth().padding(top = 35.dp, end = 42.dp), contentAlignment = Alignment.Center) {
-                        Text(text = stringResource(R.string.perfil_consulta), color = Color.White, fontWeight = FontWeight.Bold)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 35.dp, end = 42.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.perfil_consulta),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 },
                 navigationIcon = {
                     Box(modifier = Modifier.padding(top = 20.dp)) {
                         IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Regresar",
+                                tint = Color.White
+                            )
                         }
                     }
                 },
@@ -64,12 +89,47 @@ fun VerperfilempresaScreen(
         },
         containerColor = GrayBg
     ) { paddingValues ->
-        CompanyProfileContent(
-            paddingValues = paddingValues,
-            companyName = "Nombre de Empresa S.A.",
-            userEmail = "contacto@empresa.com",
-            navController = navController
-        )
+        when {
+            otherUserProfileState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = BlueMain)
+                }
+            }
+
+            otherUserProfileState.error != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = otherUserProfileState.error ?: "Error desconocido",
+                        color = Color.Red,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
+
+            else -> {
+                CompanyProfileContent(
+                    paddingValues = paddingValues,
+                    companyName = otherUserProfileState.companyName ?: "N/A",
+                    userName = otherUserProfileState.userName ?: "N/A",
+                    userEmail = otherUserProfileState.userEmail ?: "N/A",
+                    registrationDate = otherUserProfileState.registrationDate ?: "N/A",
+                    navController = navController
+                )
+            }
+        }
     }
 }
 
@@ -77,7 +137,9 @@ fun VerperfilempresaScreen(
 private fun CompanyProfileContent(
     paddingValues: PaddingValues,
     companyName: String,
+    userName: String,
     userEmail: String,
+    registrationDate: String,
     navController: NavHostController
 ) {
     val context = LocalContext.current
@@ -93,13 +155,12 @@ private fun CompanyProfileContent(
     ) {
         Spacer(modifier = Modifier.height(10.dp))
 
-        // --- FOTO DE PERFIL ---
         Box(contentAlignment = Alignment.BottomEnd) {
             Image(
                 painter = painterResource(id = R.drawable.circular_logo),
                 contentDescription = stringResource(R.string.profile_picture_cd),
                 modifier = Modifier
-                    .size(180.dp)
+                    .size(170.dp)
                     .clip(CircleShape)
                     .background(WhiteFull)
             )
@@ -107,20 +168,33 @@ private fun CompanyProfileContent(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // --- Nombre de la empresa y badge ---
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = companyName,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(
-                Icons.Filled.CheckCircle,
-                contentDescription = stringResource(R.string.verified_profile),
-                tint = verifiedColor
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentWidth(Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = companyName,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = stringResource(R.string.verified_profile),
+                    tint = Color(0xFF00BFFF)
+                )
+            }
         }
+
 
         Spacer(modifier = Modifier.height(15.dp))
 
@@ -133,14 +207,13 @@ private fun CompanyProfileContent(
                 UserInfoRow(
                     icon = Icons.Default.Person,
                     label = stringResource(R.string.full_name_label),
-                    value = "Nombres y apellidos del usuario"
+                    value = userName
                 )
                 Divider(
                     color = WhiteFull.copy(alpha = 0.2f),
                     modifier = Modifier.padding(horizontal = 1.dp)
                 )
 
-                // Email con subrayado
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -186,7 +259,7 @@ private fun CompanyProfileContent(
                 UserInfoRow(
                     icon = Icons.Default.DateRange,
                     label = stringResource(R.string.registration_date_label),
-                    value = stringResource(R.string.registration_date_value)
+                    value = formatDisplayDate(registrationDate)
                 )
                 Divider(
                     color = WhiteFull.copy(alpha = 0.2f),
@@ -204,7 +277,7 @@ private fun CompanyProfileContent(
                         color = WhiteFull,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        modifier = Modifier.padding(start = 30.dp, top = 5.dp)
+                        modifier = Modifier.padding(start = 48.dp, top = 5.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
@@ -219,7 +292,6 @@ private fun CompanyProfileContent(
 
         Spacer(modifier = Modifier.height(25.dp))
 
-        // --- BOTÓN CONTACTAR ---
         Button(
             onClick = {
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -256,6 +328,27 @@ private fun CompanyProfileContent(
 
     if (showEmailCopiedDialog) {
         EmailCopiedDialog(onDismiss = { showEmailCopiedDialog = false })
+    }
+}
+
+private fun formatDisplayDate(isoDate: String): String {
+    return try {
+        val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.getDefault())
+        val outputFormat = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
+        val date = inputFormat.parse(isoDate)
+        date?.let { outputFormat.format(it) } ?: isoDate.split("T").firstOrNull() ?: "-"
+    } catch (e: Exception) {
+        try {
+            val parts = isoDate.split("T")
+            if (parts.isNotEmpty()) {
+                val dateParts = parts[0].split("-")
+                if (dateParts.size == 3) {
+                    "${dateParts[2]}/${dateParts[1]}/${dateParts[0]}"
+                } else "-"
+            } else "-"
+        } catch (ex: Exception) {
+            "-"
+        }
     }
 }
 

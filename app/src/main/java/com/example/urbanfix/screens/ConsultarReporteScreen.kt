@@ -41,59 +41,60 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage // <-- ¡IMPORTANTE! Para cargar imágenes de S3
+import coil.compose.AsyncImage
 import com.example.urbanfix.R
-import com.example.urbanfix.data.UserPreferencesManager // <-- Necesaria para el Factory
-import com.example.urbanfix.navigation.Pantallas // <-- Asegúrate de que esta importación sea correcta
+import com.example.urbanfix.data.UserPreferencesManager
+import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.network.ComentarioResponse
-import com.example.urbanfix.network.MiReporte // <-- Asegúrate de que este sea tu data class
+import com.example.urbanfix.network.MiReporte
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.EditarReporteViewModel
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-
-// El 'data class Comment' local se elimina ya que usaremos ComentarioResponse
-
+@RequiresApi(Build.VERSION_CODES.O)
+fun navigateToUserProfile(
+    navController: NavHostController,
+    userId: Int,
+    isVerified: Boolean
+) {
+    if (isVerified) {
+        navController.navigate(Pantallas.Verperfilempresa.ruta)
+    } else {
+        navController.navigate(Pantallas.Verperfilusuario.crearRuta(userId))
+    }
+}
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditarReporteScreen(
+fun ConsultarReporteScreen(
     navController: NavHostController,
-    reportId: String = "" // El ID se recibe como String de la navegación
+    reportId: String = ""
 ) {
     val context = LocalContext.current
-
-    // Convertimos el ID a Int. Si falla, usamos -1
     val reporteIdInt = reportId.toIntOrNull() ?: -1
 
-    // Inicializamos el ViewModel con su Factory
     val viewModel: EditarReporteViewModel = viewModel(
         factory = EditarReporteViewModel.Factory(context, reporteIdInt)
     )
 
-    // Obtenemos el estado completo de la UI desde el ViewModel
     val uiState by viewModel.uiState.collectAsState()
-
     val scrollState = rememberScrollState()
     val clipboardManager = LocalClipboardManager.current
 
-    // Estados para controlar los diálogos
     var showCopyDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var commentToDelete by remember { mutableStateOf<ComentarioResponse?>(null) }
     var showImageGallery by remember { mutableStateOf(false) }
     var commentToEdit by remember { mutableStateOf<ComentarioResponse?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var showOptionsDialog by remember { mutableStateOf<Int?>(null) } // Almacena el ID del comentario
-    var showCreatorDialog by remember { mutableStateOf(false) }
-    // Obtenemos el ID del usuario actual para la lógica de la UI (saber si un comentario es nuestro)
+    var showOptionsDialog by remember { mutableStateOf<Int?>(null) }
+
     val currentUserId = remember { UserPreferencesManager(context).getUserId() }
 
     Scaffold(
         topBar = {
-            // Tu TopAppBar (sin cambios)
             TopAppBar(
                 title = {
                     Box(
@@ -134,10 +135,7 @@ fun EditarReporteScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-
-            // --- Manejo de Estados (Carga, Error, Éxito) ---
             when {
-                // --- ESTADO DE CARGA ---
                 uiState.isLoading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -147,7 +145,6 @@ fun EditarReporteScreen(
                     }
                 }
 
-                // --- ESTADO DE ERROR ---
                 uiState.error != null -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -162,30 +159,27 @@ fun EditarReporteScreen(
                     }
                 }
 
-                // --- ESTADO DE ÉXITO ---
                 uiState.reporte != null -> {
-                    val reporte = uiState.reporte!! // Tenemos un reporte, ¡a dibujar!
+                    val reporte = uiState.reporte!!
 
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(scrollState)
                             .background(Color(0xFFF1FAEE))
-                            .paddingFromBaseline(bottom = 180.dp) // Deja espacio para el BottomBar y el campo de comentario
+                            .paddingFromBaseline(bottom = 180.dp)
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(420.dp)
                         ) {
-                            // --- Mapa ---
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(180.dp)
                                     .background(Color(0xFFE8EEF5))
                             ) {
-                                // TODO: Pasar la latitud y longitud del reporte al mapa
                                 val lat = reporte.latitud.toDoubleOrNull() ?: 0.0
                                 val lon = reporte.longitud.toDoubleOrNull() ?: 0.0
                                 MapboxMapComponent(
@@ -193,13 +187,12 @@ fun EditarReporteScreen(
                                         .fillMaxSize()
                                         .nestedScroll(connection = object : NestedScrollConnection {}),
                                     hasPermission = true,
-                                    selectedLocation = null, // Debería ser LatLng(lat, lon)
+                                    selectedLocation = null,
                                     onMapReady = {},
                                     onLocationSelected = {}
                                 )
                             }
 
-                            // --- Card de Información ---
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -219,9 +212,8 @@ fun EditarReporteScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        // --- Título (Categoría) ---
                                         Text(
-                                            text = reporte.categoria_nombre ?: "Sin Categoría", // DATO REAL
+                                            text = reporte.categoria_nombre ?: "Sin Categoría",
                                             fontSize = 18.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White,
@@ -233,10 +225,9 @@ fun EditarReporteScreen(
 
                                         Spacer(modifier = Modifier.height(12.dp))
 
-                                        // --- Descripción ---
                                         reporte.descripcion?.let {
                                             Text(
-                                                text = it, // DATO REAL
+                                                text = it,
                                                 fontSize = 13.sp,
                                                 color = Color.White,
                                                 lineHeight = 18.sp,
@@ -246,7 +237,6 @@ fun EditarReporteScreen(
 
                                         Spacer(modifier = Modifier.height(10.dp))
 
-                                        // --- Fila de Acciones (ID, Like, Dislike, Estado) ---
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -254,7 +244,6 @@ fun EditarReporteScreen(
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            // --- ID del Reporte ---
                                             Column(
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                                 modifier = Modifier.offset(y = -2.dp)
@@ -270,7 +259,7 @@ fun EditarReporteScreen(
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                                 ) {
-                                                    val code = "#${reporte.id}" // DATO REAL
+                                                    val code = "#${reporte.id}"
                                                     Text(
                                                         text = code,
                                                         fontSize = 12.sp,
@@ -291,10 +280,9 @@ fun EditarReporteScreen(
                                                 }
                                             }
                                             if (showCopyDialog) {
-                                                CodeCopiedDialog(onDismiss = { showCopyDialog = false })
+                                                CodeCopiedDialog2(onDismiss = { showCopyDialog = false })
                                             }
 
-                                            // --- Botón de Like ---
                                             Column(
                                                 horizontalAlignment = Alignment.CenterHorizontally
                                             ) {
@@ -306,10 +294,10 @@ fun EditarReporteScreen(
                                                 )
                                                 Spacer(modifier = Modifier.height(6.dp))
                                                 IconButton(
-                                                    onClick = { viewModel.handleReaccion("like") }, // ACCIÓN REAL
+                                                    onClick = { viewModel.handleReaccion("like") },
                                                     modifier = Modifier.size(28.dp)
                                                 ) {
-                                                    val likeActive = reporte.current_user_reaction == "like" // DATO REAL
+                                                    val likeActive = reporte.current_user_reaction == "like"
                                                     Row(
                                                         verticalAlignment = Alignment.CenterVertically,
                                                         horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -325,7 +313,7 @@ fun EditarReporteScreen(
                                                             )
                                                         )
                                                         Text(
-                                                            text = reporte.apoyos_count.toString(), // DATO REAL
+                                                            text = reporte.apoyos_count.toString(),
                                                             fontSize = 11.sp,
                                                             color = Color.White
                                                         )
@@ -333,7 +321,6 @@ fun EditarReporteScreen(
                                                 }
                                             }
 
-                                            // --- Botón de Dislike ---
                                             Column(
                                                 horizontalAlignment = Alignment.CenterHorizontally
                                             ) {
@@ -345,10 +332,10 @@ fun EditarReporteScreen(
                                                 )
                                                 Spacer(modifier = Modifier.height(6.dp))
                                                 IconButton(
-                                                    onClick = { viewModel.handleReaccion("dislike") }, // ACCIÓN REAL
+                                                    onClick = { viewModel.handleReaccion("dislike") },
                                                     modifier = Modifier.size(28.dp)
                                                 ) {
-                                                    val dislikeActive = reporte.current_user_reaction == "dislike" // DATO REAL
+                                                    val dislikeActive = reporte.current_user_reaction == "dislike"
                                                     Row(
                                                         verticalAlignment = Alignment.CenterVertically,
                                                         horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -364,7 +351,7 @@ fun EditarReporteScreen(
                                                             )
                                                         )
                                                         Text(
-                                                            text = reporte.desapoyos_count.toString(), // DATO REAL
+                                                            text = reporte.desapoyos_count.toString(),
                                                             fontSize = 11.sp,
                                                             color = Color.White
                                                         )
@@ -372,7 +359,6 @@ fun EditarReporteScreen(
                                                 }
                                             }
 
-                                            // --- Estado del Reporte ---
                                             Column(
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                                 modifier = Modifier.offset(y = 4.dp)
@@ -384,8 +370,7 @@ fun EditarReporteScreen(
                                                         .background(Color.White.copy(alpha = 0.6f))
                                                 )
                                                 Spacer(modifier = Modifier.height(8.dp))
-                                                // Lógica de color y texto de estado
-                                                val (statusColor, statusText) = when (reporte.estado) { // DATO REAL
+                                                val (statusColor, statusText) = when (reporte.estado) {
                                                     "Nuevo" -> Color(0xFF4AB7B6) to "Nuevo"
                                                     "En proceso" -> Color(0xFFFFB800) to "En Proceso"
                                                     "Resuelto" -> Color(0xFF90BE6D) to "Resuelto"
@@ -411,35 +396,9 @@ fun EditarReporteScreen(
                                             }
                                         }
                                     }
-
-                                    // --- Botón de Editar ---
-                                    Button(
-                                        onClick = {
-                                            navController.navigate("reportar/${reporte.categoria_nombre}")
-                                        }, // Lógica original
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .height(32.dp),
-                                        shape = RoundedCornerShape(6.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(0xFFCCCCCC)
-                                        ),
-                                        contentPadding = PaddingValues(
-                                            horizontal = 12.dp,
-                                            vertical = 4.dp
-                                        )
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.edit_button),
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.Black
-                                        )
-                                    }
                                 }
                             }
 
-                            // --- Imagen Principal del Reporte (Círculo) ---
                             Box(
                                 modifier = Modifier
                                     .size(120.dp)
@@ -452,10 +411,10 @@ fun EditarReporteScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 AsyncImage(
-                                    model = reporte.img_prueba_1, // DATO REAL (S3 URL)
+                                    model = reporte.img_prueba_1,
                                     contentDescription = stringResource(R.string.report_photo),
-                                    placeholder = painterResource(id = R.drawable.prueba_circulo), // Placeholder
-                                    error = painterResource(id = R.drawable.alerta_no_nada), // Imagen en caso de error
+                                    placeholder = painterResource(id = R.drawable.prueba_circulo),
+                                    error = painterResource(id = R.drawable.alerta_no_nada),
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(CircleShape),
@@ -467,10 +426,10 @@ fun EditarReporteScreen(
                                 val images = listOfNotNull(
                                     reporte.img_prueba_1,
                                     reporte.img_prueba_2
-                                ).filter { it.isNotBlank() } // DATO REAL
+                                ).filter { it.isNotBlank() }
                                 if (images.isNotEmpty()) {
-                                    ImageGalleryDialog(
-                                        images = images, // Pasa la lista de URLs (String)
+                                    ImageGalleryDialog3(
+                                        images = images,
                                         initialIndex = 0,
                                         onDismiss = { showImageGallery = false }
                                     )
@@ -480,7 +439,6 @@ fun EditarReporteScreen(
 
                         Spacer(modifier = Modifier.height(1.dp))
 
-                        // --- Información del Creador ---
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -490,7 +448,7 @@ fun EditarReporteScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Reportado ${reporte.fecha_creacion}\"", // DATO REAL
+                                text = "Reportado ${reporte.fecha_creacion}\"",
                                 fontSize = 10.sp,
                                 color = Color(0xFF333333),
                                 lineHeight = 13.sp
@@ -500,17 +458,13 @@ fun EditarReporteScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.clickable {
-                                    // Si el usuario actual es el creador, mostrar diálogo
-                                    if (reporte.usuario_creador_id == currentUserId) {
-                                        showCreatorDialog = true
-                                    } else {
-                                        // Si no es el creador, navegar según el tipo de usuario
-                                        reporte.usuario_creador_id?.let { userId ->
-                                            if (reporte.creador_es_verificado == true) {
-                                                navController.navigate(Pantallas.Verperfilempresa.crearRuta(userId))
-                                            } else {
-                                                navController.navigate(Pantallas.Verperfilusuario.crearRuta(userId, "usuario"))
-                                            }
+                                    reporte.usuario_creador_id?.let { userId ->
+                                        if (reporte.creador_es_verificado == true) {
+                                            // Es un funcionario, navegar a perfil empresa con ID
+                                            navController.navigate(Pantallas.Verperfilempresa.crearRuta(userId))
+                                        } else {
+                                            // Es un usuario normal, navegar a perfil usuario
+                                            navController.navigate(Pantallas.Verperfilusuario.crearRuta(userId, "usuario"))
                                         }
                                     }
                                 }
@@ -540,7 +494,6 @@ fun EditarReporteScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // --- Sección de Comentarios ---
                         Column(
                             modifier = Modifier.padding(horizontal = 16.dp)
                         ) {
@@ -553,7 +506,6 @@ fun EditarReporteScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // Lista de comentarios dinámica
                             if (uiState.comentarios.isEmpty()) {
                                 Text(
                                     text = "Aún no hay comentarios. ¡Sé el primero en comentar!",
@@ -565,14 +517,11 @@ fun EditarReporteScreen(
                             } else {
                                 uiState.comentarios.forEach { comentario ->
                                     val esUsuarioActual = comentario.usuario_id == currentUserId
-                                    CommentItem(
+                                    CommentItem2(
                                         comment = comentario,
                                         isCurrentUser = esUsuarioActual,
                                         showMenu = showOptionsDialog == comentario.id,
                                         navController = navController,
-                                        currentUserId = currentUserId, // NUEVO
-                                        creatorUserId = reporte.usuario_creador_id ?: -1, // NUEVO
-                                        onShowCreatorDialog = { showCreatorDialog = true }, // NUEVO
                                         onMenuClick = {
                                             showOptionsDialog = if (showOptionsDialog == comentario.id) null else comentario.id
                                         },
@@ -587,14 +536,12 @@ fun EditarReporteScreen(
                 }
             }
 
-            // --- Caja para Escribir Comentario y Bottom Nav (Fijos abajo) ---
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
             ) {
                 Column {
-                    // --- Campo de texto para nuevo comentario ---
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -604,8 +551,8 @@ fun EditarReporteScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedTextField(
-                            value = uiState.nuevoComentarioTexto, // Conectado al ViewModel
-                            onValueChange = { viewModel.onNuevoComentarioChange(it) }, // Conectado al ViewModel
+                            value = uiState.nuevoComentarioTexto,
+                            onValueChange = { viewModel.onNuevoComentarioChange(it) },
                             placeholder = {
                                 Text(
                                     text = stringResource(R.string.add_comment_placeholder),
@@ -628,7 +575,7 @@ fun EditarReporteScreen(
                         )
 
                         IconButton(
-                            onClick = { viewModel.postComentario() }, // Conectado al ViewModel
+                            onClick = { viewModel.postComentario() },
                             modifier = Modifier
                                 .size(56.dp)
                                 .background(
@@ -648,24 +595,21 @@ fun EditarReporteScreen(
                         }
                     }
 
-                    // --- Tu Bottom Nav Bar ---
                     BottomNavBar(navController = navController)
                 }
             }
         }
     }
 
-    // --- DIÁLOGOS (Conectados al ViewModel y al Estado) ---
-
     if (showEditDialog && commentToEdit != null) {
-        EditCommentDialog(
-            comment = commentToEdit!!, // Pasa el ComentarioResponse
+        EditCommentDialog2(
+            comment = commentToEdit!!,
             onDismiss = {
                 showEditDialog = false
                 commentToEdit = null
             },
             onSave = { editedText ->
-                viewModel.updateComentario(commentToEdit!!.id, editedText) // ACCIÓN REAL
+                viewModel.updateComentario(commentToEdit!!.id, editedText)
                 showEditDialog = false
                 commentToEdit = null
             }
@@ -673,7 +617,7 @@ fun EditarReporteScreen(
     }
 
     if (showOptionsDialog != null && commentToEdit == null) {
-        CommentOptionsDialog(
+        CommentOptionsDialog2(
             onDismiss = { showOptionsDialog = null },
             onEdit = {
                 val comment = uiState.comentarios.find { it.id == showOptionsDialog }
@@ -692,35 +636,27 @@ fun EditarReporteScreen(
     }
 
     if (showDeleteDialog && commentToDelete != null) {
-        DeleteCommentDialog(
+        DeleteCommentDialog2(
             onDismiss = {
                 showDeleteDialog = false
                 commentToDelete = null
             },
             onConfirm = {
-                viewModel.deleteComentario(commentToDelete!!.id) // ACCIÓN REAL
+                viewModel.deleteComentario(commentToDelete!!.id)
                 showDeleteDialog = false
                 commentToDelete = null
             }
         )
     }
-    if (showCreatorDialog) {
-        CreatorProfileDialog(onDismiss = { showCreatorDialog = false })
-    }
 }
-
-// --- COMPOSABLES HIJOS MODIFICADOS ---
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun CommentItem(
+fun CommentItem2(
     comment: ComentarioResponse,
     isCurrentUser: Boolean,
     showMenu: Boolean,
-    navController: NavHostController, // NUEVO
-    currentUserId: Int, // NUEVO
-    creatorUserId: Int, // NUEVO
-    onShowCreatorDialog: () -> Unit, // NUEVO
+    navController: NavHostController, // NUEVO PARÁMETRO
     onMenuClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -743,7 +679,6 @@ fun CommentItem(
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Avatar clicable
             Box(
                 modifier = Modifier
                     .size(32.dp)
@@ -754,10 +689,7 @@ fun CommentItem(
                         else Color(0xFFDEB6D1)
                     )
                     .clickable {
-                        // NUEVA LÓGICA: Verificar si el comentarista es el creador del reporte
-                        if (comment.usuario_id == creatorUserId && comment.usuario_id == currentUserId) {
-                            onShowCreatorDialog()
-                        } else if (comment.es_verificado) {
+                        if (comment.es_verificado) {
                             navController.navigate(Pantallas.Verperfilempresa.crearRuta(comment.usuario_id))
                         } else {
                             navController.navigate(
@@ -781,17 +713,13 @@ fun CommentItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Nombre clicable
                     Text(
                         text = comment.autor_nombre,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isCurrentUser) Color.White else BlackFull,
                         modifier = Modifier.clickable {
-                            // NUEVA LÓGICA: Verificar si el comentarista es el creador del reporte
-                            if (comment.usuario_id == creatorUserId && comment.usuario_id == currentUserId) {
-                                onShowCreatorDialog()
-                            } else if (comment.es_verificado) {
+                            if (comment.es_verificado) {
                                 navController.navigate(Pantallas.Verperfilempresa.crearRuta(comment.usuario_id))
                             } else {
                                 navController.navigate(
@@ -841,15 +769,13 @@ fun CommentItem(
         }
     }
 }
-// --- DIÁLOGOS (Tu código original, pero usando los nuevos modelos de datos) ---
 
 @Composable
-fun CommentOptionsDialog(
+fun CommentOptionsDialog2(
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    // Este Composable no necesita cambios, tu lógica original está perfecta.
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -868,7 +794,6 @@ fun CommentOptionsDialog(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                // Header
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -886,7 +811,6 @@ fun CommentOptionsDialog(
                     )
                 }
                 Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
-                // Opción Editar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -912,7 +836,6 @@ fun CommentOptionsDialog(
                     )
                 }
                 Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
-                // Opción Eliminar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -959,7 +882,7 @@ fun CommentOptionsDialog(
 }
 
 @Composable
-fun EditCommentDialog(
+fun EditCommentDialog2(
     comment: ComentarioResponse, // Recibe el ComentarioResponse
     onDismiss: () -> Unit,
     onSave: (String) -> Unit
@@ -1049,7 +972,7 @@ fun EditCommentDialog(
 }
 
 @Composable
-fun CodeCopiedDialog(onDismiss: () -> Unit) {
+fun CodeCopiedDialog2(onDismiss: () -> Unit) {
     // Este Composable no necesita cambios, tu lógica original está perfecta.
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -1113,7 +1036,7 @@ fun CodeCopiedDialog(onDismiss: () -> Unit) {
 }
 
 @Composable
-fun DeleteCommentDialog(
+fun DeleteCommentDialog2(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -1206,7 +1129,7 @@ fun DeleteCommentDialog(
 }
 
 @Composable
-fun ImageGalleryDialog(
+fun ImageGalleryDialog3(
     images: List<String>, // AHORA RECIBE UNA LISTA DE URLs (String)
     initialIndex: Int = 0,
     onDismiss: () -> Unit
@@ -1337,84 +1260,6 @@ fun ImageGalleryDialog(
                         contentDescription = stringResource(R.string.next_description),
                         modifier = Modifier.size(32.dp),
                         tint = Color.White
-                    )
-                }
-            }
-        }
-    }
-}
-@Composable
-fun CreatorProfileDialog(onDismiss: () -> Unit) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Header con color distintivo
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp)
-                        .background(Color(0xFF4AB7B6)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.creator_profile_dialog_title),
-                            color = Color.Black,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-
-                // Mensaje
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 28.dp, horizontal = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = stringResource(R.string.creator_profile_dialog_message),
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily.SansSerif,
-                        color = Color.Black,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
-                    )
-                }
-
-                // Botón OK
-                Button(
-                    onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1D3557)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
-                        .padding(bottom = 24.dp)
-                        .height(48.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.creator_profile_dialog_button),
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
                     )
                 }
             }

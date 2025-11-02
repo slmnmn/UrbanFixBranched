@@ -121,6 +121,24 @@ interface ApiService {
     suspend fun deleteComentario(
         @Path("id") comentarioId: Int
     ): Response<Unit> // No devuelve nada, solo un 200 OK
+
+    // Endpoint para obtener perfil de otro usuario
+    @GET("/usuarios/{userId}/perfil")
+    suspend fun getOtherUserProfile(
+        @Path("userId") userId: Int
+    ): Response<OtherUserProfileResponse>
+
+    @GET("/reportes/buscar/{codigo}")
+    suspend fun buscarReportePorCodigo(
+        @Path("codigo") codigo: String,
+        @Query("user_id") userId: Int?,
+        @Header("User-Role") userRole: String
+    ): Response<MiReporte>
+
+    @GET("/funcionarios/{userId}/perfil")
+    suspend fun getOtherFuncionarioProfile(
+        @Path("userId") userId: Int
+    ): Response<OtherUserProfileResponse>
 }
 
 

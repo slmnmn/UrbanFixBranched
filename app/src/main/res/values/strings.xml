@@ -503,5 +503,36 @@
     <!-- EliminarDenunciaDialog Strings -->
     <string name="remove_denuncia_title">Seguro que quieres eliminar el reporte de Mis Denuncias?</string>
     <string name="remove_denuncia_message">No se puede deshacer; tendrás que volver a buscar el reporte y darle dislike otra vez.</string>
+    <string name="creator_profile_dialog_title">¡Este es tu reporte!</string>
+    <string name="creator_profile_dialog_message">Para ver o editar tu perfil, ve a la sección "Mi Perfil" en el menú principal.</string>
+    <string name="creator_profile_dialog_button">Entendido</string>
+    <!-- Título de la pantalla -->
+    <string name="faq_screen_title">Preguntas Frecuentes</string>
+
+    <!-- Texto del mensaje de bienvenida -->
+    <string name="faq_welcome_title">¿Tienes dudas?</string>
+    <string name="faq_welcome_message">Aquí encontrarás respuestas a las preguntas más comunes sobre UrbanFix</string>
+
+    <!-- Preguntas frecuentes -->
+    <string name="faq_question_1_title">¿Qué es UrbanFix?</string>
+    <string name="faq_question_1_description">UrbanFix es una aplicación de reportes para la ciudad de Bogotá, la cual busca simplificar el proceso de generar reportes sobre problemas en nuestra ciudad.</string>
+
+    <string name="faq_question_2_title">¿Quiénes somos?</string>
+    <string name="faq_question_2_description">Somos un grupo de estudiantes universitarios que buscamos mejorar nuestra ciudad mediante la comunicación asertiva entre los ciudadanos y las entidades públicas que puedan solucionar problemas puntuales.</string>
+
+    <string name="faq_question_3_title">¿Por qué usar esta aplicación?</string>
+    <string name="faq_question_3_description">UrbanFix simplifica el proceso de creación de reportes ciudadanos, deshaciéndose de los formularios largos en las páginas de las entidades y a su vez los hace visibles para la comunidad y priorizar cada uno de estos.</string>
+
+    <string name="faq_question_4_title">¿Cómo creo un reporte?</string>
+    <string name="faq_question_4_description">En la ventana principal podrá encontrar algunos de los reportes que puede realizar. Haga clic en alguno que desee reportar y asegúrese antes de ello de revisar que no hay un reporte igual o parecido en su zona revisando el mapa.</string>
+
+    <string name="faq_question_5_title">¿Cómo se actualiza el estado de mi reporte?</string>
+    <string name="faq_question_5_description">Tras crear un reporte, los otros usuarios pueden darle más visibilidad a su reporte. Si alguna empresa o entidad pública decide ver su reporte, esta podrá ubicar la eventualidad, y comunicarse con usted vía correo electrónico, para darle solución.</string>
+
+    <!-- Contenido accesible -->
+    <string name="faq_icon_expand">Expandir</string>
+    <string name="faq_icon_collapse">Contraer</string>
+    <string name="faq_icon_back">Volver</string>
+
 </resources>
 
