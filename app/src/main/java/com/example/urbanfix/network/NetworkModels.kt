@@ -125,3 +125,7 @@ data class OtherUserProfileResponse(
     val fecha_registro: String,
     val entidad_nombre: String? = null // Para funcionarios
 )
+
+data class UpdateEstadoRequest(
+    val estado: String
+)

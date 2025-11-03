@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import android.content.Context
 import com.example.urbanfix.data.UserPreferencesManager
-import com.example.urbanfix.network.* // Asegúrate de importar todos tus data classes (MiReporte, ComentarioResponse, etc.)
+import com.example.urbanfix.network.* // Asegúrate de importar todos tus data classes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -47,7 +47,7 @@ class EditarReporteViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                // 1. Cargar el reporte y los comentarios en paralelo (más rápido)
+                // 1. Cargar el reporte y los comentarios en paralelo
                 val reporteResponseAsync = RetrofitInstance.api.getReporteById(reporteId, currentUserId, currentUserRole)
                 val comentariosResponseAsync = RetrofitInstance.api.getComentarios(reporteId)
 
@@ -56,18 +56,15 @@ class EditarReporteViewModel(
                 val comentariosResponse = comentariosResponseAsync
 
                 // 3. --- VERIFICACIÓN DE SEGURIDAD ---
-                // Revisamos que AMBAS llamadas fueran exitosas Y que el reporte tenga cuerpo
                 if (reporteResponse.isSuccessful && comentariosResponse.isSuccessful && reporteResponse.body() != null) {
-                    // ¡Éxito! Actualizamos la UI
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            reporte = reporteResponse.body(), // Sabemos que no es nulo
-                            comentarios = comentariosResponse.body() ?: emptyList() // Si es nulo, usamos lista vacía
+                            reporte = reporteResponse.body(),
+                            comentarios = comentariosResponse.body() ?: emptyList()
                         )
                     }
                 } else {
-                    // Si una de las dos falla, mostramos un error claro
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -76,7 +73,6 @@ class EditarReporteViewModel(
                     }
                 }
             } catch (e: Exception) {
-                // Error de red (ej. sin internet)
                 _uiState.update { it.copy(isLoading = false, error = "No hay conexión: ${e.message}") }
             }
         }
@@ -90,73 +86,44 @@ class EditarReporteViewModel(
     // Publica un nuevo comentario
     fun postComentario() {
         if (_uiState.value.nuevoComentarioTexto.isBlank() || currentUserId == -1) return
-
         val request = ComentarioRequest(
             texto = _uiState.value.nuevoComentarioTexto,
             usuario_id = currentUserId
         )
-
         viewModelScope.launch {
-            // Limpia el campo de texto INMEDIATAMENTE para que el usuario vea una respuesta
             _uiState.update { it.copy(nuevoComentarioTexto = "") }
-
             try {
-                // Hacemos el post
                 val response = RetrofitInstance.api.postComentario(reporteId, request)
-
                 if (response.isSuccessful) {
-                    // El post fue exitoso.
-                    // AHORA, en lugar de confiar en el response.body(),
-                    // simplemente volvemos a cargar todo.
-                    // Es un poco más lento, pero 100% seguro contra crasheos.
-                    cargarDatosCompletos()
+                    cargarDatosCompletos() // Recarga todo para estar seguro
                 } else {
-                    // El posteo falló, mostrar un error
                     _uiState.update { it.copy(error = "No se pudo publicar el comentario (${response.code()})") }
                 }
-
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Error al publicar comentario: ${e.message}") }
-                println("Error al publicar comentario: ${e.message}")
             }
         }
     }
 
     // Maneja el clic en "like" o "dislike"
     fun handleReaccion(tipo: String) {
-        if (currentUserId == -1) return // No permitir reacciones si no está logueado
-
+        if (currentUserId == -1) return
         viewModelScope.launch {
             val reaccionActual = _uiState.value.reporte?.current_user_reaction
-
             try {
                 if (reaccionActual == tipo) {
-                    // El usuario hizo clic en el mismo botón (ej. "like" otra vez): Quitar reacción
-                    val request = ReactionRemoveRequest(
-                        actor_id = currentUserId, // <-- CORREGIDO
-                        role = currentUserRole    // <-- AÑADIDO
-                    )
+                    val request = ReactionRemoveRequest(actor_id = currentUserId, role = currentUserRole)
                     RetrofitInstance.api.removeReaccion(reporteId, request)
                 } else {
-                    // El usuario hizo clic en un botón nuevo: Poner/cambiar reacción
-                    val request = ReactionRequest(
-                        tipo = tipo,
-                        actor_id = currentUserId, // <-- CORREGIDO
-                        role = currentUserRole    // <-- AÑADIDO
-                    )
+                    val request = ReactionRequest(tipo = tipo, actor_id = currentUserId, role = currentUserRole)
                     RetrofitInstance.api.setReaccion(reporteId, request)
                 }
-
-                // Después de la reacción, recargamos el reporte para obtener los nuevos contadores
-                // y el estado de 'current_user_reaction'
+                // Recargamos el reporte para obtener los nuevos contadores
                 val updatedReporteResponse = RetrofitInstance.api.getReporteById(reporteId, currentUserId, currentUserRole)
                 if (updatedReporteResponse.isSuccessful) {
                     _uiState.update { it.copy(reporte = updatedReporteResponse.body()) }
                 }
-
             } catch (e: Exception) {
-                println("Error al gestionar reacción: ${e.message}")
-                // Opcional: Mostrar un error al usuario
                 _uiState.update { it.copy(error = "Error al procesar reacción") }
             }
         }
@@ -168,7 +135,6 @@ class EditarReporteViewModel(
             try {
                 val response = RetrofitInstance.api.deleteComentario(comentarioId)
                 if (response.isSuccessful) {
-                    // Eliminar el comentario de la lista local
                     _uiState.update {
                         it.copy(comentarios = it.comentarios.filterNot { c -> c.id == comentarioId })
                     }
@@ -185,8 +151,7 @@ class EditarReporteViewModel(
             val request = ComentarioUpdateRequest(texto = nuevoTexto)
             try {
                 val response = RetrofitInstance.api.updateComentario(comentarioId, request)
-                if (response.isSuccessful) {
-                    // Actualizar el comentario en la lista local
+                if (response.isSuccessful && response.body() != null) {
                     val comentarioActualizado = response.body()!!
                     _uiState.update {
                         it.copy(comentarios = it.comentarios.map { c ->
@@ -199,8 +164,36 @@ class EditarReporteViewModel(
             }
         }
     }
+    //Estadosreportes
+    fun updateEstadoReporte(nuevoEstado: String) {
+        // Comprobación de seguridad
+        if (currentUserRole != "funcionario" || _uiState.value.reporte == null) {
+            _uiState.update { it.copy(error = "Acción no autorizada") }
+            return
+        }
 
-    // Factory para poder pasar el ID del reporte y las preferencias al ViewModel
+        viewModelScope.launch {
+            val request = UpdateEstadoRequest(estado = nuevoEstado)
+            try {
+                // endpointcall
+                val response = RetrofitInstance.api.updateReporteEstado(
+                    reporteId,
+                    currentUserRole,
+                    currentUserId,
+                    request
+                )
+
+                if (response.isSuccessful && response.body() != null) {
+                    // Ok - ubdate
+                    _uiState.update { it.copy(reporte = response.body()) }
+                } else {
+                    _uiState.update { it.copy(error = "No se pudo actualizar el estado (${response.code()})") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Error de red: ${e.message}") }
+            }
+        }
+    }
     class Factory(
         private val context: Context,
         private val reporteId: Int

@@ -633,13 +633,15 @@ fun ConsultarReporteScreen(
         }
     }
 
-    // Diálogo para cambiar estado (solo para funcionarios)
+    // Diálogo para cambiar estado (solo para funcionarios) Cambio logica
     if (showEstadoDialog) {
         EstadoReporteDialog(
             estadoActual = uiState.reporte?.estado ?: "Nuevo",
             onDismiss = { showEstadoDialog = false },
             onEstadoSeleccionado = { nuevoEstado ->
-                //viewModel.updateEstadoReporte(nuevoEstado)
+
+                viewModel.updateEstadoReporte(nuevoEstado)
+
                 showEstadoDialog = false
             }
         )

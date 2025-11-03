@@ -139,4 +139,12 @@ interface ApiService {
     suspend fun getOtherFuncionarioProfile(
         @Path("userId") userId: Int
     ): Response<OtherUserProfileResponse>
+
+    @PUT("/reportes/{id}/estado")
+    suspend fun updateReporteEstado(
+        @Path("id") reporteId: Int,
+        @Header("User-Role") userRole: String, // Para la autorización
+        @Header("User-Id") userId: Int,
+        @Body request: UpdateEstadoRequest
+    ): Response<MiReporte>
 }
