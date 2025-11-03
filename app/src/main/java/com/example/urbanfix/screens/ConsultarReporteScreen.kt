@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -51,6 +52,14 @@ import com.example.urbanfix.network.ComentarioResponse
 import com.example.urbanfix.network.MiReporte
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.EditarReporteViewModel
+import com.mapbox.geojson.Point
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.MapView
+import com.mapbox.maps.Style
+import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
+import com.mapbox.maps.plugin.gestures.gestures
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -191,15 +200,14 @@ fun ConsultarReporteScreen(
                             ) {
                                 val lat = reporte.latitud.toDoubleOrNull() ?: 0.0
                                 val lon = reporte.longitud.toDoubleOrNull() ?: 0.0
-                                MapboxMapComponent(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .nestedScroll(connection = object :
-                                            NestedScrollConnection {}),
-                                    hasPermission = true,
-                                    selectedLocation = null,
-                                    onMapReady = {},
-                                    onLocationSelected = {}
+
+                                //INDEPENDIZAMOS LOS MAPAS. ESTE SOLO ES EL QUE APARECE EN ConsultarReporteScreen y EditarReporteScreen
+                                val reportLocationPoint = Point.fromLngLat(lon, lat)
+
+                                // Llama al nuevo componente estático
+                                ReporteDetalleMapComponent(
+                                    modifier = Modifier.fillMaxSize(),
+                                    reportLocation = reportLocationPoint
                                 )
                             }
 
@@ -1420,4 +1428,68 @@ fun ImageGalleryDialog3(
             }
         }
     }
+}
+@Composable
+fun ReporteDetalleMapComponent(
+    modifier: Modifier = Modifier,
+    reportLocation: Point
+) {
+    AndroidView(
+        factory = { context ->
+            val mapView = MapView(context)
+            val mapboxMap = mapView.getMapboxMap()
+
+            // 1. Deshabilita TODOS los gestos del mapa
+            // Esto es crucial para que funcione bien dentro de un Column con scroll
+            mapView.gestures.apply {
+                scrollEnabled = false
+                rotateEnabled = false
+                pitchEnabled = false
+            }
+
+            // 2. Centra la cámara en la ubicación del reporte
+            mapboxMap.setCamera(
+                CameraOptions.Builder()
+                    .center(reportLocation)
+                    .zoom(15.0) // Un zoom más cercano
+                    .build()
+            )
+
+            // 3. Carga el estilo
+            mapboxMap.loadStyleUri(Style.MAPBOX_STREETS) { style ->
+
+                // 4. Añade un marcador (anotación) en la ubicación
+                val annotationApi = mapView.annotations
+                val pointAnnotationManager = annotationApi.createPointAnnotationManager()
+
+                val pointAnnotationOptions = PointAnnotationOptions()
+                    .withPoint(reportLocation)
+                // Usará el marcador rojo por defecto de Mapbox
+
+                pointAnnotationManager.create(pointAnnotationOptions)
+            }
+
+            mapView // Devuelve el MapView
+        },
+        update = { mapView ->
+            // 5. Se asegura de que la cámara se actualice si el Point cambia
+            val mapboxMap = mapView.getMapboxMap()
+            mapboxMap.setCamera(
+                CameraOptions.Builder()
+                    .center(reportLocation)
+                    .zoom(15.0)
+                    .build()
+            )
+
+            // 6. Limpia marcadores viejos y añade el nuevo
+            val annotationApi = mapView.annotations
+            val pointAnnotationManager = annotationApi.createPointAnnotationManager()
+            pointAnnotationManager.deleteAll() // Limpia
+
+            val pointAnnotationOptions = PointAnnotationOptions()
+                .withPoint(reportLocation)
+            pointAnnotationManager.create(pointAnnotationOptions) // Crea el nuevo
+        },
+        modifier = modifier
+    )
 }

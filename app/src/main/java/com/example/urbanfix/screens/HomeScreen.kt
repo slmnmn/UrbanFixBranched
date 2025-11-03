@@ -284,7 +284,7 @@ fun HomeScreen(navController: NavHostController) {
                             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                             colors = CardDefaults.cardColors(containerColor = WhiteFull)
                         ) {
-                            MapboxMapComponent(
+                            MapboxMapComponentPuntos(
                                 modifier = Modifier.fillMaxSize(),
                                 hasPermission = hasLocationPermission
                             )
@@ -575,7 +575,7 @@ fun MapDetailScreen(navController: NavHostController) {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        MapboxMapComponent(
+        MapboxMapComponentPuntos(
             modifier = Modifier.fillMaxSize(),
             hasPermission = hasLocationPermission
         )
@@ -597,7 +597,7 @@ fun MapDetailScreen(navController: NavHostController) {
 }
 
 @Composable
-fun MapboxMapComponent(modifier: Modifier = Modifier, hasPermission: Boolean) {
+fun MapboxMapComponentPuntos(modifier: Modifier = Modifier, hasPermission: Boolean) {
     AndroidView(
         factory = { context ->
             // 1. Crea el MapView

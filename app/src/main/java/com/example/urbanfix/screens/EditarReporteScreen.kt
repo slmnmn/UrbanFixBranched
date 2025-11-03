@@ -49,6 +49,7 @@ import com.example.urbanfix.network.ComentarioResponse
 import com.example.urbanfix.network.MiReporte
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.EditarReporteViewModel
+import com.mapbox.geojson.Point
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -174,14 +175,13 @@ fun EditarReporteScreen(
                             ) {
                                 val lat = reporte.latitud.toDoubleOrNull() ?: 0.0
                                 val lon = reporte.longitud.toDoubleOrNull() ?: 0.0
-                                MapboxMapComponent(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .nestedScroll(connection = object : NestedScrollConnection {}),
-                                    hasPermission = true,
-                                    selectedLocation = null,
-                                    onMapReady = {},
-                                    onLocationSelected = {}
+                                //INDEPENDIZAMOS LOS MAPAS. ESTE SOLO ES EL QUE APARECE EN ConsultarReporteScreen y EditarReporteScreen
+                                val reportLocationPoint = Point.fromLngLat(lon, lat)
+
+                                // Llama al nuevo componente estático
+                                ReporteDetalleMapComponent(
+                                    modifier = Modifier.fillMaxSize(),
+                                    reportLocation = reportLocationPoint
                                 )
                             }
 
