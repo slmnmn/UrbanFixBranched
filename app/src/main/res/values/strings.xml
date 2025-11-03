@@ -546,5 +546,73 @@
     <string name="en_proceso">En proceso</string>
     <string name="aceptar">Aceptar</string>
 
+    <!-- MapaScreen -->
+    <string name="filtrar_button_description">Filtrar</string>
+    <string name="recentrar_ubicacion_description">Recentrar ubicación</string>
+    <string name="mostrar_listado_text">Mostrar listado</string>
+    <string name="mostrar_listado_description">Mostrar listado</string>
+    <string name="zoom_in_description">Acercar zoom</string>
+    <string name="zoom_out_description">Alejar zoom</string>
+    <string name="mas_zoom">+</string>
+    <string name="menos_zoom">−</string>
+
+    <!-- VerReportesScreen -->
+    <string name="ver_reportes_title">Reportes</string>
+    <string name="filter_button_description">Filtrar</string>
+    <string name="error_loading_reports">Error al cargar los reportes.</string>
+    <string name="retry_button_text">Reintentar</string>
+    <string name="no_public_reports">No hay reportes públicos disponibles</string>
+    <string name="no_reports_with_filters">No se encontraron reportes con los filtros aplicados</string>
+    <string name="report_generic">Reporte</string>
+    <string name="no_description">Sin descripción.</string>
+    <string name="copy_id_description">Copiar ID</string>
+    <string name="like_description">Like</string>
+    <string name="dislike_description">Dislike</string>
+    <string name="comments_description">Comentarios</string>
+
+    <!-- Categorías de reportes -->
+    <string name="category_sewer_full">Alcantarilla sin tapa</string>
+    <string name="category_traffic_light_full">Semaforo dañado</string>
+    <string name="category_lighting_full">Alumbrado Publico</string>
+    <string name="category_trash_full">Basura acumulada</string>
+    <string name="category_potholes_full">Huecos</string>
+    <string name="category_hydrant_full">Hidrante roto</string>
+
+    <!-- Estados de reportes -->
+    <string name="status_new_full">Nuevo</string>
+    <string name="status_in_progress_full">En proceso</string>
+    <string name="status_resolved_full">Resuelto</string>
+
+    <!-- Filtro Dialog -->
+    <string name="filter_reports_title">Filtrar Reportes</string>
+    <string name="report_type_filter_label">Tipo de Reporte</string>
+    <string name="report_status_filter_label">Estado del Reporte</string>
+    <string name="filter_reset_button">Restablecer</string>
+    <string name="filter_apply_button">Aplicar</string>
+    <string name="close_filter_description">Cerrar</string>
+
+    <!-- Tipos de reporte para filtro -->
+    <string name="filter_type_pothole">Hueco</string>
+    <string name="filter_type_lighting">Alumbrado</string>
+    <string name="filter_type_trash">Basura</string>
+    <string name="filter_type_traffic_light">Semaforo</string>
+    <string name="filter_type_hydrant">Hidrante</string>
+    <string name="filter_type_sewer">Alcantarilla</string>
+
+    <!-- Estados para filtro -->
+    <string name="filter_status_new">Nuevo</string>
+    <string name="filter_status_resolved">Resuelto</string>
+    <string name="filter_status_in_progress">En proceso</string>
+
+    <!-- Image Gallery Dialog -->
+    <string name="report_image_gallery_description">Imagen del reporte</string>
+    <string name="previous_image_button">Anterior</string>
+    <string name="next_image_button">Siguiente</string>
+    <string name="back_to_reports_button">Volver</string>
+
+    <!-- Bottom Navigation -->
+    <string name="my_supports_nav">Mis apoyos</string>
+    <string name="my_complaints_nav">Mis denuncias</string>
+    <string name="login_required_message">Debes iniciar sesión para ver tus reportes</string>
 </resources>
 

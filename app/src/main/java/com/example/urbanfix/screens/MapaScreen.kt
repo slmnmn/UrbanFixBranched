@@ -2,11 +2,11 @@ package com.example.urbanfix.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build // Añadido para @RequiresApi
-import android.util.Log // Para logs de error
+import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi // Añadido para @RequiresApi
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -55,21 +55,18 @@ import com.mapbox.maps.extension.style.layers.generated.circleLayer
 import com.mapbox.maps.extension.style.sources.addSource
 import com.mapbox.maps.plugin.gestures.addOnMapClickListener
 import com.mapbox.geojson.Feature
-
-// --- IMPORTACIONES AÑADIDAS PARA VIEWMODEL Y LÓGICA DE DATOS ---
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.urbanfix.data.ReportesRepository // Asegúrate de que este sea tu paquete
-import com.example.urbanfix.network.RetrofitInstance // Asegúrate de que este sea tu paquete
-import com.example.urbanfix.viewmodel.MapaUiState // Asegúrate de que este sea tu paquete
-import com.example.urbanfix.viewmodel.MapaViewModel // Asegúrate de que este sea tu paquete
-import com.example.urbanfix.viewmodel.MapaViewModelFactory // Asegúrate de que este sea tu paquete
+import com.example.urbanfix.data.ReportesRepository
+import com.example.urbanfix.network.RetrofitInstance
+import com.example.urbanfix.viewmodel.MapaUiState
+import com.example.urbanfix.viewmodel.MapaViewModel
+import com.example.urbanfix.viewmodel.MapaViewModelFactory
 import com.mapbox.maps.extension.style.layers.getLayer
-// Import necesario
 import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.extension.style.sources.getSource
 
 
-@RequiresApi(Build.VERSION_CODES.O) // Necesario para la navegación a ConsultarReporteScreen
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapaScreen(
@@ -85,7 +82,6 @@ fun MapaScreen(
     var tipoReporteFiltro by remember { mutableStateOf<String?>(null) }
     var estadoReporteFiltro by remember { mutableStateOf<String?>(null) }
 
-    // Referencias para controlar el mapa
     var mapView by remember { mutableStateOf<MapView?>(null) }
     var userLocation by remember { mutableStateOf<Point?>(null) }
 
@@ -111,7 +107,6 @@ fun MapaScreen(
         }
     }
 
-    // --- RECOGER EL ESTADO DEL VIEWMODEL ---
     val mapaUiState by mapaViewModel.uiState.collectAsState()
 
     Scaffold(
@@ -142,7 +137,7 @@ fun MapaScreen(
                     IconButton(onClick = { mostrarFiltro = true }) {
                         Image(
                             painter = painterResource(id = R.drawable.filtrar),
-                            contentDescription = "Filtrar",
+                            contentDescription = stringResource(R.string.filtrar_button_description),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -159,29 +154,25 @@ fun MapaScreen(
                         navController.navigate(Pantallas.VerReportes.ruta)
                     }
                 )
-                // Asume que BottomNavBarThreee está definida en otro archivo
                 BottomNavBarThreee(navController = navController)
             }
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
 
-            // --- LLAMADA AL COMPONENTE DEL MAPA ACTUALIZADO ---
             ReportesMapComponent(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                uiState = mapaUiState, // <-- Pasamos el nuevo estado
+                uiState = mapaUiState,
                 hasPermission = hasLocationPermission,
                 onMapViewReady = { map -> mapView = map },
                 onUserLocationChanged = { location -> userLocation = location },
                 onReporteClicked = { reporteId ->
-                    // ✅ NAVEGACIÓN A CONSULTAR REPORTE
                     navController.navigate(Pantallas.ConsultarReporte.crearRuta(reporteId.toString()))
                 }
             )
 
-            // Botones de control del mapa (Tu código original)
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -205,7 +196,7 @@ fun MapaScreen(
                     contentColor = WhiteFull
                 ) {
                     Text(
-                        text = "+",
+                        text = stringResource(R.string.mas_zoom),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -228,7 +219,7 @@ fun MapaScreen(
                     contentColor = WhiteFull
                 ) {
                     Text(
-                        text = "−",
+                        text = stringResource(R.string.menos_zoom),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -254,7 +245,7 @@ fun MapaScreen(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.recentrar),
-                        contentDescription = "Recentrar ubicación",
+                        contentDescription = stringResource(R.string.recentrar_ubicacion_description),
                         modifier = Modifier.size(24.dp),
                         tint = WhiteFull
                     )
@@ -263,9 +254,7 @@ fun MapaScreen(
         }
     }
 
-    // Diálogo de filtro (Tu código original)
     if (mostrarFiltro) {
-        // Asume que FiltroReportesPublicosDialog está definida en otro archivo
         FiltroReportesPublicosDialog(
             tipoSeleccionado = tipoReporteFiltro,
             estadoSeleccionado = estadoReporteFiltro,
@@ -283,11 +272,10 @@ fun MapaScreen(
     }
 }
 
-// --- COMPONENTE DEL MAPA ACTUALIZADO ---
 @Composable
 fun ReportesMapComponent(
     modifier: Modifier = Modifier,
-    uiState: MapaUiState, // <-- Recibe el UiState
+    uiState: MapaUiState,
     hasPermission: Boolean,
     onMapViewReady: (MapView) -> Unit,
     onUserLocationChanged: (Point) -> Unit,
@@ -298,7 +286,6 @@ fun ReportesMapComponent(
             val mapView = MapView(context)
             val mapboxMap = mapView.getMapboxMap()
 
-            // 1. Centra en Bogotá al iniciar
             val bogotaCenter = Point.fromLngLat(-74.0817, 4.6097)
             val initialZoom = 10.0
             mapboxMap.setCamera(
@@ -308,15 +295,12 @@ fun ReportesMapComponent(
                     .build()
             )
 
-            // 2. Carga el estilo
             mapboxMap.loadStyleUri(Style.MAPBOX_STREETS) { style ->
 
-                // 3. Muestra la ubicación del usuario
                 if (hasPermission) {
                     initLocationComponentWithCallback(mapView, onUserLocationChanged)
                 }
 
-                // 4. Lógica de clic (sin cambios)
                 mapboxMap.addOnMapClickListener { point ->
 
                     val queryGeometry = RenderedQueryGeometry(mapboxMap.pixelForCoordinate(point))
@@ -332,10 +316,9 @@ fun ReportesMapComponent(
                             }
                         }
                     }
-                    true // Indica que manejamos el clic
+                    true
                 }
 
-                // 5. Intento de carga inicial (si los datos ya llegaron)
                 if (uiState is MapaUiState.Success) {
                     actualizarFuenteGeoJson(style, uiState.geoJsonData)
                 }
@@ -345,22 +328,16 @@ fun ReportesMapComponent(
                 }
             }
 
-            // 7. Devuelve el MapView
             onMapViewReady(mapView)
             mapView
         },
         update = { mapView ->
-            // Este bloque se ejecuta en recomposiciones (cuando uiState cambia)
-
-            // 1. Actualiza la ubicación (sin cambios)
             if (hasPermission) {
                 initLocationComponentWithCallback(mapView, onUserLocationChanged)
             }
 
-            // 2. Actualiza los datos del mapa
             val style = mapView.getMapboxMap().style
             if (style != null && style.isStyleLoaded()) {
-                // Si el estado es Success, actualiza los datos del mapa
                 if (uiState is MapaUiState.Success) {
                     actualizarFuenteGeoJson(style, uiState.geoJsonData)
                 }
@@ -373,21 +350,15 @@ fun ReportesMapComponent(
     )
 }
 
-/**
- * Función de ayuda para crear o actualizar la fuente GeoJSON y su capa.
- */
 private fun actualizarFuenteGeoJson(style: Style, geoJsonData: String) {
-    // Intenta obtener la fuente
     val source = style.getSource("reportes-source") as? GeoJsonSource
 
     if (source == null) {
-        // Si no existe, la crea (y la capa)
         style.addSource(
             geoJsonSource("reportes-source") {
-                data(geoJsonData) // <-- CAMBIO CLAVE: usamos data() en lugar de url()
+                data(geoJsonData)
             }
         )
-        // Añade la capa solo si la fuente es nueva
         if (style.getLayer("reportes-layer") == null) {
             style.addLayer(
                 circleLayer("reportes-layer", "reportes-source") {
@@ -399,13 +370,10 @@ private fun actualizarFuenteGeoJson(style: Style, geoJsonData: String) {
             )
         }
     } else {
-        // Si la fuente ya existe, solo actualiza los datos
         source.data(geoJsonData)
     }
 }
 
-
-// --- FUNCIÓN DE AYUDA (Tu código original - Sin cambios) ---
 private fun initLocationComponentWithCallback(
     mapView: MapView,
     onUserLocationChanged: (Point) -> Unit
@@ -440,7 +408,6 @@ private fun initLocationComponentWithCallback(
     }
 }
 
-// --- BARRA INFERIOR (Tu código original - Sin cambios) ---
 @Composable
 fun MostrarListadoBar(onClick: () -> Unit) {
     var offsetY by remember { mutableStateOf(0f) }
@@ -485,7 +452,7 @@ fun MostrarListadoBar(onClick: () -> Unit) {
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Mostrar listado",
+                text = stringResource(R.string.mostrar_listado_text),
                 color = WhiteFull,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
@@ -493,7 +460,7 @@ fun MostrarListadoBar(onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = Icons.Default.KeyboardArrowUp,
-                contentDescription = "Mostrar listado",
+                contentDescription = stringResource(R.string.mostrar_listado_description),
                 tint = WhiteFull,
                 modifier = Modifier.size(24.dp)
             )
