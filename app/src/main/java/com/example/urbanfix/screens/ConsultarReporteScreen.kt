@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +34,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -53,6 +55,9 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.text.SimpleDateFormat
+import java.util.*
+
 @RequiresApi(Build.VERSION_CODES.O)
 fun navigateToUserProfile(
     navController: NavHostController,
@@ -65,6 +70,7 @@ fun navigateToUserProfile(
         navController.navigate(Pantallas.Verperfilusuario.crearRuta(userId))
     }
 }
+
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,8 +96,11 @@ fun ConsultarReporteScreen(
     var commentToEdit by remember { mutableStateOf<ComentarioResponse?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showOptionsDialog by remember { mutableStateOf<Int?>(null) }
+    var showEstadoDialog by remember { mutableStateOf(false) }
 
     val currentUserId = remember { UserPreferencesManager(context).getUserId() }
+    val userRole = remember { UserPreferencesManager(context).getUserRole() }
+    val isFuncionario = userRole == "funcionario"
 
     Scaffold(
         topBar = {
@@ -185,7 +194,8 @@ fun ConsultarReporteScreen(
                                 MapboxMapComponent(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .nestedScroll(connection = object : NestedScrollConnection {}),
+                                        .nestedScroll(connection = object :
+                                            NestedScrollConnection {}),
                                     hasPermission = true,
                                     selectedLocation = null,
                                     onMapReady = {},
@@ -272,7 +282,9 @@ fun ConsultarReporteScreen(
                                                         modifier = Modifier
                                                             .size(18.dp)
                                                             .clickable {
-                                                                clipboardManager.setText(AnnotatedString(code))
+                                                                clipboardManager.setText(
+                                                                    AnnotatedString(code)
+                                                                )
                                                                 showCopyDialog = true
                                                             },
                                                         tint = Color.White.copy(alpha = 0.7f)
@@ -370,29 +382,48 @@ fun ConsultarReporteScreen(
                                                         .background(Color.White.copy(alpha = 0.6f))
                                                 )
                                                 Spacer(modifier = Modifier.height(8.dp))
-                                                val (statusColor, statusText) = when (reporte.estado) {
-                                                    "Nuevo" -> Color(0xFF4AB7B6) to "Nuevo"
-                                                    "En proceso" -> Color(0xFFFFB800) to "En Proceso"
-                                                    "Resuelto" -> Color(0xFF90BE6D) to "Resuelto"
-                                                    else -> Color.Gray to (reporte.estado ?: "N/A")
+
+                                                // NUEVO: Row para imagen de estado + ícono de edición
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.Center
+                                                ) {
+                                                    val imagenEstado = when (reporte.estado) {
+                                                        "Nuevo" -> R.drawable.nuevo
+                                                        "En proceso" -> R.drawable.proceso
+                                                        "Resuelto" -> R.drawable.resuelto
+                                                        else -> R.drawable.nuevo
+                                                    }
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .width(85.dp)
+                                                            .height(26.dp),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Image(
+                                                            painter = painterResource(id = imagenEstado),
+                                                            contentDescription = reporte.estado,
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            contentScale = ContentScale.Fit
+                                                        )
+                                                    }
+
+                                                    // Mostrar ícono de edición solo si es funcionario
+                                                    if (isFuncionario) {
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        IconButton(
+                                                            onClick = { showEstadoDialog = true },
+                                                            modifier = Modifier.size(24.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Edit,
+                                                                contentDescription = "Editar estado",
+                                                                modifier = Modifier.size(16.dp),
+                                                                tint = Color.White
+                                                            )
+                                                        }
+                                                    }
                                                 }
-                                                Text(
-                                                    text = statusText,
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color.Black,
-                                                    modifier = Modifier
-                                                        .background(
-                                                            statusColor,
-                                                            RoundedCornerShape(6.dp)
-                                                        )
-                                                        .padding(
-                                                            start = 10.dp,
-                                                            top = 4.dp,
-                                                            end = 10.dp,
-                                                            bottom = 6.dp
-                                                        )
-                                                )
                                             }
                                         }
                                     }
@@ -447,8 +478,9 @@ fun ConsultarReporteScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            val fechaFormateada = formatearFecha(reporte.fecha_creacion)
                             Text(
-                                text = "Reportado ${reporte.fecha_creacion}\"",
+                                text = "Reportado $fechaFormateada",
                                 fontSize = 10.sp,
                                 color = Color(0xFF333333),
                                 lineHeight = 13.sp
@@ -460,10 +492,8 @@ fun ConsultarReporteScreen(
                                 modifier = Modifier.clickable {
                                     reporte.usuario_creador_id?.let { userId ->
                                         if (reporte.creador_es_verificado == true) {
-                                            // Es un funcionario, navegar a perfil empresa con ID
                                             navController.navigate(Pantallas.Verperfilempresa.crearRuta(userId))
                                         } else {
-                                            // Es un usuario normal, navegar a perfil usuario
                                             navController.navigate(Pantallas.Verperfilusuario.crearRuta(userId, "usuario"))
                                         }
                                     }
@@ -512,7 +542,9 @@ fun ConsultarReporteScreen(
                                     fontSize = 12.sp,
                                     color = Color.Gray,
                                     textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 16.dp)
                                 )
                             } else {
                                 uiState.comentarios.forEach { comentario ->
@@ -601,6 +633,18 @@ fun ConsultarReporteScreen(
         }
     }
 
+    // Diálogo para cambiar estado (solo para funcionarios)
+    if (showEstadoDialog) {
+        EstadoReporteDialog(
+            estadoActual = uiState.reporte?.estado ?: "Nuevo",
+            onDismiss = { showEstadoDialog = false },
+            onEstadoSeleccionado = { nuevoEstado ->
+                //viewModel.updateEstadoReporte(nuevoEstado)
+                showEstadoDialog = false
+            }
+        )
+    }
+
     if (showEditDialog && commentToEdit != null) {
         EditCommentDialog2(
             comment = commentToEdit!!,
@@ -650,13 +694,130 @@ fun ConsultarReporteScreen(
     }
 }
 
+@Composable
+fun EstadoReporteDialog(
+    estadoActual: String,
+    onDismiss: () -> Unit,
+    onEstadoSeleccionado: (String) -> Unit
+) {
+    var estadoSeleccionado by remember { mutableStateOf(estadoActual) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(Color(0xFFC8E6C9)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.cambiar_estado_del_reporte),
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp, horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.seleccione_el_estado_que_desea_proveer_a_la_situaci_n),
+                        fontSize = 15.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        color = Color.Black,
+                        fontStyle = FontStyle.Italic,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Botones de estado
+                    EstadoButton(
+                        texto = stringResource(R.string.resuelto),
+                        seleccionado = estadoSeleccionado == "Resuelto",
+                        onClick = { estadoSeleccionado = "Resuelto" }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    EstadoButton(
+                        texto = stringResource(R.string.en_proceso),
+                        seleccionado = estadoSeleccionado == "En proceso",
+                        onClick = { estadoSeleccionado = "En proceso" }
+                    )
+                }
+
+                // Botón Aceptar
+                Button(
+                    onClick = { onEstadoSeleccionado(estadoSeleccionado) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D3557)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                        .padding(bottom = 24.dp)
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.aceptar),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EstadoButton(
+    texto: String,
+    seleccionado: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (seleccionado) Color(0xFF90BE6D) else Color(0xFFE8E8E8)
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = texto,
+            color = if (seleccionado) Color.White else Color.Black,
+            fontSize = 16.sp,
+            fontWeight = if (seleccionado) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CommentItem2(
     comment: ComentarioResponse,
     isCurrentUser: Boolean,
     showMenu: Boolean,
-    navController: NavHostController, // NUEVO PARÁMETRO
+    navController: NavHostController,
     onMenuClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -861,7 +1022,6 @@ fun CommentOptionsDialog2(
                     )
                 }
                 Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
-                // Botón Volver
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier
@@ -883,13 +1043,12 @@ fun CommentOptionsDialog2(
 
 @Composable
 fun EditCommentDialog2(
-    comment: ComentarioResponse, // Recibe el ComentarioResponse
+    comment: ComentarioResponse,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit
 ) {
-    var editedText by remember { mutableStateOf(comment.texto) } // Inicializa con el texto actual
+    var editedText by remember { mutableStateOf(comment.texto) }
 
-    // El resto de tu Composable EditCommentDialog es idéntico
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -973,7 +1132,6 @@ fun EditCommentDialog2(
 
 @Composable
 fun CodeCopiedDialog2(onDismiss: () -> Unit) {
-    // Este Composable no necesita cambios, tu lógica original está perfecta.
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -1040,7 +1198,6 @@ fun DeleteCommentDialog2(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    // Este Composable no necesita cambios, tu lógica original está perfecta.
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -1130,7 +1287,7 @@ fun DeleteCommentDialog2(
 
 @Composable
 fun ImageGalleryDialog3(
-    images: List<String>, // AHORA RECIBE UNA LISTA DE URLs (String)
+    images: List<String>,
     initialIndex: Int = 0,
     onDismiss: () -> Unit
 ) {
@@ -1150,7 +1307,6 @@ fun ImageGalleryDialog3(
                     .fillMaxWidth()
                     .wrapContentHeight()
             ) {
-                // Contenedor de la imagen
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1158,9 +1314,8 @@ fun ImageGalleryDialog3(
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // --- CAMBIO PRINCIPAL: USA AsyncImage ---
                     AsyncImage(
-                        model = images[currentIndex], // Carga la URL
+                        model = images[currentIndex],
                         contentDescription = stringResource(R.string.image_description),
                         placeholder = painterResource(id = R.drawable.prueba_circulo),
                         error = painterResource(id = R.drawable.alerta_no_nada),
@@ -1171,7 +1326,6 @@ fun ImageGalleryDialog3(
                     )
                 }
 
-                // Botón Volver
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(
@@ -1192,7 +1346,6 @@ fun ImageGalleryDialog3(
                 }
             }
 
-            // Flechas de navegación (solo si hay más de una imagen)
             if (images.size > 1) {
                 IconButton(
                     onClick = {

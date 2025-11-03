@@ -41,19 +41,17 @@ import com.example.urbanfix.viewmodel.ViewModelFactory
 fun VerperfilusuarioScreen(
     navController: NavHostController,
     userId: String? = null,
-    userRole: String = "usuario" // NUEVO: Parámetro para el rol
+    userRole: String = "usuario"
 ) {
     val context = LocalContext.current
     val userIdInt = userId?.toIntOrNull()
 
-    // IMPORTANTE: Pasar el userRole al ViewModelFactory
     val viewModel: ProfileViewModel = viewModel(
         factory = ViewModelFactory(context, userIdInt, userRole)
     )
 
     val otherUserProfileState by viewModel.otherUserProfileState.collectAsState()
 
-    // NUEVO: Si es funcionario, redirigir a VerperfilempresaScreen
     LaunchedEffect(otherUserProfileState) {
         if (!otherUserProfileState.isLoading &&
             otherUserProfileState.accountType == "Funcionario" &&
@@ -230,7 +228,7 @@ private fun UsuarioProfileContent(
                 UserInfoRowUsuario(
                     icon = Icons.Default.AccountCircle,
                     label = stringResource(R.string.account_type_label),
-                    value = accountType
+                    value = "Personal" // CAMBIO: Ahora siempre muestra "Personal"
                 )
 
                 if (companyName != null && companyName.isNotBlank()) {

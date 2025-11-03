@@ -533,6 +533,18 @@
     <string name="faq_icon_expand">Expandir</string>
     <string name="faq_icon_collapse">Contraer</string>
     <string name="faq_icon_back">Volver</string>
+    <string name="fondo_barra_de_b_squeda">Fondo barra de búsqueda</string>
+    <string name="decoraci_n_superior">Decoración superior</string>
+    <string name="quieres_crear_tu_cuenta_como_funcionario_de_una_organizaci_n">¿Quieres crear tu cuenta como funcionario de una organización?</string>
+    <string name="antes_de_comenzar">Antes de comenzar...</string>
+    <string name="bienvenido_urbanfix">Bienvenido UrbanFix</string>
+
+    <!-- Consultar reporte -->
+    <string name="cambiar_estado_del_reporte">Cambiar estado del reporte</string>
+    <string name="seleccione_el_estado_que_desea_proveer_a_la_situaci_n">Seleccione el estado que desea proveer a la situación</string>
+    <string name="resuelto">Resuelto</string>
+    <string name="en_proceso">En proceso</string>
+    <string name="aceptar">Aceptar</string>
 
 </resources>
 

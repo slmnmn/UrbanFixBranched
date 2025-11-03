@@ -141,7 +141,7 @@ fun MisApoyosScreen(
             )
         },
         bottomBar = {
-            BottomNavBarThree2(navController = navController)
+            BottomNavBar(navController = navController)
         },
         containerColor = GrayBg
     ) { paddingValues ->

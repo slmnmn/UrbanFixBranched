@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -37,7 +38,7 @@ fun RegistroScreen(navController: NavHostController) {
         // Imagen de fondo
         Image(
             painter = painterResource(id = R.drawable.log_back),
-            contentDescription = "Bienvenido UrbanFix",
+            contentDescription = stringResource(R.string.bienvenido_urbanfix),
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
@@ -104,7 +105,7 @@ fun RegistroScreen(navController: NavHostController) {
                                     Spacer(modifier = Modifier.height(50.dp))
 
                                     Text(
-                                        text = "Antes de comenzar...",
+                                        text = stringResource(R.string.antes_de_comenzar),
                                         fontSize = 20.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF1D3557)
@@ -113,7 +114,7 @@ fun RegistroScreen(navController: NavHostController) {
                                     Spacer(modifier = Modifier.height(32.dp))
 
                                     Text(
-                                        text = "¿Quieres crear tu cuenta como funcionario de una organización?",
+                                        text = stringResource(R.string.quieres_crear_tu_cuenta_como_funcionario_de_una_organizaci_n),
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF1D3557),
@@ -180,7 +181,7 @@ fun RegistroScreen(navController: NavHostController) {
 
 
                             Text(
-                                text = "¿Ya tienes una cuenta? Inicia sesión",
+                                text = stringResource(R.string.ya_tienes_una_cuenta_inicia_sesi_n),
                                 fontSize = 14.sp,
                                 color = Color(0xFF1D3557),
                                 fontWeight = FontWeight.Bold,
@@ -207,7 +208,7 @@ fun RegistroScreen(navController: NavHostController) {
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.circular_logo),
-                        contentDescription = "Logo UrbanFix",
+                        contentDescription = stringResource(R.string.logo_urbanfix),
                         modifier = Modifier
                             .size(130.dp)
                             .clip(CircleShape)

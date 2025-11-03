@@ -115,7 +115,7 @@ fun HomeScreen(navController: NavHostController) {
 
         Image(
             painter = painterResource(id = R.drawable.part_arriba_menu),
-            contentDescription = "Decoración superior",
+            contentDescription = stringResource(R.string.decoraci_n_superior),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
@@ -135,7 +135,7 @@ fun HomeScreen(navController: NavHostController) {
                 contentDescription = stringResource(R.string.urbanfix_logo_description),
                 modifier = Modifier
                     .height(40.dp)
-                    .padding(start=10.dp)
+                    .padding(start = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -147,7 +147,7 @@ fun HomeScreen(navController: NavHostController) {
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.back_search),
-                    contentDescription = "Fondo barra de búsqueda",
+                    contentDescription = stringResource(R.string.fondo_barra_de_b_squeda),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(61.dp)
@@ -367,7 +367,7 @@ fun HomeScreen(navController: NavHostController) {
                             modifier = Modifier
                                 .width(167.dp)
                                 .height(48.dp)
-                                .clickable {navController.navigate(Pantallas.MisApoyos.ruta) }
+                                .clickable { navController.navigate(Pantallas.MisApoyos.ruta) }
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Image(
@@ -376,7 +376,7 @@ fun HomeScreen(navController: NavHostController) {
                             modifier = Modifier
                                 .weight(1f)
                                 .height(48.dp)
-                                .clickable {navController.navigate(Pantallas.MisDenuncias.ruta)  }
+                                .clickable { navController.navigate(Pantallas.MisDenuncias.ruta) }
                         )
                     }
                 }
@@ -644,18 +644,15 @@ private fun initLocationComponent(mapView: MapView) {
 
         val locationComponentPlugin = mapView.location
 
-        // Habilita el punto azul
+
         locationComponentPlugin.updateSettings {
             this.enabled = true
             this.pulsingEnabled = true
         }
 
-        // --- PASO 2: Moverse al Usuario ---
-        // Creamos un listener que se disparará cuando se encuentre la ubicación
         val listener = object : OnIndicatorPositionChangedListener {
             override fun onIndicatorPositionChanged(point: Point) {
 
-                // 1. Mueve la cámara a la nueva 'point' (ubicación del usuario)
                 mapView.getMapboxMap().setCamera(
                     CameraOptions.Builder()
                         .center(point)
@@ -666,11 +663,11 @@ private fun initLocationComponent(mapView: MapView) {
             }
         }
 
-        // 3. Añadimos el listener al plugin de ubicación
         locationComponentPlugin.addOnIndicatorPositionChangedListener(listener)
-        // --- Fin Paso 2 ---
+
     }
 }
+
 @Composable
 fun BottomNavBar(navController: NavHostController) {
     val context = LocalContext.current

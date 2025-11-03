@@ -1030,32 +1030,6 @@ fun BottomNavBarThree(navController: NavHostController) {
 
         NavigationBarItem(
             selected = false,
-            onClick = { },
-            icon = {
-                Image(
-                    painter = painterResource(id = R.drawable.notificaciones),
-                    contentDescription = stringResource(R.string.nav_notifications),
-                    modifier = Modifier.size(26.dp)
-                )
-            },
-            label = {
-                Text(
-                    stringResource(R.string.nav_notifications),
-                    color = WhiteFull,
-                    fontSize = 10.5.sp
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = WhiteFull,
-                selectedTextColor = WhiteFull,
-                unselectedIconColor = WhiteFull.copy(alpha = 0.6f),
-                unselectedTextColor = WhiteFull.copy(alpha = 0.6f),
-                indicatorColor = Color.Transparent
-            )
-        )
-
-        NavigationBarItem(
-            selected = false,
             onClick = {
                 navController.navigate(Pantallas.Perfil.ruta)
             },

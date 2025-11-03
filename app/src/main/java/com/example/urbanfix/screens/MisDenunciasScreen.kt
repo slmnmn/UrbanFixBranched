@@ -141,7 +141,7 @@ fun MisDenunciasScreen(
             )
         },
         bottomBar = {
-            BottomNavBarThree3(navController = navController)
+            BottomNavBar(navController = navController)
         },
         containerColor = GrayBg
     ) { paddingValues ->
@@ -1127,101 +1127,6 @@ fun MisDenunciasScreenPreview() {
     }
 }
 
-@Composable
-fun BottomNavBarThree3(navController: NavHostController) {
-    val context = LocalContext.current
-    val userPreferencesManager = remember { UserPreferencesManager(context) }
-    val userRole = remember { userPreferencesManager.getUserRole() }
-
-    NavigationBar(
-        containerColor = BlueMain,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(70.dp)
-    ) {
-        NavigationBarItem(
-            selected = true,
-            onClick = { navController.navigate(Pantallas.Home.ruta)},
-            icon = {
-                Image(
-                    painter = painterResource(id = R.drawable.menu),
-                    contentDescription = stringResource(R.string.nav_menu),
-                    modifier = Modifier
-                        .size(30.dp)
-                        .padding(top = 5.dp)
-                )
-            },
-            label = {
-                Text(
-                    stringResource(R.string.nav_menu),
-                    color = WhiteFull,
-                    fontSize = 11.sp
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = WhiteFull,
-                selectedTextColor = WhiteFull,
-                unselectedIconColor = WhiteFull.copy(alpha = 0.6f),
-                unselectedTextColor = WhiteFull.copy(alpha = 0.6f),
-                indicatorColor = Color.Transparent
-            )
-        )
-
-        NavigationBarItem(
-            selected = false,
-            onClick = { },
-            icon = {
-                Image(
-                    painter = painterResource(id = R.drawable.notificaciones),
-                    contentDescription = stringResource(R.string.nav_notifications),
-                    modifier = Modifier.size(26.dp)
-                )
-            },
-            label = {
-                Text(
-                    stringResource(R.string.nav_notifications),
-                    color = WhiteFull,
-                    fontSize = 10.5.sp
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = WhiteFull,
-                selectedTextColor = WhiteFull,
-                unselectedIconColor = WhiteFull.copy(alpha = 0.6f),
-                unselectedTextColor = WhiteFull.copy(alpha = 0.6f),
-                indicatorColor = Color.Transparent
-            )
-        )
-
-        NavigationBarItem(
-            selected = false,
-            onClick = {
-                navController.navigate(Pantallas.Perfil.ruta)
-            },
-            icon = {
-                Image(
-                    painter = painterResource(id = R.drawable.miperfil),
-                    contentDescription = stringResource(R.string.nav_profile),
-                    modifier = Modifier.size(26.dp)
-                )
-            },
-            label = {
-                Text(
-                    stringResource(R.string.nav_profile),
-                    color = WhiteFull,
-                    fontSize = 11.sp
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = WhiteFull,
-                selectedTextColor = WhiteFull,
-                unselectedIconColor = WhiteFull.copy(alpha = 0.6f),
-                unselectedTextColor = WhiteFull.copy(alpha = 0.6f),
-                indicatorColor = Color.Transparent
-            )
-        )
-    }
-}
 
 @Composable
 fun mostrarImagenCompleta3(
