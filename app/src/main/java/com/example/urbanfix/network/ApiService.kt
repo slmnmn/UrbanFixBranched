@@ -150,5 +150,10 @@ interface ApiService {
 
     @GET("/reportes/geojson")
     suspend fun getReportesGeoJson(): Response<JsonObject>
+
+    @GET("/reportes")
+    suspend fun getReportes(
+        @Query("user_id") userId: Int?
+    ): Response<List<MiReporte>>
 }
 

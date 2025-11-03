@@ -40,29 +40,57 @@ import com.example.urbanfix.data.UserPreferencesManager
 import com.example.urbanfix.navigation.Pantallas
 import com.example.urbanfix.ui.theme.*
 
-data class ReportePublico(
-    val id: String,
-    val tipo: String,
-    val imagen: Int,
-    val descripcion: String,
-    val estado: String,
-    val direccion: String,
-    val colorIndex: Int,
-    val iconoCategoria: Int
-)
+// --- IMPORTACIONES AÑADIDAS ---
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage // Importante para cargar imágenes de URL
+import com.example.urbanfix.data.ReportesRepository
+import com.example.urbanfix.network.MiReporte // Usamos el modelo de red
+import com.example.urbanfix.network.RetrofitInstance
+import com.example.urbanfix.viewmodel.ReportesUiState
+import com.example.urbanfix.viewmodel.VerReportesViewModel
+import com.example.urbanfix.viewmodel.VerReportesViewModelFactory
+import java.util.Locale
 
-// Función para obtener el ícono de categoría según el tipo
-fun obtenerIconoCategoria(tipo: String): Int {
-    return when (tipo) {
+// --- Data class ReportePublico ELIMINADA ---
+// Ya no usamos la data class estática
+
+// --- FUNCIONES HELPER PARA UI ---
+
+// Función para obtener el ícono de categoría según el nombre
+fun obtenerIconoCategoria(categoriaNombre: String?): Int {
+    return when (categoriaNombre) {
         "Alcantarilla" -> R.drawable.ciralcantarilla
         "Semaforo" -> R.drawable.cirsemaforo
         "Alumbrado" -> R.drawable.ciralumbrado
         "Basura" -> R.drawable.cirbasura
         "Hueco" -> R.drawable.circarro
         "Hidrante" -> R.drawable.cirhidrante
-        else -> R.drawable.circarro
+        else -> R.drawable.circarro // Default
     }
 }
+
+// Función para obtener el color de fondo según el nombre
+fun obtenerColorCategoria(categoriaNombre: String?): Color {
+    return when (categoriaNombre) {
+        "Alumbrado" -> Color(0xFF663251)
+        "Hueco" -> Color(0xFF4AB7B6)
+        "Semaforo" -> Color(0xFF1D3557)
+        "Basura" -> Color(0xFFE63946)
+        "Alcantarilla" -> Color(0xFF663251)
+        "Hidrante" -> Color(0xFF457B9D)
+        else -> Color(0xFF663251)
+    }
+}
+
+// Función para saber si el color de fondo es claro
+fun esColorClaro(categoriaNombre: String?): Boolean {
+    return when (categoriaNombre) {
+        "Hueco" -> true
+        else -> false
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,78 +101,24 @@ fun VerReportesScreen(
     var mostrarFiltro by remember { mutableStateOf(false) }
     var tipoReporteFiltro by remember { mutableStateOf<String?>(null) }
     var estadoReporteFiltro by remember { mutableStateOf<String?>(null) }
-    var reporteSeleccionado by remember { mutableStateOf<ReportePublico?>(null) }
+    var reporteSeleccionado by remember { mutableStateOf<MiReporte?>(null) }
 
-    // Estados para likes y dislikes (mapa con ID del reporte como clave)
-    var likesMap by remember { mutableStateOf(mapOf<String, Int>()) }
-    var dislikesMap by remember { mutableStateOf(mapOf<String, Int>()) }
-    var commentsMap by remember { mutableStateOf(mapOf<String, Int>()) }
-    var likeStatusMap by remember { mutableStateOf(mapOf<String, Boolean?>()) } // null = ninguno, true = like, false = dislike
+    // --- OBTENER DATOS DEL USUARIO ---
+    val userPreferencesManager = remember { UserPreferencesManager(context) }
+    val userId = remember { userPreferencesManager.getUserId().let { if (it == -1) null else it } }
+    val userRole = remember { userPreferencesManager.getUserRole() }
 
-    // Lista de reportes estáticos
-    val reportes = remember {
-        listOf(
-            ReportePublico(
-                "2025-00006",
-                "Alumbrado",
-                R.drawable.prueba_circulo,
-                "Se reporta que en la xx el alumbrado está intermitente, específicamente al lado del xxx",
-                "En proceso",
-                "Carrera 12 #30c 47 Sur",
-                0,
-                obtenerIconoCategoria("Alumbrado")
-            ),
-            ReportePublico(
-                "2025-00005",
-                "Hueco",
-                R.drawable.prueba_circulo,
-                "Se reporta que en la xx hay un hueco grande, específicamente al lado del xxx",
-                "Nuevo",
-                "Calle 45 #12-34",
-                1,
-                obtenerIconoCategoria("Hueco")
-            ),
-            ReportePublico(
-                "2025-00004",
-                "Alumbrado",
-                R.drawable.prueba_circulo,
-                "Se reporta que en la xx el alumbrado está intermitente, específicamente al lado del xxx",
-                "Nuevo",
-                "Avenida 68 #23-45",
-                2,
-                obtenerIconoCategoria("Alumbrado")
-            ),
-            ReportePublico(
-                "2025-00003",
-                "Alumbrado",
-                R.drawable.prueba_circulo,
-                "Se reporta que en la xx el alumbrado está intermitente, específicamente al lado del xxx",
-                "Resuelto",
-                "Carrera 7 #100-50",
-                3,
-                obtenerIconoCategoria("Alumbrado")
-            )
+    // --- INYECTAR VIEWMODEL ---
+    val viewModel: VerReportesViewModel = viewModel(
+        factory = VerReportesViewModelFactory(
+            repository = ReportesRepository(RetrofitInstance.api),
+            userId = userId,
+            userRole = userRole
         )
-    }
+    )
 
-    // Inicializar contadores
-    LaunchedEffect(Unit) {
-        reportes.forEach { reporte ->
-            likesMap = likesMap + (reporte.id to 12)
-            dislikesMap = dislikesMap + (reporte.id to 1)
-            commentsMap = commentsMap + (reporte.id to 5)
-            likeStatusMap = likeStatusMap + (reporte.id to null)
-        }
-    }
-
-    // Filtrar reportes
-    val reportesFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, reportes) {
-        reportes.filter { reporte ->
-            val coincideTipo = tipoReporteFiltro == null || reporte.tipo == tipoReporteFiltro
-            val coincideEstado = estadoReporteFiltro == null || reporte.estado == estadoReporteFiltro
-            coincideTipo && coincideEstado
-        }
-    }
+    // --- RECOLECTAR ESTADO DE LA UI ---
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -193,94 +167,111 @@ fun VerReportesScreen(
         },
         containerColor = GrayBg
     ) { paddingValues ->
-        if (reportesFiltrados.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(32.dp)
+
+        // --- MANEJAR LOS ESTADOS DE LA UI ---
+        when (val state = uiState) {
+            is ReportesUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.alerta_no_nada),
-                        contentDescription = stringResource(R.string.no_reportes),
-                        modifier = Modifier.size(120.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "No se encontraron reportes con los filtros aplicados",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
-                    )
+                    CircularProgressIndicator(color = BlueMain)
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(reportesFiltrados) { reporte ->
-                    ReportePublicoCard(
-                        reporte = reporte,
-                        context = context,
-                        likes = likesMap[reporte.id] ?: 0,
-                        dislikes = dislikesMap[reporte.id] ?: 0,
-                        comments = commentsMap[reporte.id] ?: 0,
-                        likeStatus = likeStatusMap[reporte.id],
-                        onLikeClick = {
-                            val currentStatus = likeStatusMap[reporte.id]
-                            if (currentStatus == true) {
-                                // Ya tiene like, lo quitamos
-                                likesMap = likesMap + (reporte.id to (likesMap[reporte.id]!! - 1))
-                                likeStatusMap = likeStatusMap + (reporte.id to null)
-                            } else {
-                                // Agregar like
-                                if (currentStatus == false) {
-                                    // Tenía dislike, lo quitamos
-                                    dislikesMap = dislikesMap + (reporte.id to (dislikesMap[reporte.id]!! - 1))
-                                }
-                                likesMap = likesMap + (reporte.id to (likesMap[reporte.id]!! + 1))
-                                likeStatusMap = likeStatusMap + (reporte.id to true)
-                            }
-                        },
-                        onDislikeClick = {
-                            val currentStatus = likeStatusMap[reporte.id]
-                            if (currentStatus == false) {
-                                // Ya tiene dislike, lo quitamos
-                                dislikesMap = dislikesMap + (reporte.id to (dislikesMap[reporte.id]!! - 1))
-                                likeStatusMap = likeStatusMap + (reporte.id to null)
-                            } else {
-                                // Agregar dislike
-                                if (currentStatus == true) {
-                                    // Tenía like, lo quitamos
-                                    likesMap = likesMap + (reporte.id to (likesMap[reporte.id]!! - 1))
-                                }
-                                dislikesMap = dislikesMap + (reporte.id to (dislikesMap[reporte.id]!! + 1))
-                                likeStatusMap = likeStatusMap + (reporte.id to false)
-                            }
-                        },
-                        onCommentClick = {
-                            Toast.makeText(context, "Comentarios de ${reporte.id}", Toast.LENGTH_SHORT).show()
-                        },
-                        onImageClick = {
-                            reporteSeleccionado = reporte
+            is ReportesUiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Error al cargar los reportes.",
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { viewModel.fetchReportes() }) {
+                            Text("Reintentar")
                         }
-                    )
+                    }
+                }
+            }
+            is ReportesUiState.Success -> {
+                // Filtramos la lista del ViewModel
+                val reportesFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, state.reportes) {
+                    state.reportes.filter { reporte ->
+                        val coincideTipo = tipoReporteFiltro == null || reporte.categoria_nombre == tipoReporteFiltro
+                        val coincideEstado = estadoReporteFiltro == null || reporte.estado == estadoReporteFiltro
+                        coincideTipo && coincideEstado
+                    }
+                }
+
+                if (reportesFiltrados.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(32.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.alerta_no_nada),
+                                contentDescription = stringResource(R.string.no_reportes),
+                                modifier = Modifier.size(120.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = if (tipoReporteFiltro == null && estadoReporteFiltro == null) "No hay reportes públicos disponibles"
+                                else "No se encontraron reportes con los filtros aplicados",
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(reportesFiltrados, key = { it.id }) { reporte ->
+                            ReportePublicoCard(
+                                reporte = reporte, // Pasamos el modelo MiReporte
+                                context = context,
+                                onLikeClick = {
+                                    viewModel.handleReaccion(reporte, "like")
+                                },
+                                onDislikeClick = {
+                                    viewModel.handleReaccion(reporte, "dislike")
+                                },
+                                onCommentClick = {
+                                    // Navegar a la pantalla de detalles/comentarios
+                                    navController.navigate(Pantallas.EditarReporte.crearRuta(reporte.id.toString()))
+                                },
+                                onImageClick = {
+                                    reporteSeleccionado = reporte
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 
-    // Diálogo de filtro
+    // Diálogo de filtro (No cambia)
     if (mostrarFiltro) {
         FiltroReportesPublicosDialog(
             tipoSeleccionado = tipoReporteFiltro,
@@ -298,10 +289,11 @@ fun VerReportesScreen(
         )
     }
 
-    // Diálogo de imagen completa
+    // Diálogo de imagen completa (Modificado para usar URL)
     reporteSeleccionado?.let { reporte ->
         ImageGalleryDialogReporte(
-            images = listOf(reporte.imagen),
+            // Ahora pasamos las URLs de las imágenes
+            images = listOfNotNull(reporte.img_prueba_1, reporte.img_prueba_2?.takeIf { it.isNotEmpty() }),
             initialIndex = 0,
             onDismiss = { reporteSeleccionado = null }
         )
@@ -310,26 +302,16 @@ fun VerReportesScreen(
 
 @Composable
 fun ReportePublicoCard(
-    reporte: ReportePublico,
+    reporte: MiReporte, // <-- CAMBIO: Usa el modelo de la API
     context: Context,
-    likes: Int,
-    dislikes: Int,
-    comments: Int,
-    likeStatus: Boolean?,
     onLikeClick: () -> Unit,
     onDislikeClick: () -> Unit,
     onCommentClick: () -> Unit,
     onImageClick: () -> Unit
 ) {
-    val colores = listOf(
-        Color(0xFF663251),
-        Color(0xFF4AB7B6),
-        Color(0xFF1D3557),
-        Color(0xFF663251)
-    )
-
-    val backgroundColor = colores[reporte.colorIndex % colores.size]
-    val esColorClaro = reporte.colorIndex == 1
+    // --- LÓGICA DE UI AHORA BASADA EN EL REPORTE ---
+    val backgroundColor = obtenerColorCategoria(reporte.categoria_nombre)
+    val esColorClaro = esColorClaro(reporte.categoria_nombre)
     val textColor = if (esColorClaro) Color.Black else WhiteFull
     val iconoCopiar = if (esColorClaro) R.drawable.copiarneg else R.drawable.copiarbla
 
@@ -340,10 +322,14 @@ fun ReportePublicoCard(
         else -> R.drawable.nuevo
     }
 
+    // Formatear el ID como en la maqueta
+    val formattedId = "# 2025-${reporte.id.toString().padStart(5, '0')}"
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(155.dp),
+            .height(155.dp)
+            .clickable { onCommentClick() }, // Hacer toda la tarjeta clickeable
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -364,7 +350,9 @@ fun ReportePublicoCard(
                 ) {
                     // Categoría
                     Text(
-                        text = reporte.tipo,
+                        text = reporte.categoria_nombre?.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                        } ?: "Reporte",
                         color = textColor,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -375,12 +363,18 @@ fun ReportePublicoCard(
                     // ID con botón copiar
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable {
-                            copiarAlPortapapeles(context, reporte.id)
-                        }
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                copiarAlPortapapeles(context, formattedId)
+                            }
+                            .padding(vertical = 2.dp)
                     ) {
                         Text(
-                            text = "# ${reporte.id}",
+                            text = formattedId, // ID formateado
                             color = textColor,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
@@ -397,7 +391,7 @@ fun ReportePublicoCard(
 
                     // Descripción
                     Text(
-                        text = reporte.descripcion,
+                        text = reporte.descripcion ?: "Sin descripción.",
                         color = textColor.copy(alpha = 0.9f),
                         fontSize = 12.sp,
                         lineHeight = 14.sp,
@@ -414,13 +408,20 @@ fun ReportePublicoCard(
                         .width(100.dp)
                         .height(105.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = reporte.imagen),
-                        contentDescription = reporte.tipo,
+                    // --- CAMBIO: Usar AsyncImage (Coil) ---
+                    AsyncImage(
+                        model = reporte.img_prueba_1, // Carga la URL
+                        contentDescription = reporte.categoria_nombre,
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { onImageClick() },
+                            .clickable(
+                                // Detener la propagación del clic de la tarjeta
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                onImageClick()
+                            },
                         contentScale = ContentScale.Crop
                     )
                 }
@@ -428,7 +429,7 @@ fun ReportePublicoCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Fila inferior: Ícono categoría, likes, dislikes, comentarios y estado
+            // Fila inferior: Ícono categoría, likes, dislikes y estado
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -442,26 +443,33 @@ fun ReportePublicoCard(
                 ) {
                     // Ícono de categoría
                     Image(
-                        painter = painterResource(id = reporte.iconoCategoria),
-                        contentDescription = reporte.tipo,
+                        painter = painterResource(id = obtenerIconoCategoria(reporte.categoria_nombre)),
+                        contentDescription = reporte.categoria_nombre,
                         modifier = Modifier.size(28.dp)
                     )
+
+                    // --- LÓGICA DE REACCIÓN ACTUALIZADA ---
+                    val isLiked = reporte.current_user_reaction == "like"
+                    val isDisliked = reporte.current_user_reaction == "dislike"
 
                     // Like
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { onLikeClick() }
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onLikeClick() }
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
                     ) {
                         Image(
                             painter = painterResource(
-                                id = if (likeStatus == true) R.drawable.like_relleno else R.drawable.sin_like
+                                id = if (isLiked) R.drawable.like_relleno else R.drawable.sin_like
                             ),
                             contentDescription = "Like",
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(3.dp))
                         Text(
-                            text = likes.toString(),
+                            text = reporte.apoyos_count.toString(),
                             color = textColor,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
@@ -471,25 +479,32 @@ fun ReportePublicoCard(
                     // Dislike
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { onDislikeClick() }
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onDislikeClick() }
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
                     ) {
                         Image(
                             painter = painterResource(
-                                id = if (likeStatus == false) R.drawable.dislike_relleno else R.drawable.no_like
+                                id = if (isDisliked) R.drawable.dislike_relleno else R.drawable.no_like
                             ),
                             contentDescription = "Dislike",
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(3.dp))
                         Text(
-                            text = dislikes.toString(),
+                            text = reporte.desapoyos_count.toString(),
                             color = textColor,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
 
-                    // Comentarios
+                    // --- SECCIÓN DE COMENTARIOS ---
+                    // NOTA: Tu API (GET /reportes) y tu modelo (MiReporte)
+                    // no incluyen un contador de comentarios.
+                    // Si lo añades en el futuro, puedes descomentar esto.
+                    /*
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.clickable { onCommentClick() }
@@ -501,12 +516,13 @@ fun ReportePublicoCard(
                         )
                         Spacer(modifier = Modifier.width(3.dp))
                         Text(
-                            text = comments.toString(),
+                            text = reporte.comentarios_count.toString(), // <-- Necesitarías este campo
                             color = textColor,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
+                    */
                 }
 
                 // Imagen de estado
@@ -554,7 +570,10 @@ fun FiltroReportesPublicosDialog(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.6f))
-                .clickable { onDismiss() },
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { onDismiss() },
             contentAlignment = Alignment.Center
         ) {
             Card(
@@ -736,9 +755,10 @@ fun FiltroBotonReporte(
     }
 }
 
+// --- ImageGalleryDialogReporte MODIFICADO ---
 @Composable
 fun ImageGalleryDialogReporte(
-    images: List<Int>,
+    images: List<String>, // <-- CAMBIO: Acepta lista de Strings (URLs)
     initialIndex: Int = 0,
     onDismiss: () -> Unit
 ) {
@@ -765,8 +785,9 @@ fun ImageGalleryDialogReporte(
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = images[currentIndex]),
+                    // --- CAMBIO: Usar AsyncImage (Coil) ---
+                    AsyncImage(
+                        model = images[currentIndex], // Carga la URL
                         contentDescription = "Imagen del reporte",
                         modifier = Modifier
                             .fillMaxSize()
@@ -870,6 +891,8 @@ fun ImageGalleryDialogReporte(
     }
 }
 
+// --- COMPONENTES SIN CAMBIOS ---
+
 @Composable
 fun BottomNavBarThreee(navController: NavHostController) {
     val context = LocalContext.current
@@ -972,3 +995,5 @@ fun BottomNavBarThreee(navController: NavHostController) {
         Spacer(modifier = Modifier.width(3.dp))
     }
 }
+
+// --- FUNCIONES HELPER SIN CAMBIOS ---
