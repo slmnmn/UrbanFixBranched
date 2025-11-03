@@ -10,7 +10,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.HTTP
 import retrofit2.http.Header
-
+import com.google.gson.JsonObject
 interface ApiService {
     @POST("/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
@@ -147,4 +147,8 @@ interface ApiService {
         @Header("User-Id") userId: Int,
         @Body request: UpdateEstadoRequest
     ): Response<MiReporte>
+
+    @GET("/reportes/geojson")
+    suspend fun getReportesGeoJson(): Response<JsonObject>
 }
+

@@ -2,8 +2,11 @@ package com.example.urbanfix.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build // Añadido para @RequiresApi
+import android.util.Log // Para logs de error
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi // Añadido para @RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -41,12 +44,47 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
+import com.mapbox.maps.extension.style.layers.addLayer
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
+import com.mapbox.maps.RenderedQueryGeometry
+import com.mapbox.maps.RenderedQueryOptions
+import com.mapbox.maps.extension.style.style
+import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
+import com.mapbox.maps.extension.style.layers.generated.circleLayer
+import com.mapbox.maps.extension.style.sources.addSource
+import com.mapbox.maps.plugin.gestures.addOnMapClickListener
+import com.mapbox.geojson.Feature
 
+// --- IMPORTACIONES AÑADIDAS PARA VIEWMODEL Y LÓGICA DE DATOS ---
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.urbanfix.data.ReportesRepository // Asegúrate de que este sea tu paquete
+import com.example.urbanfix.network.RetrofitInstance // Asegúrate de que este sea tu paquete
+import com.example.urbanfix.viewmodel.MapaUiState // Asegúrate de que este sea tu paquete
+import com.example.urbanfix.viewmodel.MapaViewModel // Asegúrate de que este sea tu paquete
+import com.example.urbanfix.viewmodel.MapaViewModelFactory // Asegúrate de que este sea tu paquete
+import com.mapbox.maps.extension.style.layers.getLayer
+// Import necesario
+import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
+import com.mapbox.maps.extension.style.sources.getSource
+
+
+// --- URLS HARDCODEADAS ELIMINADAS ---
+// private const val BASE_URL = "http://192.168.2.7:5000" // <-- ELIMINADO
+// private const val GEOJSON_API_URL = "$BASE_URL/reportes/geojson" // <-- ELIMINADO
+
+
+@RequiresApi(Build.VERSION_CODES.O) // Necesario para la navegación a ConsultarReporteScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapaScreen(navController: NavHostController) {
+fun MapaScreen(
+    navController: NavHostController,
+    mapaViewModel: MapaViewModel = viewModel(
+        factory = MapaViewModelFactory(
+            ReportesRepository(RetrofitInstance.api)
+        )
+    )
+){
     val context = LocalContext.current
     var mostrarFiltro by remember { mutableStateOf(false) }
     var tipoReporteFiltro by remember { mutableStateOf<String?>(null) }
@@ -77,6 +115,9 @@ fun MapaScreen(navController: NavHostController) {
             permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
+
+    // --- RECOGER EL ESTADO DEL VIEWMODEL ---
+    val mapaUiState by mapaViewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -123,21 +164,29 @@ fun MapaScreen(navController: NavHostController) {
                         navController.navigate(Pantallas.VerReportes.ruta)
                     }
                 )
+                // Asume que BottomNavBarThreee está definida en otro archivo
                 BottomNavBarThreee(navController = navController)
             }
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-            MapboxMapComponentWithControls(
+
+            // --- LLAMADA AL COMPONENTE DEL MAPA ACTUALIZADO ---
+            ReportesMapComponent(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
+                uiState = mapaUiState, // <-- Pasamos el nuevo estado
                 hasPermission = hasLocationPermission,
                 onMapViewReady = { map -> mapView = map },
-                onUserLocationChanged = { location -> userLocation = location }
+                onUserLocationChanged = { location -> userLocation = location },
+                onReporteClicked = { reporteId ->
+                    // ✅ ESTA ES LA LÍNEA CORRECTA
+                    navController.navigate(Pantallas.EditarReporte.crearRuta(reporteId.toString()))
+                }
             )
 
-            // Botones de control del mapa
+            // Botones de control del mapa (Tu código original)
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -219,7 +268,9 @@ fun MapaScreen(navController: NavHostController) {
         }
     }
 
+    // Diálogo de filtro (Tu código original)
     if (mostrarFiltro) {
+        // Asume que FiltroReportesPublicosDialog está definida en otro archivo
         FiltroReportesPublicosDialog(
             tipoSeleccionado = tipoReporteFiltro,
             estadoSeleccionado = estadoReporteFiltro,
@@ -237,21 +288,24 @@ fun MapaScreen(navController: NavHostController) {
     }
 }
 
+// --- COMPONENTE DEL MAPA ACTUALIZADO ---
 @Composable
-fun MapboxMapComponentWithControls(
+fun ReportesMapComponent(
     modifier: Modifier = Modifier,
+    uiState: MapaUiState, // <-- Recibe el UiState
     hasPermission: Boolean,
     onMapViewReady: (MapView) -> Unit,
-    onUserLocationChanged: (Point) -> Unit
+    onUserLocationChanged: (Point) -> Unit,
+    onReporteClicked: (Int) -> Unit
 ) {
     AndroidView(
         factory = { context ->
             val mapView = MapView(context)
             val mapboxMap = mapView.getMapboxMap()
 
+            // 1. Centra en Bogotá al iniciar
             val bogotaCenter = Point.fromLngLat(-74.0817, 4.6097)
             val initialZoom = 10.0
-
             mapboxMap.setCamera(
                 CameraOptions.Builder()
                     .center(bogotaCenter)
@@ -259,24 +313,104 @@ fun MapboxMapComponentWithControls(
                     .build()
             )
 
-            mapboxMap.loadStyleUri(Style.MAPBOX_STREETS) {
+            // 2. Carga el estilo
+            mapboxMap.loadStyleUri(Style.MAPBOX_STREETS) { style ->
+
+                // 3. Muestra la ubicación del usuario
                 if (hasPermission) {
                     initLocationComponentWithCallback(mapView, onUserLocationChanged)
                 }
+
+                // 4. Lógica de clic (sin cambios)
+                mapboxMap.addOnMapClickListener { point ->
+
+                    val queryGeometry = RenderedQueryGeometry(mapboxMap.pixelForCoordinate(point))
+                    val queryOptions = RenderedQueryOptions(listOf("reportes-layer"), null)
+
+                    mapboxMap.queryRenderedFeatures(queryGeometry, queryOptions) { features ->
+                        if (features.value?.isNotEmpty() == true) {
+                            val feature: Feature = features.value!![0].queriedFeature.feature
+                            val reporteId = feature.getNumberProperty("id")?.toInt()
+
+                            if (reporteId != null) {
+                                onReporteClicked(reporteId)
+                            }
+                        }
+                    }
+                    true // Indica que manejamos el clic
+                }
+
+                // 5. Intento de carga inicial (si los datos ya llegaron)
+                if (uiState is MapaUiState.Success) {
+                    actualizarFuenteGeoJson(style, uiState.geoJsonData)
+                }
+
+                if (uiState is MapaUiState.Error) {
+                    Log.e("MapaComponentFactory", "Error al cargar GeoJSON: ${uiState.message}")
+                }
             }
 
+            // 7. Devuelve el MapView
             onMapViewReady(mapView)
             mapView
         },
         update = { mapView ->
+            // Este bloque se ejecuta en recomposiciones (cuando uiState cambia)
+
+            // 1. Actualiza la ubicación (sin cambios)
             if (hasPermission) {
                 initLocationComponentWithCallback(mapView, onUserLocationChanged)
+            }
+
+            // 2. Actualiza los datos del mapa
+            val style = mapView.getMapboxMap().style
+            if (style != null && style.isStyleLoaded()) {
+                // Si el estado es Success, actualiza los datos del mapa
+                if (uiState is MapaUiState.Success) {
+                    actualizarFuenteGeoJson(style, uiState.geoJsonData)
+                }
+                if (uiState is MapaUiState.Error) {
+                    Log.e("MapaComponentUpdate", "Error al cargar GeoJSON: ${uiState.message}")
+                }
             }
         },
         modifier = modifier
     )
 }
 
+/**
+ * Función de ayuda para crear o actualizar la fuente GeoJSON y su capa.
+ */
+private fun actualizarFuenteGeoJson(style: Style, geoJsonData: String) {
+    // Intenta obtener la fuente
+    val source = style.getSource("reportes-source") as? GeoJsonSource
+
+    if (source == null) {
+        // Si no existe, la crea (y la capa)
+        style.addSource(
+            geoJsonSource("reportes-source") {
+                data(geoJsonData) // <-- CAMBIO CLAVE: usamos data() en lugar de url()
+            }
+        )
+        // Añade la capa solo si la fuente es nueva
+        if (style.getLayer("reportes-layer") == null) {
+            style.addLayer(
+                circleLayer("reportes-layer", "reportes-source") {
+                    circleColor("blue")
+                    circleRadius(8.0)
+                    circleStrokeColor("white")
+                    circleStrokeWidth(2.0)
+                }
+            )
+        }
+    } else {
+        // Si la fuente ya existe, solo actualiza los datos
+        source.data(geoJsonData)
+    }
+}
+
+
+// --- FUNCIÓN DE AYUDA (Tu código original - Sin cambios) ---
 private fun initLocationComponentWithCallback(
     mapView: MapView,
     onUserLocationChanged: (Point) -> Unit
@@ -311,6 +445,7 @@ private fun initLocationComponentWithCallback(
     }
 }
 
+// --- BARRA INFERIOR (Tu código original - Sin cambios) ---
 @Composable
 fun MostrarListadoBar(onClick: () -> Unit) {
     var offsetY by remember { mutableStateOf(0f) }
