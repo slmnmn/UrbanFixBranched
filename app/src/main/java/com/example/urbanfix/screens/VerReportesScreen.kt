@@ -68,7 +68,7 @@ fun obtenerIconoCategoria(categoriaNombre: String?): Int {
         "Hidrante roto" -> R.drawable.cirhidrante
         else -> R.drawable.circarro // Default
     }
-} //Esto sería mejor por ID pero bueno - o tal vez con los strings . Mirar.
+} //Esto sería mejor por ID pero bueno - o tal vez con los strings . Mirar. TODO
 
 // Función para obtener el color de fondo según el nombre
 fun obtenerColorCategoria(categoriaNombre: String?): Color {
@@ -200,7 +200,7 @@ fun VerReportesScreen(
                     }
                 }
             }
-            is ReportesUiState.Success -> {
+            is ReportesUiState.Success -> { // Esto debemos mirar y cambiarlo pq está logica es la que se encarga el filtro TODO
                 // Filtramos la lista del ViewModel
                 val reportesFiltrados = remember(tipoReporteFiltro, estadoReporteFiltro, state.reportes) {
                     state.reportes.filter { reporte ->
