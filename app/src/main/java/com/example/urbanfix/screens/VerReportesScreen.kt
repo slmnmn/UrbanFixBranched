@@ -60,25 +60,25 @@ import java.util.Locale
 // Función para obtener el ícono de categoría según el nombre
 fun obtenerIconoCategoria(categoriaNombre: String?): Int {
     return when (categoriaNombre) {
-        "Alcantarilla" -> R.drawable.ciralcantarilla
-        "Semaforo" -> R.drawable.cirsemaforo
-        "Alumbrado" -> R.drawable.ciralumbrado
-        "Basura" -> R.drawable.cirbasura
-        "Hueco" -> R.drawable.circarro
-        "Hidrante" -> R.drawable.cirhidrante
+        "Alcantarilla sin tapa" -> R.drawable.ciralcantarilla
+        "Semaforo dañado" -> R.drawable.cirsemaforo
+        "Alumbrado Publico" -> R.drawable.ciralumbrado
+        "Basura acumulada" -> R.drawable.cirbasura
+        "Huecos" -> R.drawable.circarro
+        "Hidrante roto" -> R.drawable.cirhidrante
         else -> R.drawable.circarro // Default
     }
-}
+} //Esto sería mejor por ID pero bueno - o tal vez con los strings . Mirar.
 
 // Función para obtener el color de fondo según el nombre
 fun obtenerColorCategoria(categoriaNombre: String?): Color {
     return when (categoriaNombre) {
-        "Alumbrado" -> Color(0xFF663251)
-        "Hueco" -> Color(0xFF4AB7B6)
-        "Semaforo" -> Color(0xFF1D3557)
-        "Basura" -> Color(0xFFE63946)
-        "Alcantarilla" -> Color(0xFF663251)
-        "Hidrante" -> Color(0xFF457B9D)
+        "Alumbrado Publico" -> Color(0xFF663251)
+        "Huecos" -> Color(0xFF4AB7B6)
+        "Semaforo dañado" -> Color(0xFF1D3557)
+        "Basura acumulada" -> Color(0xFFE63946)
+        "Alcantarilla sin tapa" -> Color(0xFF663251)
+        "Hidrante roto" -> Color(0xFF457B9D)
         else -> Color(0xFF663251)
     }
 }
