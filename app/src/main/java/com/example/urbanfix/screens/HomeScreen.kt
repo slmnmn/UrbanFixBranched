@@ -3,6 +3,10 @@ package com.example.urbanfix.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.urbanfix.network.RetrofitInstance
+import androidx.compose.material3.CircularProgressIndicator
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -76,10 +80,12 @@ fun HomeScreen(navController: NavHostController) {
     val context = LocalContext.current
     val userPreferencesManager = remember { UserPreferencesManager(context) }
     val userName = remember { userPreferencesManager.getUserName() }
+    val scope = rememberCoroutineScope()
     var searchText by remember { mutableStateOf("") }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showSearchErrorDialog by remember { mutableStateOf(false) }
     var searchErrorMessage by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
 
     var hasLocationPermission by remember {
         mutableStateOf(
@@ -175,7 +181,6 @@ fun HomeScreen(navController: NavHostController) {
                     trailingIcon = {
                         IconButton(
                             onClick = {
-                                // Procesar búsqueda
                                 val trimmedSearch = searchText.trim()
 
                                 if (trimmedSearch.isEmpty()) {
@@ -184,28 +189,56 @@ fun HomeScreen(navController: NavHostController) {
                                     return@IconButton
                                 }
 
-                                // Extraer el número del código (ej: "#123" -> "123")
                                 val reportId = trimmedSearch.removePrefix("#")
 
-                                // Validar que sea un número
                                 if (reportId.toIntOrNull() == null) {
                                     searchErrorMessage = "Código inválido. Ingresa solo números o el formato #123"
                                     showSearchErrorDialog = true
                                     return@IconButton
                                 }
 
-                                // Navegar a ConsultarReporteScreen
-                                navController.navigate(Pantallas.ConsultarReporte.crearRuta(reportId))
 
-                                // Limpiar el campo de búsqueda
-                                searchText = ""
-                            }
+                                // NUEVO: Validar que el reporte existe antes de navegar
+                                isSearching = true
+                                scope.launch {
+                                    try {
+                                        val response = RetrofitInstance.api.getReporteById(reportId.toInt())
+
+                                        isSearching = false
+
+                                        if (response.isSuccessful && response.body() != null) {
+                                            // El reporte existe, navegar
+                                            navController.navigate(Pantallas.ConsultarReporte.crearRuta(reportId))
+                                            searchText = ""
+                                        } else {
+                                            // El reporte no existe (404 u otro error)
+                                            searchErrorMessage = "No existe un reporte con el ID #$reportId"
+                                            showSearchErrorDialog = true
+                                        }
+                                    } catch (e: Exception) {
+                                        isSearching = false
+                                        // Error de red o reporte no encontrado
+                                        searchErrorMessage = "No existe un reporte con el ID #$reportId"
+                                        showSearchErrorDialog = true
+                                    }
+                                }
+                            },
+                            enabled = !isSearching // Deshabilitar mientras busca
                         ) {
-                            Icon(
-                                Icons.Default.Search,
-                                contentDescription = stringResource(R.string.search_button_description),
-                                tint = PurpleMain
-                            )
+                            if (isSearching) {
+                                // Mostrar loading mientras valida
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = PurpleMain,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = stringResource(R.string.search_button_description),
+                                    tint = PurpleMain
+                                )
+                            }
                         }
                     },
                     shape = RoundedCornerShape(12.dp),
@@ -638,49 +671,13 @@ private fun initLocationComponent(mapView: MapView) {
         // --- Fin Paso 2 ---
     }
 }
-
-// ReportButton ACTUALIZADO con onClick
-@Composable
-fun ReportButton(iconId: Int, text: String, onClick: () -> Unit = {}) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = PurpleMain),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier
-            .width(100.dp)
-            .height(100.dp)
-            .clickable(onClick = onClick)  // CAMBIO AQUÍ
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp)
-        ) {
-            Image(
-                painter = painterResource(id = iconId),
-                contentDescription = text,
-                modifier = Modifier.size(40.dp)
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = text,
-                color = WhiteFull,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                lineHeight = 12.sp
-            )
-        }
-    }
-}
-
 @Composable
 fun BottomNavBar(navController: NavHostController) {
     val context = LocalContext.current
     val userPreferencesManager = remember { UserPreferencesManager(context) }
-    val userRole = remember { userPreferencesManager.getUserRole() }
+
+    // Obtener el userId
+    val userId = remember { userPreferencesManager.getUserId() }
 
     NavigationBar(
         containerColor = BlueMain,
@@ -721,7 +718,6 @@ fun BottomNavBar(navController: NavHostController) {
         NavigationBarItem(
             selected = false,
             onClick = {
-                val userId = userPreferencesManager.getUserId()
                 if (userId != -1) {
                     navController.navigate(Pantallas.MisReportes.crearRuta(userId))
                 } else {
@@ -739,7 +735,7 @@ fun BottomNavBar(navController: NavHostController) {
                 Text(
                     stringResource(R.string.nav_my_reports),
                     color = WhiteFull,
-                    fontSize = 10.5.sp // igual que en BottomNavBarThree2
+                    fontSize = 10.5.sp
                 )
             },
             colors = NavigationBarItemDefaults.colors(
@@ -845,3 +841,41 @@ fun SearchErrorDialog(
         }
     }
 }
+// ReportButton ACTUALIZADO con onClick
+@Composable
+fun ReportButton(iconId: Int, text: String, onClick: () -> Unit = {}) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = PurpleMain),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        modifier = Modifier
+            .width(100.dp)
+            .height(100.dp)
+            .clickable(onClick = onClick)  // CAMBIO AQUÍ
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp)
+        ) {
+            Image(
+                painter = painterResource(id = iconId),
+                contentDescription = text,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = text,
+                color = WhiteFull,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                lineHeight = 12.sp
+            )
+        }
+    }
+}
+
+

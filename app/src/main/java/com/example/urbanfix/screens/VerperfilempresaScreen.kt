@@ -35,6 +35,8 @@ import com.example.urbanfix.R
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.ProfileViewModel
 import com.example.urbanfix.viewmodel.ViewModelFactory
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +53,6 @@ fun VerperfilempresaScreen(
     )
 
     val otherUserProfileState by viewModel.otherUserProfileState.collectAsState()
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -145,11 +146,12 @@ private fun CompanyProfileContent(
     val context = LocalContext.current
     val verifiedColor = Color(0xFF00BFFF)
     var showEmailCopiedDialog by remember { mutableStateOf(false) }
-
+    val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -160,7 +162,7 @@ private fun CompanyProfileContent(
                 painter = painterResource(id = R.drawable.circular_logo),
                 contentDescription = stringResource(R.string.profile_picture_cd),
                 modifier = Modifier
-                    .size(170.dp)
+                    .size(150.dp)
                     .clip(CircleShape)
                     .background(WhiteFull)
             )
@@ -277,14 +279,14 @@ private fun CompanyProfileContent(
                         color = WhiteFull,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        modifier = Modifier.padding(start = 48.dp, top = 5.dp)
+                        modifier = Modifier.padding(start = 40.dp, top = 5.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         Icons.Filled.CheckCircle,
                         contentDescription = stringResource(R.string.verified_profile),
                         tint = verifiedColor,
-                        modifier = Modifier.padding(start = 4.dp, top = 5.dp)
+                        modifier = Modifier.padding(start = 2.dp, top = 5.dp)
                     )
                 }
             }

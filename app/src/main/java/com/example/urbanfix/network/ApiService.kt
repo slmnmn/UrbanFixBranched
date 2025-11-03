@@ -12,11 +12,11 @@ import retrofit2.http.HTTP
 import retrofit2.http.Header
 
 interface ApiService {
-    @POST("/login") // The path of your login endpoint
+    @POST("/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     @POST("/usuarios")
-    suspend fun createuser(@Body request: CreateUserRequest): Response<ErrorResponse> // TEMPORAL RESPONSE PQ SOLO TIENE MENSAJE
+    suspend fun createuser(@Body request: CreateUserRequest): Response<ErrorResponse>
 
     @POST("/funcionarios")
     suspend fun createFuncionario(@Body request: CreateFuncionarioRequest): Response<Unit>
@@ -59,23 +59,24 @@ interface ApiService {
         @Body request: FotoPerfilRequest
     ): Response<Unit>
 
+    // MÉTODO ORIGINAL - con parámetros opcionales para consulta detallada
     @GET("/reportes/{id}")
     suspend fun getReporteById(
         @Path("id") reporteId: Int,
-        @Query("user_id") userId: Int?,
-        @Header("User-Role") userRole: String
-    ): Response<MiReporte> // Use Response<>
+        @Query("user_id") userId: Int? = null,
+        @Header("User-Role") userRole: String = "usuario"
+    ): Response<MiReporte>
 
-    //User-Specific Report Lists ---
+    //User-Specific Report Lists
     @GET("/usuarios/{id}/denuncias")
     suspend fun getUserDenuncias(
         @Path("id") userId: Int
-    ): Response<List<MiReporte>> // Use Response<>
+    ): Response<List<MiReporte>>
 
     @GET("/usuarios/{id}/apoyos")
     suspend fun getUserApoyos(
         @Path("id") userId: Int
-    ): Response<List<MiReporte>> // Use Response<>
+    ): Response<List<MiReporte>>
 
     //Like/Dislike (Reaction) Endpoints
     @POST("/reportes/{id}/reaccion")
@@ -97,32 +98,31 @@ interface ApiService {
     @HTTP(method = "DELETE", path = "/reportes/{id}/reaccion", hasBody = true)
     suspend fun removeReaccion(
         @Path("id") reporteId: Int,
-        @Body request: ReactionRemoveRequest //
+        @Body request: ReactionRemoveRequest
     ): Response<Unit>
 
     @GET("/reportes/{id}/comentarios")
     suspend fun getComentarios(
         @Path("id") reporteId: Int
-    ): Response<List<ComentarioResponse>> // Devuelve una lista de comentarios
+    ): Response<List<ComentarioResponse>>
 
     @POST("/reportes/{id}/comentarios")
     suspend fun postComentario(
         @Path("id") reporteId: Int,
         @Body request: ComentarioRequest
-    ): Response<ComentarioResponse> // Devuelve el comentario recién creado
+    ): Response<ComentarioResponse>
 
     @PUT("/comentarios/{id}")
     suspend fun updateComentario(
         @Path("id") comentarioId: Int,
         @Body request: ComentarioUpdateRequest
-    ): Response<ComentarioResponse> // Devuelve el comentario actualizado
+    ): Response<ComentarioResponse>
 
     @DELETE("/comentarios/{id}")
     suspend fun deleteComentario(
         @Path("id") comentarioId: Int
-    ): Response<Unit> // No devuelve nada, solo un 200 OK
+    ): Response<Unit>
 
-    // Endpoint para obtener perfil de otro usuario
     @GET("/usuarios/{userId}/perfil")
     suspend fun getOtherUserProfile(
         @Path("userId") userId: Int
@@ -140,5 +140,3 @@ interface ApiService {
         @Path("userId") userId: Int
     ): Response<OtherUserProfileResponse>
 }
-
-
