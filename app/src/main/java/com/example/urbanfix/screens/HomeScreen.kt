@@ -782,9 +782,8 @@ fun SearchErrorDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                .padding(horizontal = 1.dp),
+            shape = RoundedCornerShape(1.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
@@ -794,13 +793,13 @@ fun SearchErrorDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
-                        .background(Color(0xFFE63946)),
+                        .height(48.dp)
+                        .background(Color(0xFFFF4B3A)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "Error de Búsqueda",
-                        color = Color.White,
+                        color = Color.Black,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -810,10 +809,11 @@ fun SearchErrorDialog(
                     fontSize = 15.sp,
                     fontFamily = FontFamily.SansSerif,
                     color = Color.Black,
+                    fontStyle = FontStyle.Italic,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 28.dp, horizontal = 24.dp)
+                        .padding(vertical = 32.dp, horizontal = 24.dp)
                 )
                 Button(
                     onClick = onDismiss,
@@ -828,7 +828,7 @@ fun SearchErrorDialog(
                         .height(48.dp)
                 ) {
                     Text(
-                        text = "Entendido",
+                        text = "Volver",
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
