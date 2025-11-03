@@ -258,7 +258,7 @@ fun VerReportesScreen(
                                 },
                                 onCommentClick = {
                                     // Navegar a la pantalla de detalles/comentarios
-                                    navController.navigate(Pantallas.EditarReporte.crearRuta(reporte.id.toString()))
+                                    navController.navigate(Pantallas.ConsultarReporte.crearRuta(reporte.id.toString()))
                                 },
                                 onImageClick = {
                                     reporteSeleccionado = reporte
@@ -323,7 +323,7 @@ fun ReportePublicoCard(
     }
 
     // Formatear el ID como en la maqueta
-    val formattedId = "# 2025-${reporte.id.toString().padStart(5, '0')}"
+    val formattedId = "# ${reporte.id}"
 
     Card(
         modifier = Modifier
@@ -369,7 +369,7 @@ fun ReportePublicoCard(
                                 indication = null,
                                 interactionSource = remember { MutableInteractionSource() }
                             ) {
-                                copiarAlPortapapeles(context, formattedId)
+                                copiarAlPortapapeles(context, reporte.id.toString())
                             }
                             .padding(vertical = 2.dp)
                     ) {

@@ -69,11 +69,6 @@ import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.extension.style.sources.getSource
 
 
-// --- URLS HARDCODEADAS ELIMINADAS ---
-// private const val BASE_URL = "http://192.168.2.7:5000" // <-- ELIMINADO
-// private const val GEOJSON_API_URL = "$BASE_URL/reportes/geojson" // <-- ELIMINADO
-
-
 @RequiresApi(Build.VERSION_CODES.O) // Necesario para la navegación a ConsultarReporteScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,8 +176,8 @@ fun MapaScreen(
                 onMapViewReady = { map -> mapView = map },
                 onUserLocationChanged = { location -> userLocation = location },
                 onReporteClicked = { reporteId ->
-                    // ✅ ESTA ES LA LÍNEA CORRECTA
-                    navController.navigate(Pantallas.EditarReporte.crearRuta(reporteId.toString()))
+                    // ✅ NAVEGACIÓN A CONSULTAR REPORTE
+                    navController.navigate(Pantallas.ConsultarReporte.crearRuta(reporteId.toString()))
                 }
             )
 
