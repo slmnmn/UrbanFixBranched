@@ -66,6 +66,7 @@ import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.extension.style.sources.getSource
 import com.mapbox.maps.extension.style.layers.generated.symbolLayer
 import com.mapbox.maps.extension.style.expressions.generated.Expression
+import com.mapbox.geojson.FeatureCollection
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -168,6 +169,8 @@ fun MapaScreen(
                     .padding(paddingValues),
                 uiState = mapaUiState,
                 hasPermission = hasLocationPermission,
+                tipoFiltro = tipoReporteFiltro,
+                estadoFiltro = estadoReporteFiltro,
                 onMapViewReady = { map -> mapView = map },
                 onUserLocationChanged = { location -> userLocation = location },
                 onReporteClicked = { reporteId ->
@@ -274,11 +277,68 @@ fun MapaScreen(
     }
 }
 
+// Función para mapear categorías (igual que en VerReportesScreen)
+fun mapearCategoriaParaMapa(nombreBD: String?): String {
+    val processedName = nombreBD?.lowercase()?.trim() ?: ""
+    return when (processedName) {
+        "huecos" -> "Hueco"
+        "alumbrado publico" -> "Alumbrado"
+        "basura acumulada" -> "Basura"
+        "semaforo dañado" -> "Semáforo"
+        "hidrante roto" -> "Hidrante"
+        "alcantarilla sin tapa" -> "Alcantarilla"
+        else -> nombreBD ?: "Desconocido"
+    }
+}
+
+// Función para filtrar GeoJSON según los filtros aplicados
+fun filtrarGeoJson(geoJsonData: String, tipoFiltro: String?, estadoFiltro: String?): String {
+    if (tipoFiltro == null && estadoFiltro == null) {
+        return geoJsonData
+    }
+
+    try {
+        val featureCollection = FeatureCollection.fromJson(geoJsonData)
+        val features = featureCollection.features() ?: emptyList()
+
+        val featuresFiltradas = features.filter { feature ->
+            try {
+                // Obtener propiedades del feature
+                val categoria = feature.getStringProperty("categoria") ?: ""
+                val estadoRaw = feature.getStringProperty("estado") ?: ""
+                val estado = estadoRaw.trim()
+
+                // Mapear la categoría para comparación
+                val categoriaMapeada = mapearCategoriaParaMapa(categoria)
+
+                // Verificar si cumple con los filtros
+                val coincideTipo = tipoFiltro == null || categoriaMapeada == tipoFiltro
+                val coincideEstado = estadoFiltro == null || estado.equals(estadoFiltro, ignoreCase = true)
+
+                coincideTipo && coincideEstado
+            } catch (e: Exception) {
+                Log.e("MapaScreen", "Error procesando feature: ${e.message}", e)
+                false
+            }
+        }
+
+        // Crear nuevo FeatureCollection con features filtradas
+        val nuevoFeatureCollection = FeatureCollection.fromFeatures(featuresFiltradas)
+        return nuevoFeatureCollection.toJson()
+    } catch (e: Exception) {
+        Log.e("MapaScreen", "Error crítico filtrando GeoJSON: ${e.message}", e)
+        e.printStackTrace()
+        return geoJsonData
+    }
+}
+
 @Composable
 fun ReportesMapComponent(
     modifier: Modifier = Modifier,
     uiState: MapaUiState,
     hasPermission: Boolean,
+    tipoFiltro: String?,
+    estadoFiltro: String?,
     onMapViewReady: (MapView) -> Unit,
     onUserLocationChanged: (Point) -> Unit,
     onReporteClicked: (Int) -> Unit
@@ -327,7 +387,8 @@ fun ReportesMapComponent(
                 }
 
                 if (uiState is MapaUiState.Success) {
-                    actualizarFuenteGeoJson(style, uiState.geoJsonData, ctx)
+                    val geoJsonFiltrado = filtrarGeoJson(uiState.geoJsonData, tipoFiltro, estadoFiltro)
+                    actualizarFuenteGeoJson(style, geoJsonFiltrado, ctx)
                 }
 
                 if (uiState is MapaUiState.Error) {
@@ -346,7 +407,8 @@ fun ReportesMapComponent(
             val style = mapView.getMapboxMap().style
             if (style != null && style.isStyleLoaded()) {
                 if (uiState is MapaUiState.Success) {
-                    actualizarFuenteGeoJson(style, uiState.geoJsonData, mapView.context)
+                    val geoJsonFiltrado = filtrarGeoJson(uiState.geoJsonData, tipoFiltro, estadoFiltro)
+                    actualizarFuenteGeoJson(style, geoJsonFiltrado, mapView.context)
                 }
                 if (uiState is MapaUiState.Error) {
                     Log.e("MapaComponentUpdate", "Error al cargar GeoJSON: ${uiState.message}")
