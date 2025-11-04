@@ -400,11 +400,11 @@ private fun crearCapaSimbolos(style: Style) {
                 Expression.match {
                     get { literal("categoria") }
                     stop {
-                        literal("Alcantarilla obstruida")
+                        literal("Alcantarilla sin tapa")
                         literal("ciralcantarilla")
                     }
                     stop {
-                        literal("Alumbrado público")
+                        literal("Alumbrado Publico")
                         literal("ciralumbrado")
                     }
                     stop {
@@ -420,7 +420,7 @@ private fun crearCapaSimbolos(style: Style) {
                         literal("cirhidrante")
                     }
                     stop {
-                        literal("Semáforo dañado")
+                        literal("Semaforo dañado")
                         literal("cirsemaforo")
                     }
                     literal("circarro") // default
