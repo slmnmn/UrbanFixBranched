@@ -64,6 +64,8 @@ import com.example.urbanfix.viewmodel.MapaViewModelFactory
 import com.mapbox.maps.extension.style.layers.getLayer
 import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.extension.style.sources.getSource
+import com.mapbox.maps.extension.style.layers.generated.symbolLayer
+import com.mapbox.maps.extension.style.expressions.generated.Expression
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -281,9 +283,11 @@ fun ReportesMapComponent(
     onUserLocationChanged: (Point) -> Unit,
     onReporteClicked: (Int) -> Unit
 ) {
+    val context = LocalContext.current
+
     AndroidView(
-        factory = { context ->
-            val mapView = MapView(context)
+        factory = { ctx ->
+            val mapView = MapView(ctx)
             val mapboxMap = mapView.getMapboxMap()
 
             val bogotaCenter = Point.fromLngLat(-74.0817, 4.6097)
@@ -300,6 +304,9 @@ fun ReportesMapComponent(
                 if (hasPermission) {
                     initLocationComponentWithCallback(mapView, onUserLocationChanged)
                 }
+
+                // Cargar íconos al iniciar el mapa
+                cargarIconosEnMapa(style, ctx)
 
                 mapboxMap.addOnMapClickListener { point ->
 
@@ -320,7 +327,7 @@ fun ReportesMapComponent(
                 }
 
                 if (uiState is MapaUiState.Success) {
-                    actualizarFuenteGeoJson(style, uiState.geoJsonData)
+                    actualizarFuenteGeoJson(style, uiState.geoJsonData, ctx)
                 }
 
                 if (uiState is MapaUiState.Error) {
@@ -339,7 +346,7 @@ fun ReportesMapComponent(
             val style = mapView.getMapboxMap().style
             if (style != null && style.isStyleLoaded()) {
                 if (uiState is MapaUiState.Success) {
-                    actualizarFuenteGeoJson(style, uiState.geoJsonData)
+                    actualizarFuenteGeoJson(style, uiState.geoJsonData, mapView.context)
                 }
                 if (uiState is MapaUiState.Error) {
                     Log.e("MapaComponentUpdate", "Error al cargar GeoJSON: ${uiState.message}")
@@ -350,28 +357,153 @@ fun ReportesMapComponent(
     )
 }
 
-private fun actualizarFuenteGeoJson(style: Style, geoJsonData: String) {
-    val source = style.getSource("reportes-source") as? GeoJsonSource
+private fun actualizarFuenteGeoJson(style: Style, geoJsonData: String, context: android.content.Context) {
+    try {
+        val source = style.getSource("reportes-source") as? GeoJsonSource
 
-    if (source == null) {
-        style.addSource(
-            geoJsonSource("reportes-source") {
-                data(geoJsonData)
-            }
-        )
-        if (style.getLayer("reportes-layer") == null) {
-            style.addLayer(
-                circleLayer("reportes-layer", "reportes-source") {
-                    circleColor("blue")
-                    circleRadius(8.0)
-                    circleStrokeColor("white")
-                    circleStrokeWidth(2.0)
+        if (source == null) {
+            Log.d("MapaScreen", "Creando fuente y capa de reportes")
+
+            // Agregar la fuente
+            style.addSource(
+                geoJsonSource("reportes-source") {
+                    data(geoJsonData)
                 }
             )
+
+            // Cargar todas las imágenes como íconos si no están ya cargadas
+            if (style.getLayer("reportes-layer") == null) {
+                val iconosCargados = cargarIconosEnMapa(style, context)
+
+                if (iconosCargados) {
+                    // Crear capa de símbolos con imágenes
+                    crearCapaSimbolos(style)
+                } else {
+                    // Fallback: usar círculos de colores
+                    Log.w("MapaScreen", "Usando círculos como fallback")
+                    crearCapaCirculos(style)
+                }
+            }
+        } else {
+            Log.d("MapaScreen", "Actualizando datos de fuente existente")
+            source.data(geoJsonData)
         }
-    } else {
-        source.data(geoJsonData)
+    } catch (e: Exception) {
+        Log.e("MapaScreen", "Error en actualizarFuenteGeoJson: ${e.message}", e)
     }
+}
+
+private fun crearCapaSimbolos(style: Style) {
+    style.addLayer(
+        symbolLayer("reportes-layer", "reportes-source") {
+            iconImage(
+                Expression.match {
+                    get { literal("categoria") }
+                    stop {
+                        literal("Alcantarilla obstruida")
+                        literal("ciralcantarilla")
+                    }
+                    stop {
+                        literal("Alumbrado público")
+                        literal("ciralumbrado")
+                    }
+                    stop {
+                        literal("Basura acumulada")
+                        literal("cirbasura")
+                    }
+                    stop {
+                        literal("Huecos")
+                        literal("circarro")
+                    }
+                    stop {
+                        literal("Hidrante roto")
+                        literal("cirhidrante")
+                    }
+                    stop {
+                        literal("Semáforo dañado")
+                        literal("cirsemaforo")
+                    }
+                    literal("circarro") // default
+                }
+            )
+            iconSize(0.15)
+            iconAllowOverlap(true)
+            iconIgnorePlacement(true)
+        }
+    )
+    Log.d("MapaScreen", "Capa de símbolos creada correctamente")
+}
+
+private fun crearCapaCirculos(style: Style) {
+    style.addLayer(
+        circleLayer("reportes-layer", "reportes-source") {
+            circleColor(
+                Expression.match {
+                    get { literal("categoria") }
+                    stop {
+                        literal("Alcantarilla")
+                        literal("#FF6B35")
+                    }
+                    stop {
+                        literal("Alumbrado público")
+                        literal("#F7C948")
+                    }
+                    stop {
+                        literal("Basura")
+                        literal("#6A994E")
+                    }
+                    stop {
+                        literal("Huecos")
+                        literal("#BC4749")
+                    }
+                    stop {
+                        literal("Hidrante roto")
+                        literal("#4361EE")
+                    }
+                    stop {
+                        literal("Semáforo")
+                        literal("#F72585")
+                    }
+                    literal("#0077B6") // default
+                }
+            )
+            circleRadius(10.0)
+            circleStrokeColor("white")
+            circleStrokeWidth(2.0)
+        }
+    )
+    Log.d("MapaScreen", "Capa de círculos creada como fallback")
+}
+
+private fun cargarIconosEnMapa(style: Style, context: android.content.Context): Boolean {
+    val iconos = mapOf(
+        "ciralcantarilla" to R.drawable.ciralcantarilla,
+        "ciralumbrado" to R.drawable.ciralumbrado,
+        "cirbasura" to R.drawable.cirbasura,
+        "circarro" to R.drawable.circarro,
+        "cirhidrante" to R.drawable.cirhidrante,
+        "cirsemaforo" to R.drawable.cirsemaforo
+    )
+
+    var todosExitosos = true
+
+    iconos.forEach { (nombre, recurso) ->
+        try {
+            val bitmap = android.graphics.BitmapFactory.decodeResource(context.resources, recurso)
+            if (bitmap != null) {
+                style.addImage(nombre, bitmap)
+                Log.d("MapaScreen", "Ícono $nombre cargado correctamente")
+            } else {
+                Log.e("MapaScreen", "Bitmap null para ícono $nombre - Recurso no encontrado")
+                todosExitosos = false
+            }
+        } catch (e: Exception) {
+            Log.e("MapaScreen", "Error cargando ícono $nombre: ${e.message}", e)
+            todosExitosos = false
+        }
+    }
+
+    return todosExitosos
 }
 
 private fun initLocationComponentWithCallback(

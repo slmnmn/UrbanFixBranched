@@ -184,7 +184,7 @@ private fun CompanyProfileContent(
             ) {
                 Text(
                     text = companyName,
-                    fontSize = 22.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
