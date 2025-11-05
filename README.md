@@ -24,7 +24,8 @@ El backend se conecta a través de servicios REST y el almacenamiento de datos s
 - **Otras librerías:** Coil (para carga de imágenes), Retrofit (para API REST)
 - **AGP:** 8.11.1 (por temas de compatibilidad entre las versiones del Android studio.)
 - **SDK:** 36
-- **Integraciones:** Mapbox (Para el mapa), Gemini AI  
+- **Integraciones:** Mapbox (Para el mapa), Gemini AI
+- **Backend:** https://github.com/FelipeAguilar302/backend_urbanfix  
 
 ---
 
@@ -138,8 +139,7 @@ Este proceso se realiza mediante una petición al modelo de lenguaje de gemini l
 ---
 
 ### Para instalarlo:
-
-
+- Simplemente debe instalar la aplicación que se encuentra en el apartado de releases en el repositorio. No deberia haber ningun problema con ello, 
 ....
 
 
