@@ -3,6 +3,7 @@ package com.example.urbanfix.screens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -35,6 +36,9 @@ import com.example.urbanfix.R
 import com.example.urbanfix.ui.theme.*
 import com.example.urbanfix.viewmodel.ProfileViewModel
 import com.example.urbanfix.viewmodel.ViewModelFactory
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,7 +143,8 @@ fun VerperfilusuarioScreen(
                     userEmail = otherUserProfileState.userEmail ?: "N/A",
                     accountType = otherUserProfileState.accountType ?: "Usuario",
                     registrationDate = otherUserProfileState.registrationDate ?: "N/A",
-                    companyName = otherUserProfileState.companyName
+                    companyName = otherUserProfileState.companyName,
+                    profilePicUrl = otherUserProfileState.profile_pic_url
                 )
             }
         }
@@ -153,10 +158,16 @@ private fun UsuarioProfileContent(
     userEmail: String,
     accountType: String,
     registrationDate: String,
-    companyName: String? = null
+    companyName: String? = null,
+    profilePicUrl: String? = null
 ) {
     val context = LocalContext.current
     var showEmailCopiedDialog by remember { mutableStateOf(false) }
+
+    // 🔥 LOG PARA VER QUÉ URL RECIBE EL COMPOSABLE
+    LaunchedEffect(profilePicUrl) {
+        Log.d("USUARIO_SCREEN", "🖼️ URL de foto recibida en UI: $profilePicUrl")
+    }
 
     Column(
         modifier = Modifier
@@ -167,14 +178,27 @@ private fun UsuarioProfileContent(
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
+        // 🔥 VERSIÓN MEJORADA DEL ASYNCIMAGE
         Box(contentAlignment = Alignment.BottomEnd) {
-            Image(
-                painter = painterResource(id = R.drawable.circular_logo),
+            AsyncImage(
+                model = profilePicUrl.takeIf { !it.isNullOrBlank() }, // Solo carga si no es nulo/vacío
                 contentDescription = stringResource(R.string.profile_picture_cd),
+                placeholder = painterResource(id = R.drawable.circular_logo),
+                error = painterResource(id = R.drawable.circular_logo),
+                fallback = painterResource(id = R.drawable.circular_logo),
                 modifier = Modifier
                     .size(180.dp)
                     .clip(CircleShape)
-                    .background(WhiteFull)
+                    .background(WhiteFull),
+                contentScale = ContentScale.Crop,
+                onSuccess = {
+                    Log.d("COIL_IMAGE", "✅ Imagen cargada exitosamente: $profilePicUrl")
+                },
+                onError = { error ->
+                    Log.e("COIL_IMAGE", "❌ Error al cargar imagen: ${error.result.throwable.message}")
+                    Log.e("COIL_IMAGE", "❌ URL intentada: $profilePicUrl")
+                    error.result.throwable.printStackTrace()
+                }
             )
         }
 
@@ -228,7 +252,7 @@ private fun UsuarioProfileContent(
                 UserInfoRowUsuario(
                     icon = Icons.Default.AccountCircle,
                     label = stringResource(R.string.account_type_label),
-                    value = "Personal" // CAMBIO: Ahora siempre muestra "Personal"
+                    value = "Personal"
                 )
 
                 if (companyName != null && companyName.isNotBlank()) {

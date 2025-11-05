@@ -389,7 +389,22 @@ fun EditarReporteScreen(
 
                                     Button(
                                         onClick = {
-                                            navController.navigate("reportar/${reporte.categoria_nombre}")
+                                            val reportTypeKey = when (reporte.categoria_id) {
+                                                1 -> "huecos"
+                                                2 -> "alumbrado"
+                                                3 -> "basura"
+                                                4 -> "semaforo"
+                                                5 -> "hidrante"
+                                                6 -> "alcantarilla"
+                                                else -> "huecos"
+                                            }
+
+                                            navController.navigate(
+                                                Pantallas.Reportar.crearRutaConId(
+                                                    reportType = reportTypeKey,
+                                                    reporteId = reporte.id
+                                                )
+                                            )
                                         },
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)

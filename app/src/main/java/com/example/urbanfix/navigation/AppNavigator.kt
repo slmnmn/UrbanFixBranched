@@ -45,7 +45,12 @@ sealed class Pantallas(val ruta: String) {
     }
 
     object Reportar : Pantallas("reportar/{reportType}") {
+        // Ruta para CREAR (sin ID)
         fun crearRuta(reportType: String) = "reportar/$reportType"
+
+        // Ruta para EDITAR (con ID)
+        fun crearRutaConId(reportType: String, reporteId: Int) =
+            "reportar/$reportType?reporteId=$reporteId"
     }
 
     object ConsultarReporte : Pantallas("consultar_reporte_screen/{reportId}") {
@@ -155,16 +160,26 @@ fun AppNavigator(navController: NavHostController) {
            RUTA: ReportarScreen (Pantalla 1)
         ----------------------------*/
         composable(
-            route = Pantallas.Reportar.ruta,
+            route = Pantallas.Reportar.ruta + "?reporteId={reporteId}",
             arguments = listOf(
                 navArgument("reportType") {
                     type = NavType.StringType
                     defaultValue = "huecos"
+                },
+                navArgument("reporteId") {
+                    type = NavType.IntType
+                    defaultValue = -1
                 }
             )
         ) { backStackEntry ->
             val reportType = backStackEntry.arguments?.getString("reportType") ?: "huecos"
-            ReportarScreen(navController = navController, reportType = reportType)
+            val reporteId = backStackEntry.arguments?.getInt("reporteId") ?: -1 // Obtenemos el ID
+
+            ReportarScreen(
+                navController = navController,
+                reportType = reportType,
+                reporteId = reporteId
+            )
         }
 
         /* ---------------------------

@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitInstance {
-    private const val BASE_URL = "http://192.168.1.77:5000" //
+    private const val BASE_URL = "http://54.144.11.53:5000" //
 
 
     // --- 1. CREA UN OKHTTPCLIENT CON TIMEOUTS MÁS LARGOS --- // Crear reporte demora mucho
@@ -17,7 +17,7 @@ object RetrofitInstance {
             // Tiempo máximo esperando datos después de conectar
             .readTimeout(60, TimeUnit.SECONDS)
             // Tiempo máximo enviando datos
-            .writeTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(90, TimeUnit.SECONDS)
             .build()
     }
 

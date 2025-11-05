@@ -13,6 +13,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.content.Context
+import android.graphics.drawable.BitmapDrawable
+import coil.Coil
+import coil.request.ImageRequest
 
 sealed interface ReportState {
     object Idle : ReportState
@@ -52,6 +56,16 @@ class ReportViewModel(
     private val _reportState = MutableStateFlow<ReportState>(ReportState.Idle)
     val reportState: StateFlow<ReportState> = _reportState.asStateFlow()
 
+    // Debajo de _reportState
+    private val _isEditMode = MutableStateFlow(false)
+    val isEditMode: StateFlow<Boolean> = _isEditMode.asStateFlow()
+
+    private var editingReportId: Int? = null
+    private val _photosChanged = MutableStateFlow(false)
+
+    private var originalPhoto1Url: String? = null
+    private var originalPhoto2Url: String? = null
+
     // ===== FUNCIONES PANTALLA 1 =====
     fun onEventAddressChange(address: String) {
         _eventAddress.value = address
@@ -64,11 +78,13 @@ class ReportViewModel(
     fun addPhoto(bitmap: Bitmap) {
         if (_photos.value.size < 2) {
             _photos.value = _photos.value + bitmap
+            _photosChanged.value = true  // NUEVO
         }
     }
 
     fun removePhoto(index: Int) {
         _photos.value = _photos.value.filterIndexed { i, _ -> i != index }
+        _photosChanged.value = true  // NUEVO
     }
 
     fun updateLocation(point: Point) {
@@ -97,7 +113,68 @@ class ReportViewModel(
     }
 
     // ===== FUNCIÓN PARA CREAR REPORTE =====
-    fun createReport(
+
+    // Nueva función
+    fun loadReportForEdit(reporteId: Int, context: Context) { // <-- 1. AÑADIMOS 'context'
+        if (reporteId == -1) {
+            clearReportData() // Asegura que esté limpio para "Crear"
+            _isEditMode.value = false
+            editingReportId = null
+            return
+        }
+
+        _isEditMode.value = true
+        editingReportId = reporteId
+        _reportState.value = ReportState.Loading
+        _photosChanged.value = false
+
+        viewModelScope.launch {
+            try {
+                val userId = userPreferencesManager.getUserId()
+                val userRole = userPreferencesManager.getUserRole() ?: "usuario"
+
+                val response = RetrofitInstance.api.getReporteById(reporteId, userId, userRole)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val reporte = response.body()!!
+
+                    _eventAddress.value = reporte.direccion ?: ""
+                    _referencePoint.value = reporte.referencia ?: ""
+                    _selectedLocation.value = Point.fromLngLat(
+                        reporte.longitud.toDoubleOrNull() ?: 0.0,
+                        reporte.latitud.toDoubleOrNull() ?: 0.0
+                    )
+                    _selectedSubtype.value = reporte.nombre ?: ""
+                    _description.value = reporte.descripcion ?: ""
+                    originalPhoto1Url = reporte.img_prueba_1
+                    originalPhoto2Url = reporte.img_prueba_2
+
+
+                    val loadedBitmaps = mutableListOf<Bitmap>()
+
+                    reporte.img_prueba_1?.let { url ->
+                        loadBitmapFromUrl(context, url)?.let { bitmap ->
+                            loadedBitmaps.add(bitmap)
+                        }
+                    }
+                    reporte.img_prueba_2?.let { url ->
+                        loadBitmapFromUrl(context, url)?.let { bitmap ->
+                            loadedBitmaps.add(bitmap)
+                        }
+                    }
+
+                    _photos.value = loadedBitmaps
+
+                    _reportState.value = ReportState.Idle
+                } else {
+                    _reportState.value = ReportState.Error(R.string.error_loading_report)
+                }
+            } catch (e: Exception) {
+                _reportState.value = ReportState.Error(R.string.error_network_connection)
+            }
+        }
+    }
+    fun submitReport(
         reportType: String,
         onSuccess: () -> Unit
     ) {
@@ -122,32 +199,39 @@ class ReportViewModel(
                     return@launch
                 }
 
-                // Convertir bitmaps a Base64
-                val photo1Base64 = if (_photos.value.isNotEmpty()) {
-                    ImageUtils.bitmapToBase64(_photos.value[0])
+                // Convertir bitmaps (esto se queda igual)
+                val photo1Base64: String
+                val photo2Base64: String
+
+                if (_isEditMode.value && !_photosChanged.value) {
+                    // En modo edición y fotos NO cambiaron: NO enviar nada
+                    photo1Base64 = ""
+                    photo2Base64 = ""
                 } else {
-                    // Si la primera foto es obligatoria, validamos aquí
-                    _reportState.value = ReportState.Error(R.string.error_no_photos)
-                    return@launch
+                    // Fotos cambiaron o es modo crear: convertir a Base64
+                    photo1Base64 = if (_photos.value.isNotEmpty()) {
+                        ImageUtils.bitmapToBase64(_photos.value[0])
+                    } else {
+                        if (!_isEditMode.value) {
+                            _reportState.value = ReportState.Error(R.string.error_no_photos)
+                            return@launch
+                        }
+                        ""
+                    }
+
+                    photo2Base64 = if (_photos.value.size > 1) {
+                        ImageUtils.bitmapToBase64(_photos.value[1])
+                    } else { "" }
                 }
 
-                val photo2Base64 = if (_photos.value.size > 1) {
-                    ImageUtils.bitmapToBase64(_photos.value[1])
-                } else {
-                    "" // Vacío si no hay segunda foto
-                }
-
-                // Obtener ID de categoría según el tipo de reporte
                 val categoryId = getCategoryId(reportType)
-
-                // Usar descripción o generar una por defecto con el subtipo
                 val finalDescription = if (_description.value.isNotEmpty()) {
                     _description.value
                 } else {
                     "Reporte de ${_selectedSubtype.value}"
                 }
 
-                // Crear request
+                // Crear request (es el mismo para crear y actualizar)
                 val request = CreateReporteRequest(
                     descripcion = finalDescription,
                     direccion = _eventAddress.value,
@@ -156,19 +240,30 @@ class ReportViewModel(
                     img_prueba_2 = photo2Base64,
                     latitud = location.latitude().toFloat(),
                     longitud = location.longitude().toFloat(),
-                    usuario_creador_id = userId.toString(), // Asegúrate de que el backend espera String
+                    usuario_creador_id = userId.toString(),
                     categoria_id = categoryId,
-                    tipo_evento = _selectedSubtype.value, // <-- LÍNEA CORREGIDA
+                    tipo_evento = _selectedSubtype.value,
                 )
 
-                // Enviar al servidor
-                val response = RetrofitInstance.api.createReporte(request)
-
-                if (response.isSuccessful) {
-                    _reportState.value = ReportState.Success
-                    onSuccess()
+                // ===== 2. LA LÓGICA DE DECISIÓN =====
+                if (_isEditMode.value && editingReportId != null) {
+                    // --- MODO EDICIÓN ---
+                    val response = RetrofitInstance.api.updateReporte(editingReportId!!, request)
+                    if (response.isSuccessful) {
+                        _reportState.value = ReportState.Success
+                        onSuccess()
+                    } else {
+                        _reportState.value = ReportState.Error(R.string.error_updating_report) // Necesitarás añadir este string
+                    }
                 } else {
-                    _reportState.value = ReportState.Error(R.string.error_creating_report)
+                    // --- MODO CREACIÓN ---
+                    val response = RetrofitInstance.api.createReporte(request)
+                    if (response.isSuccessful) {
+                        _reportState.value = ReportState.Success
+                        onSuccess()
+                    } else {
+                        _reportState.value = ReportState.Error(R.string.error_creating_report)
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -176,6 +271,7 @@ class ReportViewModel(
             }
         }
     }
+
 
     // Mapear tipos de reporte a IDs de categoría
     private fun getCategoryId(reportType: String): Int {
@@ -190,6 +286,21 @@ class ReportViewModel(
         }
     }
 
+    private suspend fun loadBitmapFromUrl(context: Context, url: String): Bitmap? {
+        if (url.isBlank()) return null
+        return try {
+            val request = ImageRequest.Builder(context)
+                .data(url)
+                .allowHardware(false)
+                .build()
+            val result = Coil.imageLoader(context).execute(request).drawable
+            (result as? BitmapDrawable)?.bitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     // ===== FUNCIONES DE LIMPIEZA =====
     fun clearReportData() {
         _eventAddress.value = ""
@@ -200,6 +311,9 @@ class ReportViewModel(
         _description.value = ""
         _isGeneratingDescription.value = false
         _reportState.value = ReportState.Idle
+        _photosChanged.value = false
+        originalPhoto1Url = null
+        originalPhoto2Url = null
     }
 
     fun resetReportState() {

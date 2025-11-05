@@ -123,7 +123,8 @@ data class OtherUserProfileResponse(
     val email: String,
     val role: String,
     val fecha_registro: String,
-    val entidad_nombre: String? = null // Para funcionarios
+    val entidad_nombre: String? = null,
+    val profile_pic_url: String?
 )
 
 data class UpdateEstadoRequest(

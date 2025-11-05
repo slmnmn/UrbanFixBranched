@@ -260,12 +260,15 @@
     <string name="exit_confirmation_message">Se perderán todos los cambios</string>
     <string name="exit_yes_button">Salir</string>
     <string name="exit_no_button">Volver</string>
+    <string name="close_dialog">Cerrar diálogo</string>
 
     <string name="incomplete_fields_title">Error</string>
     <string name="incomplete_fields_message">Debes completar los campos obligatorios</string>
 
     <string name="max_photos_error_title">Error</string>
     <string name="max_photos_error_message">No puedes agregar más de dos fotos</string>
+    <string name="error_loading_report">Error al cargar el reporte. Inténtalo de nuevo.</string>
+    <string name="error_updating_report">Error al actualizar el reporte. Inténtalo de nuevo.</string>
 
     <!-- Report Types -->
     <string name="report_type_potholes">huecos</string>

@@ -3,6 +3,7 @@ package com.example.urbanfix.screens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -37,6 +38,9 @@ import com.example.urbanfix.viewmodel.ProfileViewModel
 import com.example.urbanfix.viewmodel.ViewModelFactory
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,7 +131,8 @@ fun VerperfilempresaScreen(
                     userName = otherUserProfileState.userName ?: "N/A",
                     userEmail = otherUserProfileState.userEmail ?: "N/A",
                     registrationDate = otherUserProfileState.registrationDate ?: "N/A",
-                    navController = navController
+                    navController = navController,
+                    profilePicUrl = otherUserProfileState.profile_pic_url
                 )
             }
         }
@@ -141,12 +146,19 @@ private fun CompanyProfileContent(
     userName: String,
     userEmail: String,
     registrationDate: String,
-    navController: NavHostController
+    navController: NavHostController,
+    profilePicUrl: String? = null
 ) {
     val context = LocalContext.current
     val verifiedColor = Color(0xFF00BFFF)
     var showEmailCopiedDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+
+    // 🔥 LOG PARA VER QUÉ URL RECIBE EL COMPOSABLE
+    LaunchedEffect(profilePicUrl) {
+        Log.d("EMPRESA_SCREEN", "🖼️ URL de foto recibida en UI: $profilePicUrl")
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -157,14 +169,27 @@ private fun CompanyProfileContent(
     ) {
         Spacer(modifier = Modifier.height(10.dp))
 
+        // 🔥 VERSIÓN MEJORADA DEL ASYNCIMAGE
         Box(contentAlignment = Alignment.BottomEnd) {
-            Image(
-                painter = painterResource(id = R.drawable.circular_logo),
+            AsyncImage(
+                model = profilePicUrl.takeIf { !it.isNullOrBlank() }, // Solo carga si no es nulo/vacío
                 contentDescription = stringResource(R.string.profile_picture_cd),
+                placeholder = painterResource(id = R.drawable.circular_logo),
+                error = painterResource(id = R.drawable.circular_logo),
+                fallback = painterResource(id = R.drawable.circular_logo),
                 modifier = Modifier
                     .size(150.dp)
                     .clip(CircleShape)
-                    .background(WhiteFull)
+                    .background(WhiteFull),
+                contentScale = ContentScale.Crop,
+                onSuccess = {
+                    Log.d("COIL_IMAGE", "✅ Imagen cargada exitosamente: $profilePicUrl")
+                },
+                onError = { error ->
+                    Log.e("COIL_IMAGE", "❌ Error al cargar imagen: ${error.result.throwable.message}")
+                    Log.e("COIL_IMAGE", "❌ URL intentada: $profilePicUrl")
+                    error.result.throwable.printStackTrace()
+                }
             )
         }
 
@@ -196,7 +221,6 @@ private fun CompanyProfileContent(
                 )
             }
         }
-
 
         Spacer(modifier = Modifier.height(15.dp))
 

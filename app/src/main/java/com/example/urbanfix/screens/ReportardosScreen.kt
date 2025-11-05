@@ -21,7 +21,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -51,6 +50,9 @@ import com.example.urbanfix.viewmodel.ReportState
 import com.example.urbanfix.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
 import java.io.File
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
 
 private fun rotateImageIfNeeded(bitmap: Bitmap, uri: Uri, context: android.content.Context): Bitmap {
     return try {
@@ -84,8 +86,8 @@ fun ReportarDosScreen(
     reportType: String = "huecos"
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()  // MOVER ANTES del activity
     val activity = context as? ComponentActivity ?: error("No Activity found")
+    val coroutineScope = rememberCoroutineScope()
     val viewModel: ReportViewModel = viewModel(
         viewModelStoreOwner = activity,
         factory = ViewModelFactory(context)
@@ -100,7 +102,7 @@ fun ReportarDosScreen(
     val description by viewModel.description.collectAsState()
     val isGeneratingDescription by viewModel.isGeneratingDescription.collectAsState()
     val reportState by viewModel.reportState.collectAsState()
-
+    val isEditMode by viewModel.isEditMode.collectAsState()
 
     // Estados locales para UI
     var expanded by remember { mutableStateOf(false) }
@@ -117,10 +119,10 @@ fun ReportarDosScreen(
     LaunchedEffect(reportState) {
         when (reportState) {
             is ReportState.Success -> {
-                // El éxito se maneja en el diálogo
+                // El exito se maneja en el dialogo
             }
             is ReportState.Error -> {
-                // El error se maneja en el diálogo
+                // El error se maneja en el dialogo
             }
             else -> { /* Idle o Loading */ }
         }
@@ -270,7 +272,10 @@ fun ReportarDosScreen(
                 navigationIcon = {
                     Box(modifier = Modifier.padding(top = 20.dp)) {
                         IconButton(onClick = {
-                            if (selectedSubtype.isNotEmpty() || description.isNotEmpty()) {
+                            val hayDatos = selectedSubtype.isNotEmpty() || description.isNotEmpty()
+                            val estamosEnModoCrear = !isEditMode
+
+                            if (estamosEnModoCrear && hayDatos) {
                                 showExitDialog = true
                             } else {
                                 navController.popBackStack()
@@ -636,10 +641,10 @@ fun ReportarDosScreen(
             Button(
                 onClick = {
                     if (viewModel.validateStep2()) {
-                        viewModel.createReport(
+                        viewModel.submitReport(
                             reportType = reportType,
                             onSuccess = {
-                                // El éxito se maneja en el diálogo
+                                // El exito se maneja en el dialogo
                             }
                         )
                     } else {
@@ -655,118 +660,123 @@ fun ReportarDosScreen(
                 )
             ) {
                 Text(
-                    text = stringResource(R.string.create_report_button),
+                    text = if (isEditMode) "Actualizar Reporte" else stringResource(R.string.create_report_button),
                     color = WhiteFull,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
-    }
 
-    // Diálogos
-    if (showPhotoOptionsDialog) {
-        PhotoOptionsDialog(
-            onCamera = {
-                showPhotoOptionsDialog = false
-                when (PackageManager.PERMISSION_GRANTED) {
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.CAMERA
-                    ) -> {
-                        val photoFile = File(context.cacheDir, "report_photo_${System.currentTimeMillis()}.jpg")
-                        val uri = FileProvider.getUriForFile(
+        // Dialogos
+        if (showPhotoOptionsDialog) {
+            PhotoOptionsDialog(
+                onCamera = {
+                    showPhotoOptionsDialog = false
+                    when (PackageManager.PERMISSION_GRANTED) {
+                        ContextCompat.checkSelfPermission(
                             context,
-                            "${context.packageName}.fileprovider",
-                            photoFile
-                        )
-                        tempImageUri = uri
-                        cameraLauncher.launch(uri)
+                            Manifest.permission.CAMERA
+                        ) -> {
+                            val photoFile = File(
+                                context.cacheDir,
+                                "report_photo_${System.currentTimeMillis()}.jpg"
+                            )
+                            val uri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.fileprovider",
+                                photoFile
+                            )
+                            tempImageUri = uri
+                            cameraLauncher.launch(uri)
+                        }
+                        else -> {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
                     }
-                    else -> {
-                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
+                },
+                onGallery = {
+                    showPhotoOptionsDialog = false
+                    galleryLauncher.launch("image/*")
+                },
+                onDismiss = {
+                    showPhotoOptionsDialog = false
                 }
-            },
-            onGallery = {
-                showPhotoOptionsDialog = false
-                galleryLauncher.launch("image/*")
-            },
-            onDismiss = {
-                showPhotoOptionsDialog = false
-            }
-        )
-    }
+            )
+        }
 
-    if (showExitDialog) {
-        ExitConfirmationDialog(
-            onConfirm = {
-                showExitDialog = false
-                viewModel.clearReportData()
-                navController.popBackStack()
-            },
-            onDismiss = {
-                showExitDialog = false
-            }
-        )
-    }
+        if (showExitDialog) {
+            ExitConfirmationDialog(
+                onConfirm = {
+                    showExitDialog = false
+                    viewModel.clearReportData()
+                    navController.popBackStack()
+                },
+                onDismiss = {
+                    showExitDialog = false
+                }
+            )
+        }
 
-    if (showIncompleteFieldsDialog) {
-        IncompleteFieldsDialog(
-            onDismiss = { showIncompleteFieldsDialog = false }
-        )
-    }
+        if (showIncompleteFieldsDialog) {
+            IncompleteFieldsDialog(
+                onDismiss = { showIncompleteFieldsDialog = false }
+            )
+        }
 
-    if (showMaxPhotosDialog) {
-        MaxPhotosErrorDialog(
-            onDismiss = { showMaxPhotosDialog = false }
-        )
-    }
+        if (showMaxPhotosDialog) {
+            MaxPhotosErrorDialog(
+                onDismiss = { showMaxPhotosDialog = false }
+            )
+        }
 
-    if (expandedImageIndex != null && expandedImageIndex!! < photos.size) {
-        ImagePreviewDialog(
-            bitmap = photos[expandedImageIndex!!],
-            onDismiss = { expandedImageIndex = null }
-        )
-    }
+        if (expandedImageIndex != null && expandedImageIndex!! < photos.size) {
+            ImagePreviewDialog(
+                bitmap = photos[expandedImageIndex!!],
+                onDismiss = { expandedImageIndex = null }
+            )
+        }
 
-    if (showNoImageDialog) {
-        NoImageDialog(
-            onDismiss = { showNoImageDialog = false }
-        )
-    }
+        if (showNoImageDialog) {
+            NoImageDialog(
+                onDismiss = { showNoImageDialog = false }
+            )
+        }
 
-    if (showNoSubtypeDialog) {
-        NoSubtypeDialog(
-            onDismiss = { showNoSubtypeDialog = false }
-        )
-    }
+        if (showNoSubtypeDialog) {
+            NoSubtypeDialog(
+                onDismiss = { showNoSubtypeDialog = false }
+            )
+        }
 
-    // Diálogo de carga/éxito/error
-    if (reportState != ReportState.Idle) {
-        LoadingReportDialog(
-            reportState = reportState,
-            onRetry = {
-                viewModel.resetReportState()
-                viewModel.createReport(
-                    reportType = reportType,
-                    onSuccess = {}
-                )
-            },
-            onDismiss = {
-                viewModel.resetReportState()
-                viewModel.clearReportData()
-                // Volver a la pantalla anterior (home/inicio)
-                navController.popBackStack()
-            }
-        )
+        // Dialogo de carga/exito/error
+        if (reportState != ReportState.Idle) {
+            LoadingReportDialog(
+                reportState = reportState,
+                onRetry = {
+                    viewModel.resetReportState()
+                    viewModel.submitReport(
+                        reportType = reportType,
+                        onSuccess = {}
+                    )
+                },
+                onDismiss = {
+                    viewModel.resetReportState()
+                    viewModel.clearReportData()
+                    navController.popBackStack()
+                },
+                onCloseDialog = {
+                    viewModel.resetReportState()
+                }
+            )
+        }
     }
 }
 
 // ===== COMPOSABLES AUXILIARES =====
 
 @Composable
-fun PhotoOptionsDialog(
+private fun PhotoOptionsDialog(
     onCamera: () -> Unit,
     onGallery: () -> Unit,
     onDismiss: () -> Unit
@@ -893,7 +903,7 @@ fun PhotoOptionsDialog(
 }
 
 @Composable
-fun NoImageDialog(
+private fun NoImageDialog(
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -961,7 +971,7 @@ fun NoImageDialog(
 }
 
 @Composable
-fun NoSubtypeDialog(
+private fun NoSubtypeDialog(
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -1028,96 +1038,130 @@ fun NoSubtypeDialog(
     }
 }
 
-// Diálogo actualizado para usar ReportState
 @Composable
 fun LoadingReportDialog(
     reportState: ReportState,
     onRetry: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onCloseDialog: () -> Unit
 ) {
-    Dialog(onDismissRequest = { if (reportState is ReportState.Success) onDismiss() }) {
+    Dialog(onDismissRequest = {
+        if (reportState is ReportState.Success) {
+            onDismiss()
+        } else if (reportState is ReportState.Error) {
+            onCloseDialog()
+        }
+    }) {
         Card(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                when (reportState) {
-                    is ReportState.Loading -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(80.dp).padding(8.dp),
-                            color = Color(0xFF6366F1),
-                            strokeWidth = 6.dp
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Text(
-                            text = stringResource(R.string.loading_report),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+            Box(modifier = Modifier.fillMaxWidth()) {
 
-                    is ReportState.Error -> {
-                        Image(
-                            painter = painterResource(id = R.drawable.error_subir_reporte),
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp)
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Text(
-                            text = stringResource(reportState.messageId),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Button(
-                            onClick = onRetry,
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB76998))
-                        ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    when (reportState) {
+                        is ReportState.Loading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(80.dp).padding(8.dp),
+                                color = Color(0xFF6366F1),
+                                strokeWidth = 6.dp
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
                             Text(
-                                text = stringResource(R.string.retry_button),
-                                color = Color.White,
-                                fontSize = 16.sp,
+                                text = stringResource(R.string.loading_report),
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                    }
 
-                    is ReportState.Success -> {
-                        Image(
-                            painter = painterResource(id = R.drawable.subido_correcto_reporte),
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp)
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Text(
-                            text = stringResource(R.string.report_completed),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Button(
-                            onClick = onDismiss,
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB76998))
-                        ) {
+                        is ReportState.Error -> {
+                            Image(
+                                painter = painterResource(id = R.drawable.error_subir_reporte),
+                                contentDescription = null,
+                                modifier = Modifier.size(80.dp)
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
                             Text(
-                                text = stringResource(R.string.home_button),
-                                color = Color.White,
-                                fontSize = 16.sp,
+                                text = stringResource(reportState.messageId),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Button(
+                                onClick = onRetry,
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFB76998)
+                                )
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.retry_button),
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        is ReportState.Success -> {
+                            Image(
+                                painter = painterResource(id = R.drawable.subido_correcto_reporte),
+                                contentDescription = null,
+                                modifier = Modifier.size(80.dp)
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Text(
+                                text = stringResource(R.string.report_completed),
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Button(
+                                onClick = onDismiss,
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFB76998)
+                                )
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.home_button),
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
-                    }
 
-                    is ReportState.Idle -> { /* No mostrar */ }
+                        is ReportState.Idle -> { /* No mostrar */ }
+                    }
+                }
+
+                if (reportState !is ReportState.Loading) {
+                    IconButton(
+                        onClick = {
+                            if (reportState is ReportState.Success) {
+                                onDismiss()
+                            } else {
+                                onCloseDialog()
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.close_dialog),
+                            tint = Color.Gray
+                        )
+                    }
                 }
             }
         }

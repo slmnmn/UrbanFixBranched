@@ -42,6 +42,11 @@ interface ApiService {
         @Query("user_id") userId: Int
     ): List<MiReporte>
 
+    @PUT("reportes/{id}")
+    suspend fun updateReporte(
+        @Path("id") reporteId: Int,
+        @Body request: CreateReporteRequest // Reutilizamos el mismo body de "Crear"
+    ): Response<MiReporte>
     @DELETE("reportes/{id}")
     suspend fun deleteReporte(
         @Path("id") reporteId: Int

@@ -165,7 +165,8 @@ private fun updateMapLocation(mapView: MapView, point: Point) {
 @Composable
 fun ReportarScreen(
     navController: NavHostController,
-    reportType: String = "huecos"
+    reportType: String = "huecos",
+    reporteId: Int = -1
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()  // MOVER ANTES del activity
@@ -174,6 +175,9 @@ fun ReportarScreen(
         viewModelStoreOwner = activity,
         factory = ViewModelFactory(context)
     )
+    LaunchedEffect(key1 = reporteId) {
+        viewModel.loadReportForEdit(reporteId, context)
+    }
 
     // CAMBIO CLAVE: Usar estados del ViewModel
     val eventAddress by viewModel.eventAddress.collectAsState()
@@ -295,7 +299,10 @@ fun ReportarScreen(
                 navigationIcon = {
                     Box(modifier = Modifier.padding(top = 20.dp)) {
                         IconButton(onClick = {
-                            if (eventAddress.isNotEmpty() || referencePoint.isNotEmpty() || photos.isNotEmpty()) {
+                            val hayDatos = eventAddress.isNotEmpty() || referencePoint.isNotEmpty() || photos.isNotEmpty()
+                            val estamosEnModoCrear = (reporteId == -1)
+
+                            if (estamosEnModoCrear && hayDatos) {
                                 showExitDialog = true
                             } else {
                                 viewModel.clearReportData()

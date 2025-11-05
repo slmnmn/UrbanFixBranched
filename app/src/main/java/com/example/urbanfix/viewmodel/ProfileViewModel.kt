@@ -39,6 +39,7 @@ data class OtherUserProfileState(
     val accountType: String? = null,
     val registrationDate: String? = null,
     val companyName: String? = null,
+    val profile_pic_url: String? = null,
     val error: String? = null
 )
 
@@ -170,6 +171,7 @@ class ProfileViewModel(
     }
 
     // --- CARGAR PERFIL DE OTRO USUARIO ---
+    // --- CARGAR PERFIL DE OTRO USUARIO ---
     fun loadOtherUserProfile(userId: Int, userRole: String = "usuario") {
         viewModelScope.launch {
             _otherUserProfileState.value = _otherUserProfileState.value.copy(
@@ -178,21 +180,28 @@ class ProfileViewModel(
             )
 
             try {
-                Log.d("PROFILE_VM", "Intentando cargar perfil - ID: $userId, Rol: $userRole")
+                Log.d("PROFILE_VM", "🔍 Intentando cargar perfil - ID: $userId, Rol: $userRole")
 
-                // Llamar al endpoint correcto según el rol
                 val response = if (userRole == "funcionario") {
                     RetrofitInstance.api.getOtherFuncionarioProfile(userId)
                 } else {
                     RetrofitInstance.api.getOtherUserProfile(userId)
                 }
 
-                Log.d("PROFILE_VM", "Respuesta recibida - Código: ${response.code()}")
+                Log.d("PROFILE_VM", "📡 Respuesta recibida - Código: ${response.code()}")
 
                 if (response.isSuccessful && response.body() != null) {
                     val profile = response.body()!!
 
-                    Log.d("PROFILE_VM", "Perfil cargado exitosamente: ${profile.nombre}")
+                    Log.d("PROFILE_VM", "✅ Perfil cargado exitosamente: ${profile.nombre}")
+                    Log.d("PROFILE_VM", "🖼️ URL de foto recibida: ${profile.profile_pic_url}")
+
+                    // Verificar si la URL es nula o vacía
+                    if (profile.profile_pic_url.isNullOrEmpty()) {
+                        Log.w("PROFILE_VM", "⚠️ ADVERTENCIA: URL de foto es nula o vacía")
+                    } else {
+                        Log.d("PROFILE_VM", "✅ URL válida: ${profile.profile_pic_url}")
+                    }
 
                     val accountType = when (profile.role) {
                         "funcionario" -> "Funcionario"
@@ -207,8 +216,11 @@ class ProfileViewModel(
                         accountType = accountType,
                         registrationDate = profile.fecha_registro,
                         companyName = profile.entidad_nombre,
+                        profile_pic_url = profile.profile_pic_url,
                         error = null
                     )
+
+                    Log.d("PROFILE_VM", "✅ Estado actualizado correctamente")
                 } else {
                     val errorBody = response.errorBody()?.string()
                     val errorMsg = "Error al cargar el perfil: ${response.code()}"
@@ -218,16 +230,16 @@ class ProfileViewModel(
                         error = errorMsg
                     )
 
-                    Log.e("PROFILE_VM", "Error API: ${response.code()}")
-                    Log.e("PROFILE_VM", "Error body: $errorBody")
-                    Log.e("PROFILE_VM", "URL solicitada: ${response.raw().request.url}")
+                    Log.e("PROFILE_VM", "❌ Error API: ${response.code()}")
+                    Log.e("PROFILE_VM", "❌ Error body: $errorBody")
+                    Log.e("PROFILE_VM", "❌ URL solicitada: ${response.raw().request.url}")
                 }
             } catch (e: Exception) {
                 _otherUserProfileState.value = _otherUserProfileState.value.copy(
                     isLoading = false,
                     error = "Error de conexión: ${e.message}"
                 )
-                Log.e("PROFILE_VM", "Error de red al cargar perfil", e)
+                Log.e("PROFILE_VM", "❌ Error de red al cargar perfil", e)
             }
         }
     }
