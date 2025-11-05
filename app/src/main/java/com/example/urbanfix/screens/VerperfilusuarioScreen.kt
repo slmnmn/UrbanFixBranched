@@ -164,9 +164,8 @@ private fun UsuarioProfileContent(
     val context = LocalContext.current
     var showEmailCopiedDialog by remember { mutableStateOf(false) }
 
-    // 🔥 LOG PARA VER QUÉ URL RECIBE EL COMPOSABLE
     LaunchedEffect(profilePicUrl) {
-        Log.d("USUARIO_SCREEN", "🖼️ URL de foto recibida en UI: $profilePicUrl")
+        Log.d("USUARIO_SCREEN", "URL de foto recibida en UI: $profilePicUrl")
     }
 
     Column(
@@ -192,11 +191,11 @@ private fun UsuarioProfileContent(
                     .background(WhiteFull),
                 contentScale = ContentScale.Crop,
                 onSuccess = {
-                    Log.d("COIL_IMAGE", "✅ Imagen cargada exitosamente: $profilePicUrl")
+                    Log.d("COIL_IMAGE", "Imagen cargada exitosamente: $profilePicUrl")
                 },
                 onError = { error ->
-                    Log.e("COIL_IMAGE", "❌ Error al cargar imagen: ${error.result.throwable.message}")
-                    Log.e("COIL_IMAGE", "❌ URL intentada: $profilePicUrl")
+                    Log.e("COIL_IMAGE", "Error al cargar imagen: ${error.result.throwable.message}")
+                    Log.e("COIL_IMAGE", "URL intentada: $profilePicUrl")
                     error.result.throwable.printStackTrace()
                 }
             )

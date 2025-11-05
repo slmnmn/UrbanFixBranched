@@ -220,7 +220,7 @@ class ProfileViewModel(
                         error = null
                     )
 
-                    Log.d("PROFILE_VM", "✅ Estado actualizado correctamente")
+                    Log.d("PROFILE_VM", "Estado actualizado correctamente")
                 } else {
                     val errorBody = response.errorBody()?.string()
                     val errorMsg = "Error al cargar el perfil: ${response.code()}"
@@ -230,16 +230,16 @@ class ProfileViewModel(
                         error = errorMsg
                     )
 
-                    Log.e("PROFILE_VM", "❌ Error API: ${response.code()}")
-                    Log.e("PROFILE_VM", "❌ Error body: $errorBody")
-                    Log.e("PROFILE_VM", "❌ URL solicitada: ${response.raw().request.url}")
+                    Log.e("PROFILE_VM", "Error API: ${response.code()}")
+                    Log.e("PROFILE_VM", "Error body: $errorBody")
+                    Log.e("PROFILE_VM", "URL solicitada: ${response.raw().request.url}")
                 }
             } catch (e: Exception) {
                 _otherUserProfileState.value = _otherUserProfileState.value.copy(
                     isLoading = false,
                     error = "Error de conexión: ${e.message}"
                 )
-                Log.e("PROFILE_VM", "❌ Error de red al cargar perfil", e)
+                Log.e("PROFILE_VM", "Error de red al cargar perfil", e)
             }
         }
     }
